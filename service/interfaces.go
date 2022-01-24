@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 )
 
@@ -20,8 +22,9 @@ type Initialiser interface {
 	DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error)
 	DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
 	DoGetKafkaConsumer(ctx context.Context, cfg *config.Config) (kafka.IConsumerGroup, error)
-	//DoGetHealthClient(name, url string) *health.Client
+	DoGetHealthClient(name, url string) *health.Client
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
+	DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

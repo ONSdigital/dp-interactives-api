@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/ONSdigital/dp-api-clients-go/health"
+	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
@@ -28,7 +30,13 @@ type Service struct {
 
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
+	var zc *health.Client
 	var auth api.AuthHandler
+
+	// Get Health client for Zebedee and permissions
+	zc = serviceList.GetHealthClient("Zebedee", cfg.ZebedeeURL)
+	auth = getAuthorisationHandlers(zc)
+
 	// Get HTTP Server with collectionID checkHeader middleware
 	r := mux.NewRouter()
 	middleware := alice.New(handlers.CheckHeader(handlers.CollectionID))
@@ -39,8 +47,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
 		return nil, err
 	}
-
-	a := api.Setup(ctx, cfg, r, auth, mongoDB, nil, nil)
 
 	// Get Kafka consumer
 	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
@@ -53,6 +59,15 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "failed to initialise kafka producer", err)
 		return nil, err
 	}
+
+	// Get S3Uploaded client
+	s3Client, err := serviceList.GetS3Client(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise S3 client for uploaded bucket", err)
+		return nil, err
+	}
+
+	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, consumer, s3Client)
 
 	//heathcheck - start
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -101,7 +116,7 @@ func (svc *Service) Close(ctx context.Context) error {
 		defer cancel()
 		var hasShutdownError bool
 
-		// stop healthcheck, as it depends on everything else
+		// stop healthcheck first, as it depends on everything else
 		if svc.serviceList.HealthCheck {
 			svc.healthCheck.Stop()
 		}
@@ -186,4 +201,21 @@ func registerCheckers(ctx context.Context,
 		return errors.New("Error(s) registering checkers for healthcheck")
 	}
 	return nil
+}
+
+// generate permissions from dp-auth-api, using the provided health client, reusing its http Client
+func getAuthorisationHandlers(zc *health.Client) api.AuthHandler {
+	log.Info(context.Background(), "getting Authorisation Handlers", log.Data{"zc_url": zc.URL})
+
+	authClient := dpauth.NewPermissionsClient(zc.Client)
+	authVerifier := dpauth.DefaultPermissionsVerifier()
+
+	// for checking caller permissions when we only have a user/service token
+	permissions := dpauth.NewHandler(
+		dpauth.NewPermissionsRequestBuilder(zc.URL),
+		authClient,
+		authVerifier,
+	)
+
+	return permissions
 }

@@ -10,6 +10,8 @@ import (
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
 	ApiURL                     string        `envconfig:"INTERACTIVES_API_URL"`
+	AwsRegion                  string        `envconfig:"AWS_REGION"`
+	UploadBucketName           string        `envconfig:"UPLOAD_BUCKET_NAME"`
 	Brokers                    []string      `envconfig:"KAFKA_ADDR"`
 	KafkaMaxBytes              int           `envconfig:"KAFKA_MAX_BYTES"`
 	KafkaVersion               string        `envconfig:"KAFKA_VERSION"`
@@ -24,6 +26,7 @@ type Config struct {
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
+	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
 	MongoConfig                MongoConfig
 }
 
@@ -49,6 +52,8 @@ func Get() (*Config, error) {
 	cfg := &Config{
 		BindAddr:                   "localhost:27500",
 		ApiURL:                     "http://localhost:27500",
+		AwsRegion:                  "eu-west-1",
+		UploadBucketName:           "dp-interactives-file-uploads",
 		Brokers:                    []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,
@@ -58,6 +63,7 @@ func Get() (*Config, error) {
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
+		ZebedeeURL:                 "http://localhost:8082",
 		MongoConfig: MongoConfig{
 			BindAddr:   "localhost:27017",
 			Collection: "visualisations",

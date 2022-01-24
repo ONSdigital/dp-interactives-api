@@ -4,12 +4,15 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ONSdigital/dp-api-clients-go/health"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
+	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	dphttp "github.com/ONSdigital/dp-net/http"
+	dps3 "github.com/ONSdigital/dp-s3"
 )
 
 type ExternalServiceList struct {
@@ -17,6 +20,7 @@ type ExternalServiceList struct {
 	HealthCheck   bool
 	KafkaProducer bool
 	KafkaConsumer bool
+	S3Client      bool
 	Init          Initialiser
 }
 
@@ -26,6 +30,7 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 		HealthCheck:   false,
 		KafkaProducer: false,
 		KafkaConsumer: false,
+		S3Client:      false,
 		Init:          initialiser,
 	}
 }
@@ -68,9 +73,20 @@ func (e *ExternalServiceList) GetKafkaConsumer(ctx context.Context, cfg *config.
 	return consumer, nil
 }
 
+// GetS3Uploaded creates a S3 client and sets the S3Uploaded flag to true
+func (e *ExternalServiceList) GetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+	s3, err := e.Init.DoGetS3Client(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.S3Client = true
+	return s3, nil
+}
+
 // GetHealthClient returns a healthclient for the provided URL
-//func (e *ExternalServiceList) GetHealthClient(name, url string) *health.Client {
-//}
+func (e *ExternalServiceList) GetHealthClient(name, url string) *health.Client {
+	return e.Init.DoGetHealthClient(name, url)
+}
 
 // GetHealthCheck creates a healthcheck with versionInfo and sets teh HealthCheck flag to true
 func (e *ExternalServiceList) GetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error) {
@@ -150,6 +166,20 @@ func (e *Init) DoGetKafkaConsumer(ctx context.Context, cfg *config.Config) (kafk
 		cgChannels,
 		cConfig,
 	)
+}
+
+// DoGetS3Uploaded returns a S3Client
+func (e *Init) DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+	s3Client, err := dps3.NewClient(cfg.AwsRegion, cfg.UploadBucketName)
+	if err != nil {
+		return nil, err
+	}
+	return s3Client, nil
+}
+
+// DoGetHealthClient creates a new Health Client for the provided name and url
+func (e *Init) DoGetHealthClient(name, url string) *health.Client {
+	return health.NewClient(name, url)
 }
 
 // DoGetHealthCheck creates a healthcheck with versionInfo
