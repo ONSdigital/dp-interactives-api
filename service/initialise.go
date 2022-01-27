@@ -136,7 +136,7 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 		)
 	}
 	producerChannels := kafka.CreateProducerChannels()
-	return kafka.NewProducer(ctx, cfg.Brokers, cfg.InteractivesTopic, producerChannels, pConfig)
+	return kafka.NewProducer(ctx, cfg.Brokers, cfg.InteractivesWriteTopic, producerChannels, pConfig)
 }
 
 // DoGetKafkaConsumer returns a Kafka Consumer group
@@ -161,7 +161,7 @@ func (e *Init) DoGetKafkaConsumer(ctx context.Context, cfg *config.Config) (kafk
 	return kafka.NewConsumerGroup(
 		ctx,
 		cfg.Brokers,
-		cfg.InteractivesTopic,
+		cfg.InteractivesReadTopic,
 		cfg.InteractivesGroup,
 		cgChannels,
 		cConfig,

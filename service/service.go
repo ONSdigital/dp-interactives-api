@@ -2,16 +2,16 @@ package service
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/health"
 	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
-	"github.com/ONSdigital/dp-net/handlers"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
 	"github.com/pkg/errors"
 )
 
@@ -37,10 +37,8 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	zc = serviceList.GetHealthClient("Zebedee", cfg.ZebedeeURL)
 	auth = getAuthorisationHandlers(zc)
 
-	// Get HTTP Server with collectionID checkHeader middleware
 	r := mux.NewRouter()
-	middleware := alice.New(handlers.CheckHeader(handlers.CollectionID))
-	s := serviceList.GetHTTPServer(cfg.BindAddr, middleware.Then(r))
+	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
 	mongoDB, err := serviceList.GetMongoDB(ctx, cfg)
 	if err != nil {
@@ -75,11 +73,11 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, consumer); err != nil {
+	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, consumer, s3Client); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
-	r.StrictSlash(true).Path("/health").HandlerFunc(hc.Handler)
+	r.StrictSlash(true).Path("/health").Methods(http.MethodGet).HandlerFunc(hc.Handler)
 	hc.Start(ctx)
 	//healthcheck - end
 
@@ -178,7 +176,8 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	mongoDB api.MongoServer,
 	producer kafka.IProducer,
-	consumer kafka.IConsumerGroup) (err error) {
+	consumer kafka.IConsumerGroup,
+	s3 upload.S3Interface) (err error) {
 
 	hasErrors := false
 
@@ -189,12 +188,17 @@ func registerCheckers(ctx context.Context,
 
 	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesTopic})
+		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
 	}
 
 	if err = hc.AddCheck("Published Kafka Consumer", consumer.Checker); err != nil {
 		hasErrors = true
-		log.Error(ctx, "error adding check for published kafka consumer", err, log.Data{"group": cfg.InteractivesGroup, "topic": cfg.InteractivesTopic})
+		log.Error(ctx, "error adding check for published kafka consumer", err, log.Data{"group": cfg.InteractivesGroup, "topic": cfg.InteractivesReadTopic})
+	}
+
+	if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for s3", err)
 	}
 
 	if hasErrors {
