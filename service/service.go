@@ -73,11 +73,19 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
+	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, consumer, s3Client); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
 	r.StrictSlash(true).Path("/health").Methods(http.MethodGet).HandlerFunc(hc.Handler)
 	hc.Start(ctx)
+	//healthcheck - end
+
+	// Run the http server in a new go-routine
+	go func() {
+		if err := s.ListenAndServe(); err != nil {
+			svcErrors <- errors.Wrap(err, "failure in http listen and serve")
+		}
 	}()
 
 	return &Service{
