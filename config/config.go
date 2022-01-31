@@ -21,8 +21,6 @@ type Config struct {
 	KafkaSecClientKey          string        `envconfig:"KAFKA_SEC_CLIENT_KEY"             json:"-"`
 	KafkaSecSkipVerify         bool          `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
 	InteractivesWriteTopic     string        `envconfig:"INTERACTIVES_WRITE_TOPIC"`
-	InteractivesReadTopic      string        `envconfig:"INTERACTIVES_READ_TOPIC"`
-	InteractivesGroup          string        `envconfig:"INTERACTIVES_GROUP"`
 	KafkaConsumerWorkers       int           `envconfig:"KAFKA_CONSUMER_WORKERS"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
@@ -54,14 +52,12 @@ func Get() (*Config, error) {
 		BindAddr:                   "localhost:27500",
 		ApiURL:                     "http://localhost:27500",
 		AwsRegion:                  "eu-west-1",
-		UploadBucketName:           "dp-interactives-file-uploads",
-		Brokers:                    []string{"localhost:9092", "localhost:9093", "localhost:9094"},
+		UploadBucketName:           "dp-interactives-file-upload",
+		Brokers:                    []string{"localhost:9092"},
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,
 		InteractivesWriteTopic:     "interactives-visualisations-api",
-		InteractivesReadTopic:      "interactives-visualisations-importer",
 		KafkaConsumerWorkers:       1,
-		InteractivesGroup:          "dp-interactives-api",
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,

@@ -25,7 +25,6 @@ type Service struct {
 	healthCheck               HealthChecker
 	mongoDB                   api.MongoServer
 	interactivesKafkaProducer kafka.IProducer
-	interactivesKafkaConsumer kafka.IConsumerGroup
 }
 
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
@@ -46,12 +45,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	// Get Kafka consumer
-	consumer, err := serviceList.GetKafkaConsumer(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise kafka consumer", err)
-		return nil, err
-	}
+	// Get Kafka producer
 	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise kafka producer", err)
@@ -65,7 +59,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, consumer, s3Client)
+	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, s3Client)
 
 	//heathcheck - start
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -73,7 +67,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, consumer, s3Client); err != nil {
+	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -94,10 +88,9 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		router:                    r,
 		api:                       a,
 		serviceList:               serviceList,
-		healthCheck:               nil,
+		healthCheck:               hc,
 		mongoDB:                   mongoDB,
 		interactivesKafkaProducer: producer,
-		interactivesKafkaConsumer: consumer,
 	}, nil
 }
 
@@ -140,13 +133,6 @@ func (svc *Service) Close(ctx context.Context) error {
 			}
 		}
 
-		if svc.serviceList.KafkaConsumer {
-			if err := svc.interactivesKafkaConsumer.Close(ctx); err != nil {
-				log.Error(ctx, "error closing Kafka consumer", err)
-				hasShutdownError = true
-			}
-		}
-
 		// stop any incoming requests before closing any outbound connections
 		if err := svc.server.Shutdown(ctx); err != nil {
 			log.Error(ctx, "failed to shutdown http server", err)
@@ -176,7 +162,6 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	mongoDB api.MongoServer,
 	producer kafka.IProducer,
-	consumer kafka.IConsumerGroup,
 	s3 upload.S3Interface) (err error) {
 
 	hasErrors := false
@@ -189,11 +174,6 @@ func registerCheckers(ctx context.Context,
 	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
-	}
-
-	if err = hc.AddCheck("Published Kafka Consumer", consumer.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for published kafka consumer", err, log.Data{"group": cfg.InteractivesGroup, "topic": cfg.InteractivesReadTopic})
 	}
 
 	if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {

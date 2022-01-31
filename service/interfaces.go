@@ -21,7 +21,6 @@ type Initialiser interface {
 	DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer
 	DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error)
 	DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
-	DoGetKafkaConsumer(ctx context.Context, cfg *config.Config) (kafka.IConsumerGroup, error)
 	DoGetHealthClient(name, url string) *health.Client
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)

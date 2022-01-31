@@ -25,7 +25,6 @@ func TestConfig(t *testing.T) {
 				So(cfg.KafkaSecProtocol, ShouldEqual, "")
 				So(cfg.KafkaMaxBytes, ShouldEqual, 2000000)
 				So(cfg.InteractivesWriteTopic, ShouldEqual, "interactives-visualisations-api")
-				So(cfg.InteractivesReadTopic, ShouldEqual, "interactives-visualisations-importer")
 				So(cfg.GracefulShutdownTimeout, ShouldEqual, 5*time.Second)
 				So(cfg.HealthCheckInterval, ShouldEqual, 30*time.Second)
 				So(cfg.HealthCheckCriticalTimeout, ShouldEqual, 90*time.Second)

@@ -1,0 +1,33 @@
+version: '3.3'
+services:
+  mongodb:
+    image: mongo:3.6
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo/entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  zookeeper-1:
+    image: confluentinc/cp-zookeeper:6.0.0
+    expose:
+      - 2181
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka-1:
+    image: confluentinc/cp-kafka:6.0.0
+    expose:
+      - 19092 # exposed port to docker network so that the broker is reachable by other brokers, value needs to match PLAINTEXT port
+    ports:
+      - 9092:9092 # map localhost port so that broker is reachable from the host, values needs to match PLAINTEXT_HOST port
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:19092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT

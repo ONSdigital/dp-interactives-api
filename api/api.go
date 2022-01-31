@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
@@ -17,25 +16,31 @@ type API struct {
 	mongoDB  MongoServer
 	auth     AuthHandler
 	producer kafka.IProducer
-	consumer kafka.IConsumerGroup
 	s3       upload.S3Interface
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
-func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, kafkaConsumer kafka.IConsumerGroup, s3 upload.S3Interface) *API {
+func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, s3 upload.S3Interface) *API {
 
 	api := &API{
 		Router:   r,
 		mongoDB:  mongoDB,
 		auth:     auth,
 		producer: kafkaProducer,
-		consumer: kafkaConsumer,
 		s3:       s3,
 	}
 
-	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPut)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Create: true}, api.GetVisualisationInfoHandler)).Methods(http.MethodGet)
+	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPut)
+	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Read: true}, api.GetVisualisationInfoHandler)).Methods(http.MethodGet)
 	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Delete: true}, api.DeleteVisualisationHandler)).Methods(http.MethodDelete)
+	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Update: true}, api.UpdateVisualisationInfoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Read: true}, api.GetAllVisualisationsHandler)).Methods(http.MethodGet)*/
+
+	r.HandleFunc("/interactives", api.UploadVisualisationHandler).Methods(http.MethodPut)
+	r.HandleFunc("/interactives/{id}", api.GetVisualisationInfoHandler).Methods(http.MethodGet)
+	r.HandleFunc("/interactives/{id}", api.DeleteVisualisationHandler).Methods(http.MethodDelete)
+	r.HandleFunc("/interactives/{id}", api.UpdateVisualisationInfoHandler).Methods(http.MethodPost)
+	r.HandleFunc("/interactives", api.ListVisualisationsHandler).Methods(http.MethodGet)
 
 	return api
 }
