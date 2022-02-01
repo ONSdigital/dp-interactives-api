@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/ONSdigital/dp-interactives-api/config"
@@ -9,6 +10,10 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+)
+
+var (
+	ErrNoBody = errors.New("no body in http request")
 )
 
 type API struct {
@@ -30,15 +35,13 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 		s3:       s3,
 	}
 
-	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPut)
+	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Read: true}, api.GetVisualisationInfoHandler)).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Delete: true}, api.DeleteVisualisationHandler)).Methods(http.MethodDelete)
 	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Update: true}, api.UpdateVisualisationInfoHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Read: true}, api.GetAllVisualisationsHandler)).Methods(http.MethodGet)*/
 
-	r.HandleFunc("/interactives", api.UploadVisualisationHandler).Methods(http.MethodPut)
+	r.HandleFunc("/interactives", api.UploadVisualisationHandler).Methods(http.MethodPost)
 	r.HandleFunc("/interactives/{id}", api.GetVisualisationInfoHandler).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", api.DeleteVisualisationHandler).Methods(http.MethodDelete)
 	r.HandleFunc("/interactives/{id}", api.UpdateVisualisationInfoHandler).Methods(http.MethodPost)
 	r.HandleFunc("/interactives", api.ListVisualisationsHandler).Methods(http.MethodGet)
 

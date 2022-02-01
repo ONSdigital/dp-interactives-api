@@ -49,6 +49,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/assertions v1.2.1 // indirect
 	github.com/square/mongo-lock v0.0.0-20201208161834-4db518ed7fb2 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
