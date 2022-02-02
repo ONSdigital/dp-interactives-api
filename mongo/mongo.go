@@ -78,7 +78,7 @@ func (m *Mongo) GetVisualisationFromSHA(ctx context.Context, sha string) (*model
 	log.Info(ctx, "getting visualisation by SHA", log.Data{"sha": sha})
 
 	var vis models.Visualisation
-	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"_id": sha}, &vis)
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
 			return nil, err

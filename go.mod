@@ -18,8 +18,9 @@ require (
 )
 
 require (
-	github.com/ONSdigital/go-ns v0.0.0-20210410105122-6d6a140e952e // indirect
+	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e // indirect
 	github.com/aws/aws-sdk-go v1.42.29 // indirect
+	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	go.mongodb.org/mongo-driver v1.8.0 // indirect
 )
