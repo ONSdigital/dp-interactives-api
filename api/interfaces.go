@@ -10,6 +10,7 @@ import (
 )
 
 //go:generate moq -out mock/mongo.go -pkg mock . MongoServer
+//go:generate moq -out mock/auth.go -pkg mock . AuthHandler
 
 type MongoServer interface {
 	Close(ctx context.Context) error

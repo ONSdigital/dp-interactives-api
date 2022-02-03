@@ -2,6 +2,8 @@ package event
 
 import "errors"
 
+//go:generate moq -out mock/marshaller.go -pkg mock . Marshaller
+
 type AvroProducer struct {
 	out        chan []byte
 	marshaller Marshaller

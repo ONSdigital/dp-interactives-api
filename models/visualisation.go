@@ -8,6 +8,7 @@ const (
 	ArchiveDispatchedToImporter
 	ImportFailed
 	ImportSuccess
+	IsDeleted
 )
 
 type Visualisation struct {

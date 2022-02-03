@@ -32,7 +32,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	var zc *health.Client
 	var auth api.AuthHandler
 
-	// Get Health client for Zebedee and permissions
 	zc = serviceList.GetHealthClient("Zebedee", cfg.ZebedeeURL)
 	auth = getAuthorisationHandlers(zc)
 
@@ -45,13 +44,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	// Get Kafka producer
-	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise kafka producer", err)
-		return nil, err
-	}
-
 	// Get S3Uploaded client
 	s3Client, err := serviceList.GetS3Client(ctx, cfg)
 	if err != nil {
@@ -59,9 +51,16 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
+	// Get Kafka producer
+	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
+
 	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, s3Client)
 
-	//heathcheck - start
+	//heathcheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
@@ -73,7 +72,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	r.StrictSlash(true).Path("/health").Methods(http.MethodGet).HandlerFunc(hc.Handler)
 	hc.Start(ctx)
-	//healthcheck - end
 
 	// Run the http server in a new go-routine
 	go func() {
@@ -112,6 +110,12 @@ func (svc *Service) Close(ctx context.Context) error {
 			svc.healthCheck.Stop()
 		}
 
+		// stop any incoming requests before closing any outbound connections
+		if err := svc.server.Shutdown(ctx); err != nil {
+			log.Error(ctx, "failed to shutdown http server", err)
+			hasShutdownError = true
+		}
+
 		// close API
 		if err := svc.api.Close(ctx); err != nil {
 			log.Error(ctx, "error closing API", err)
@@ -131,12 +135,6 @@ func (svc *Service) Close(ctx context.Context) error {
 				log.Error(ctx, "error closing Kafka producer", err)
 				hasShutdownError = true
 			}
-		}
-
-		// stop any incoming requests before closing any outbound connections
-		if err := svc.server.Shutdown(ctx); err != nil {
-			log.Error(ctx, "failed to shutdown http server", err)
-			hasShutdownError = true
 		}
 
 		if !hasShutdownError {
@@ -171,7 +169,7 @@ func registerCheckers(ctx context.Context,
 		log.Error(ctx, "error adding check for mongo db", err)
 	}
 
-	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
+	if err = hc.AddCheck("Kafka Producer", producer.Checker); err != nil {
 		hasErrors = true
 		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
 	}
