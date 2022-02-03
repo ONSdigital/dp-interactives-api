@@ -12,14 +12,13 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	dphttp "github.com/ONSdigital/dp-net/http"
-	dps3 "github.com/ONSdigital/dp-s3"
+	dps3 "github.com/ONSdigital/dp-s3/v2"
 )
 
 type ExternalServiceList struct {
 	MongoDB       bool
 	HealthCheck   bool
 	KafkaProducer bool
-	KafkaConsumer bool
 	S3Client      bool
 	Init          Initialiser
 }
@@ -29,7 +28,6 @@ func NewServiceList(initialiser Initialiser) *ExternalServiceList {
 		MongoDB:       false,
 		HealthCheck:   false,
 		KafkaProducer: false,
-		KafkaConsumer: false,
 		S3Client:      false,
 		Init:          initialiser,
 	}
@@ -61,16 +59,6 @@ func (e *ExternalServiceList) GetKafkaProducer(ctx context.Context, cfg *config.
 	}
 	e.KafkaProducer = true
 	return producer, nil
-}
-
-// GetKafkaConsumer creates a Kafka consumer and sets the consumer flag to true
-func (e *ExternalServiceList) GetKafkaConsumer(ctx context.Context, cfg *config.Config) (kafka.IConsumerGroup, error) {
-	consumer, err := e.Init.DoGetKafkaConsumer(ctx, cfg)
-	if err != nil {
-		return nil, err
-	}
-	e.KafkaConsumer = true
-	return consumer, nil
 }
 
 // GetS3Uploaded creates a S3 client and sets the S3Uploaded flag to true
@@ -137,35 +125,6 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 	}
 	producerChannels := kafka.CreateProducerChannels()
 	return kafka.NewProducer(ctx, cfg.Brokers, cfg.InteractivesWriteTopic, producerChannels, pConfig)
-}
-
-// DoGetKafkaConsumer returns a Kafka Consumer group
-func (e *Init) DoGetKafkaConsumer(ctx context.Context, cfg *config.Config) (kafka.IConsumerGroup, error) {
-	kafkaOffset := kafka.OffsetOldest
-
-	cConfig := &kafka.ConsumerGroupConfig{
-		Offset:       &kafkaOffset,
-		KafkaVersion: &cfg.KafkaVersion,
-	}
-	if cfg.KafkaSecProtocol == "TLS" {
-		cConfig.SecurityConfig = kafka.GetSecurityConfig(
-			cfg.KafkaSecCACerts,
-			cfg.KafkaSecClientCert,
-			cfg.KafkaSecClientKey,
-			cfg.KafkaSecSkipVerify,
-		)
-	}
-
-	cgChannels := kafka.CreateConsumerGroupChannels(cfg.KafkaConsumerWorkers)
-
-	return kafka.NewConsumerGroup(
-		ctx,
-		cfg.Brokers,
-		cfg.InteractivesReadTopic,
-		cfg.InteractivesGroup,
-		cgChannels,
-		cConfig,
-	)
 }
 
 // DoGetS3Uploaded returns a S3Client

@@ -2,40 +2,49 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
-	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/event"
+	"github.com/ONSdigital/dp-interactives-api/schema"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v2"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
 
+var (
+	ErrNoBody = errors.New("no body in http request")
+)
+
 type API struct {
 	Router   *mux.Router
 	mongoDB  MongoServer
 	auth     AuthHandler
-	producer kafka.IProducer
-	consumer kafka.IConsumerGroup
+	producer *event.AvroProducer
 	s3       upload.S3Interface
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
-func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, kafkaConsumer kafka.IConsumerGroup, s3 upload.S3Interface) *API {
+func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, s3 upload.S3Interface) *API {
 
 	api := &API{
-		Router:   r,
-		mongoDB:  mongoDB,
-		auth:     auth,
-		producer: kafkaProducer,
-		consumer: kafkaConsumer,
-		s3:       s3,
+		Router:  r,
+		mongoDB: mongoDB,
+		auth:    auth,
+		s3:      s3,
 	}
 
-	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPut)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Create: true}, api.GetVisualisationInfoHandler)).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Delete: true}, api.DeleteVisualisationHandler)).Methods(http.MethodDelete)
+	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadInteractivesHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Read: true}, api.GetInteractiveInfoHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Update: true}, api.UpdateInteractiveInfoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Read: true}, api.ListInteractivessHandler)).Methods(http.MethodGet)*/
+	api.producer = event.NewAvroProducer(kafkaProducer.Channels().Output, schema.InteractiveUploadedEvent)
+	r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
+	r.HandleFunc("/interactives/{id}", api.GetInteractiveInfoHandler).Methods(http.MethodGet)
+	r.HandleFunc("/interactives/{id}", api.UpdateInteractiveInfoHandler).Methods(http.MethodPost)
+	r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
 
 	return api
 }

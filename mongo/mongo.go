@@ -3,11 +3,15 @@ package mongo
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/v3/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/v3/health"
 	dpMongoDriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	"github.com/ONSdigital/log.go/v2/log"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 const (
@@ -51,7 +55,7 @@ func (m *Mongo) getConnectionConfig(shouldEnableReadConcern, shouldEnableWriteCo
 // Init creates a new mongodb.MongoConnection with a strong consistency and a write mode of "majority".
 func (m *Mongo) Init(ctx context.Context, shouldEnableReadConcern, shouldEnableWriteConcern bool) (err error) {
 	if m.Connection != nil {
-		return errors.New("Datastor Connection already exists")
+		return errors.New("interactives connection already exists")
 	}
 	mongoConnection, err := dpMongoDriver.Open(m.getConnectionConfig(shouldEnableReadConcern, shouldEnableWriteConcern))
 	if err != nil {
@@ -67,6 +71,37 @@ func (m *Mongo) Init(ctx context.Context, shouldEnableReadConcern, shouldEnableW
 	// Create MongoDB lock client, which also starts the purger loop
 	m.lockClient = dpMongoLock.New(ctx, m.Connection, interactivesCol)
 	return nil
+}
+
+// GetInteractiveFromSHA retrieves a interactive by its SHA
+func (m *Mongo) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
+	log.Info(ctx, "getting interactive by SHA", log.Data{"sha": sha})
+
+	var vis models.Interactive
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha}, &vis)
+	if err != nil {
+		if dpMongoDriver.IsErrNoDocumentFound(err) {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return &vis, nil
+}
+
+// UpsertInteractive adds or overides an existing interactive
+func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.Interactive) (err error) {
+	log.Info(ctx, "upserting interactive", log.Data{"id": id})
+
+	update := bson.M{
+		"$set": vis,
+		"$setOnInsert": bson.M{
+			"last_updated": time.Now(),
+		},
+	}
+
+	_, err = m.Connection.GetConfiguredCollection().UpsertById(ctx, id, update)
+	return
 }
 
 // Close closes the mongo session and returns any error
