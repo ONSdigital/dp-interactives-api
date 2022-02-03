@@ -24,7 +24,7 @@ Manages all interactives state and metadata (in persistent store). Talks to dp-i
 | KAFKA_SEC_SKIP_VERIFY        | false                             | ignores server certificate issues if `true` [1]
 | MONGODB_BIND_ADDR            | localhost:27017                   | The MongoDB bind address
 | MONGODB_COLLECTION           | interactives                      | The MongoDB interactives database
-| MONGODB_DATABASE             | interactives-1pi                  | MongoDB collection
+| MONGODB_DATABASE             | interactives-api                  | MongoDB collection
 | MONGODB_USERNAME             | test                              | MongoDB Username
 | MONGODB_PASSWORD             | test                              | MongoDB Password
 | MONGODB_IS_SSL               | false                             | is SSL enabled for mongo server
