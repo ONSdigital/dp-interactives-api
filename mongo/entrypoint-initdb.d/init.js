@@ -1,7 +1,7 @@
 var databases = [
     {
-        name: "interactives",
-        collections: ["visualisations"]
+        name: "interactives-api",
+        collections: ["interactives"]
     }
 ];
 

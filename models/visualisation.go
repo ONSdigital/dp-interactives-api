@@ -1,9 +1,9 @@
 package models
 
-type VisualisationState int
+type InteractiveState int
 
 const (
-	ArchiveUploaded VisualisationState = iota
+	ArchiveUploaded InteractiveState = iota
 	ArchiveDispatchFailed
 	ArchiveDispatchedToImporter
 	ImportFailed
@@ -11,9 +11,9 @@ const (
 	IsDeleted
 )
 
-type Visualisation struct {
+type Interactive struct {
 	ID       string              `bson:"_id,omitempty"       json:"id,omitempty"`
 	SHA      string              `bson:"sha,omitempty"       json:"sha,omitempty"`
 	FileName string              `bson:"file_name,omitempty" json:"file_name,omitempty"`
-	State    *VisualisationState `bson:"state,omitempty"     json:"state,omitempty"`
+	State    *InteractiveState `bson:"state,omitempty"     json:"state,omitempty"`
 }

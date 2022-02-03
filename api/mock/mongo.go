@@ -27,11 +27,11 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			CloseFunc: func(ctx context.Context) error {
 // 				panic("mock out the Close method")
 // 			},
-// 			GetVisualisationFromSHAFunc: func(ctx context.Context, sha string) (*models.Visualisation, error) {
-// 				panic("mock out the GetVisualisationFromSHA method")
+// 			GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) {
+// 				panic("mock out the GetInteractiveFromSHA method")
 // 			},
-// 			UpsertVisualisationFunc: func(ctx context.Context, id string, vis *models.Visualisation) error {
-// 				panic("mock out the UpsertVisualisation method")
+// 			UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
+// 				panic("mock out the UpsertInteractive method")
 // 			},
 // 		}
 //
@@ -46,11 +46,11 @@ type MongoServerMock struct {
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
 
-	// GetVisualisationFromSHAFunc mocks the GetVisualisationFromSHA method.
-	GetVisualisationFromSHAFunc func(ctx context.Context, sha string) (*models.Visualisation, error)
+	// GetInteractiveFromSHAFunc mocks the GetInteractiveFromSHA method.
+	GetInteractiveFromSHAFunc func(ctx context.Context, sha string) (*models.Interactive, error)
 
-	// UpsertVisualisationFunc mocks the UpsertVisualisation method.
-	UpsertVisualisationFunc func(ctx context.Context, id string, vis *models.Visualisation) error
+	// UpsertInteractiveFunc mocks the UpsertInteractive method.
+	UpsertInteractiveFunc func(ctx context.Context, id string, vis *models.Interactive) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -66,27 +66,27 @@ type MongoServerMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
-		// GetVisualisationFromSHA holds details about calls to the GetVisualisationFromSHA method.
-		GetVisualisationFromSHA []struct {
+		// GetInteractiveFromSHA holds details about calls to the GetInteractiveFromSHA method.
+		GetInteractiveFromSHA []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Sha is the sha argument value.
 			Sha string
 		}
-		// UpsertVisualisation holds details about calls to the UpsertVisualisation method.
-		UpsertVisualisation []struct {
+		// UpsertInteractive holds details about calls to the UpsertInteractive method.
+		UpsertInteractive []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
 			// Vis is the vis argument value.
-			Vis *models.Visualisation
+			Vis *models.Interactive
 		}
 	}
-	lockChecker                 sync.RWMutex
-	lockClose                   sync.RWMutex
-	lockGetVisualisationFromSHA sync.RWMutex
-	lockUpsertVisualisation     sync.RWMutex
+	lockChecker               sync.RWMutex
+	lockClose                 sync.RWMutex
+	lockGetInteractiveFromSHA sync.RWMutex
+	lockUpsertInteractive     sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -155,10 +155,10 @@ func (mock *MongoServerMock) CloseCalls() []struct {
 	return calls
 }
 
-// GetVisualisationFromSHA calls GetVisualisationFromSHAFunc.
-func (mock *MongoServerMock) GetVisualisationFromSHA(ctx context.Context, sha string) (*models.Visualisation, error) {
-	if mock.GetVisualisationFromSHAFunc == nil {
-		panic("MongoServerMock.GetVisualisationFromSHAFunc: method is nil but MongoServer.GetVisualisationFromSHA was just called")
+// GetInteractiveFromSHA calls GetInteractiveFromSHAFunc.
+func (mock *MongoServerMock) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
+	if mock.GetInteractiveFromSHAFunc == nil {
+		panic("MongoServerMock.GetInteractiveFromSHAFunc: method is nil but MongoServer.GetInteractiveFromSHA was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -167,16 +167,16 @@ func (mock *MongoServerMock) GetVisualisationFromSHA(ctx context.Context, sha st
 		Ctx: ctx,
 		Sha: sha,
 	}
-	mock.lockGetVisualisationFromSHA.Lock()
-	mock.calls.GetVisualisationFromSHA = append(mock.calls.GetVisualisationFromSHA, callInfo)
-	mock.lockGetVisualisationFromSHA.Unlock()
-	return mock.GetVisualisationFromSHAFunc(ctx, sha)
+	mock.lockGetInteractiveFromSHA.Lock()
+	mock.calls.GetInteractiveFromSHA = append(mock.calls.GetInteractiveFromSHA, callInfo)
+	mock.lockGetInteractiveFromSHA.Unlock()
+	return mock.GetInteractiveFromSHAFunc(ctx, sha)
 }
 
-// GetVisualisationFromSHACalls gets all the calls that were made to GetVisualisationFromSHA.
+// GetInteractiveFromSHACalls gets all the calls that were made to GetInteractiveFromSHA.
 // Check the length with:
-//     len(mockedMongoServer.GetVisualisationFromSHACalls())
-func (mock *MongoServerMock) GetVisualisationFromSHACalls() []struct {
+//     len(mockedMongoServer.GetInteractiveFromSHACalls())
+func (mock *MongoServerMock) GetInteractiveFromSHACalls() []struct {
 	Ctx context.Context
 	Sha string
 } {
@@ -184,47 +184,47 @@ func (mock *MongoServerMock) GetVisualisationFromSHACalls() []struct {
 		Ctx context.Context
 		Sha string
 	}
-	mock.lockGetVisualisationFromSHA.RLock()
-	calls = mock.calls.GetVisualisationFromSHA
-	mock.lockGetVisualisationFromSHA.RUnlock()
+	mock.lockGetInteractiveFromSHA.RLock()
+	calls = mock.calls.GetInteractiveFromSHA
+	mock.lockGetInteractiveFromSHA.RUnlock()
 	return calls
 }
 
-// UpsertVisualisation calls UpsertVisualisationFunc.
-func (mock *MongoServerMock) UpsertVisualisation(ctx context.Context, id string, vis *models.Visualisation) error {
-	if mock.UpsertVisualisationFunc == nil {
-		panic("MongoServerMock.UpsertVisualisationFunc: method is nil but MongoServer.UpsertVisualisation was just called")
+// UpsertInteractive calls UpsertInteractiveFunc.
+func (mock *MongoServerMock) UpsertInteractive(ctx context.Context, id string, vis *models.Interactive) error {
+	if mock.UpsertInteractiveFunc == nil {
+		panic("MongoServerMock.UpsertInteractiveFunc: method is nil but MongoServer.UpsertInteractive was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 		ID  string
-		Vis *models.Visualisation
+		Vis *models.Interactive
 	}{
 		Ctx: ctx,
 		ID:  id,
 		Vis: vis,
 	}
-	mock.lockUpsertVisualisation.Lock()
-	mock.calls.UpsertVisualisation = append(mock.calls.UpsertVisualisation, callInfo)
-	mock.lockUpsertVisualisation.Unlock()
-	return mock.UpsertVisualisationFunc(ctx, id, vis)
+	mock.lockUpsertInteractive.Lock()
+	mock.calls.UpsertInteractive = append(mock.calls.UpsertInteractive, callInfo)
+	mock.lockUpsertInteractive.Unlock()
+	return mock.UpsertInteractiveFunc(ctx, id, vis)
 }
 
-// UpsertVisualisationCalls gets all the calls that were made to UpsertVisualisation.
+// UpsertInteractiveCalls gets all the calls that were made to UpsertInteractive.
 // Check the length with:
-//     len(mockedMongoServer.UpsertVisualisationCalls())
-func (mock *MongoServerMock) UpsertVisualisationCalls() []struct {
+//     len(mockedMongoServer.UpsertInteractiveCalls())
+func (mock *MongoServerMock) UpsertInteractiveCalls() []struct {
 	Ctx context.Context
 	ID  string
-	Vis *models.Visualisation
+	Vis *models.Interactive
 } {
 	var calls []struct {
 		Ctx context.Context
 		ID  string
-		Vis *models.Visualisation
+		Vis *models.Interactive
 	}
-	mock.lockUpsertVisualisation.RLock()
-	calls = mock.calls.UpsertVisualisation
-	mock.lockUpsertVisualisation.RUnlock()
+	mock.lockUpsertInteractive.RLock()
+	calls = mock.calls.UpsertInteractive
+	mock.lockUpsertInteractive.RUnlock()
 	return calls
 }

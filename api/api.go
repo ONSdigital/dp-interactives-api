@@ -36,15 +36,15 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 		s3:      s3,
 	}
 
-	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPost)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Read: true}, api.GetVisualisationInfoHandler)).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Update: true}, api.UpdateVisualisationInfoHandler)).Methods(http.MethodPost)
-	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Read: true}, api.GetAllVisualisationsHandler)).Methods(http.MethodGet)*/
+	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadInteractivesHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Read: true}, api.GetInteractiveInfoHandler)).Methods(http.MethodGet)
+	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Update: true}, api.UpdateInteractiveInfoHandler)).Methods(http.MethodPost)
+	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Read: true}, api.ListInteractivessHandler)).Methods(http.MethodGet)*/
 	api.producer = event.NewAvroProducer(kafkaProducer.Channels().Output, schema.InteractiveUploadedEvent)
-	r.HandleFunc("/interactives", api.UploadVisualisationHandler).Methods(http.MethodPost)
-	r.HandleFunc("/interactives/{id}", api.GetVisualisationInfoHandler).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", api.UpdateVisualisationInfoHandler).Methods(http.MethodPost)
-	r.HandleFunc("/interactives", api.ListVisualisationsHandler).Methods(http.MethodGet)
+	r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
+	r.HandleFunc("/interactives/{id}", api.GetInteractiveInfoHandler).Methods(http.MethodGet)
+	r.HandleFunc("/interactives/{id}", api.UpdateInteractiveInfoHandler).Methods(http.MethodPost)
+	r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
 
 	return api
 }

@@ -1,5 +1,5 @@
 # dp-interactives-api
-Manages all visualisation state and metadata (in persistent store). Talks to dp-interactives-importer via kafka.
+Manages all interactives state and metadata (in persistent store). Talks to dp-interactives-importer via kafka.
 
 ## Getting started
 
@@ -23,8 +23,8 @@ Manages all visualisation state and metadata (in persistent store). Talks to dp-
 | KAFKA_SEC_CA_CERTS           | _unset_                           | CA cert chain for the server cert [1]
 | KAFKA_SEC_SKIP_VERIFY        | false                             | ignores server certificate issues if `true` [1]
 | MONGODB_BIND_ADDR            | localhost:27017                   | The MongoDB bind address
-| MONGODB_COLLECTION           | visualisations                    | The MongoDB interactives database
-| MONGODB_DATABASE             | interactives                      | MongoDB collection
+| MONGODB_COLLECTION           | interactives                      | The MongoDB interactives database
+| MONGODB_DATABASE             | interactives-1pi                  | MongoDB collection
 | MONGODB_USERNAME             | test                              | MongoDB Username
 | MONGODB_PASSWORD             | test                              | MongoDB Password
 | MONGODB_IS_SSL               | false                             | is SSL enabled for mongo server

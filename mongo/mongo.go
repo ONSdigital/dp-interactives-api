@@ -73,11 +73,11 @@ func (m *Mongo) Init(ctx context.Context, shouldEnableReadConcern, shouldEnableW
 	return nil
 }
 
-// GetVisualisationFromSHA retrieves a visualisation by its SHA
-func (m *Mongo) GetVisualisationFromSHA(ctx context.Context, sha string) (*models.Visualisation, error) {
-	log.Info(ctx, "getting visualisation by SHA", log.Data{"sha": sha})
+// GetInteractiveFromSHA retrieves a interactive by its SHA
+func (m *Mongo) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
+	log.Info(ctx, "getting interactive by SHA", log.Data{"sha": sha})
 
-	var vis models.Visualisation
+	var vis models.Interactive
 	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
@@ -89,9 +89,9 @@ func (m *Mongo) GetVisualisationFromSHA(ctx context.Context, sha string) (*model
 	return &vis, nil
 }
 
-// UpsertVisualisation adds or overides an existing visualisation
-func (m *Mongo) UpsertVisualisation(ctx context.Context, id string, vis *models.Visualisation) (err error) {
-	log.Info(ctx, "upserting visualisation", log.Data{"id": id})
+// UpsertInteractive adds or overides an existing interactive
+func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.Interactive) (err error) {
+	log.Info(ctx, "upserting interactive", log.Data{"id": id})
 
 	update := bson.M{
 		"$set": vis,

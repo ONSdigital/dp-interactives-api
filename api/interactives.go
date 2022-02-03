@@ -30,7 +30,7 @@ var NewID = func() string {
 	return uuid.NewV4().String()
 }
 
-func (api *API) UploadVisualisationHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var err error
 	var retVal *validatedReq
@@ -61,7 +61,7 @@ func (api *API) UploadVisualisationHandler(w http.ResponseWriter, req *http.Requ
 	// 3. Write to DB
 	id := NewID()
 	lala := models.ArchiveUploaded
-	err = api.mongoDB.UpsertVisualisation(ctx, id, &models.Visualisation{
+	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
 		SHA:      retVal.Sha,
 		FileName: fileWithPath,
 		State:    &lala,
@@ -83,16 +83,16 @@ func (api *API) UploadVisualisationHandler(w http.ResponseWriter, req *http.Requ
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (api *API) GetVisualisationInfoHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) GetInteractiveInfoHandler(w http.ResponseWriter, req *http.Request) {
 	// get id
 	// fetch info from DB
 }
 
-func (api *API) UpdateVisualisationInfoHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) UpdateInteractiveInfoHandler(w http.ResponseWriter, req *http.Request) {
 	// called from the importer to update vis info/state
 }
 
-func (api *API) ListVisualisationsHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) ListInteractivessHandler(w http.ResponseWriter, req *http.Request) {
 	// fetches all/filtered visulatisations
 }
 
@@ -122,7 +122,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	hasher := sha1.New()
 	hasher.Write(data)
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	vis, _ := api.mongoDB.GetVisualisationFromSHA(req.Context(), sha)
+	vis, _ := api.mongoDB.GetInteractiveFromSHA(req.Context(), sha)
 	if vis != nil {
 		return nil, fmt.Errorf("archive already exists (%s)", vis.FileName)
 	}
