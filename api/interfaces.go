@@ -17,6 +17,7 @@ type MongoServer interface {
 	Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
 	UpsertInteractive(ctx context.Context, id string, vis *models.Interactive) (err error)
 	GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error)
+	GetInteractive(ctx context.Context, id string) (*models.Interactive, error)
 }
 
 // AuthHandler interface for adding auth to endpoints

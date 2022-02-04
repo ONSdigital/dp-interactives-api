@@ -53,7 +53,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			},
 		},
 		{
-			title:        "WhenValidationPassButS3BucketNotExisting_ThenStatusBadRequest",
+			title:        "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
@@ -64,7 +64,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			},
 		},
 		{
-			title:        "WhenUploadError_ThenStatusBadRequest",
+			title:        "WhenUploadError_ThenInternalServerError",
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
@@ -78,7 +78,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			},
 		},
 		{
-			title:        "WhenDbError_ThenStatusBadRequest",
+			title:        "WhenDbError_ThenInternalServerError",
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
@@ -122,12 +122,12 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			api := api.Setup(ctx, nil, nil, nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
 			resp := httptest.NewRecorder()
 			if tc.formFile != "" {
-				tc.req, _ = newfileUploadRequest("/interactives", map[string]string{}, "attachment", tc.formFile)
+				tc.req, _ = newfileUploadRequest("/interactives", map[string]string{"metadata1": "value1"}, "attachment", tc.formFile)
 			}
 
 			api.UploadInteractivesHandler(resp, tc.req)
 
-			require.Equal(t, resp.Result().StatusCode, tc.responseCode)
+			require.Equal(t, tc.responseCode, resp.Result().StatusCode)
 		})
 	}
 }

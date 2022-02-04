@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -50,7 +51,7 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 
 	if r != nil {
 		r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
-		r.HandleFunc("/interactives/{id}", api.GetInteractiveInfoHandler).Methods(http.MethodGet)
+		r.HandleFunc("/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
 		r.HandleFunc("/interactives/{id}", api.UpdateInteractiveInfoHandler).Methods(http.MethodPost)
 		r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
 	} else {
@@ -63,5 +64,24 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
 func (*API) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
+	return nil
+}
+
+func WriteJSONBody(v interface{}, w http.ResponseWriter, httpStatus int) error {
+
+	// Set headers
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(httpStatus)
+
+	// Marshal provided model
+	payload, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	// Write payload to body
+	if _, err := w.Write(payload); err != nil {
+		return err
+	}
 	return nil
 }
