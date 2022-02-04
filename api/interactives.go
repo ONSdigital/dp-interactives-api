@@ -60,11 +60,10 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 
 	// 3. Write to DB
 	id := NewID()
-	lala := models.ArchiveUploaded
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
 		SHA:      retVal.Sha,
 		FileName: fileWithPath,
-		State:    &lala,
+		State:    models.ArchiveUploaded.String(),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -100,7 +99,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	var data []byte
 	var vErr error
 
-	file, fileHeader, vErr := req.FormFile("file")
+	file, fileHeader, vErr := req.FormFile("attachment")
 	if vErr != nil {
 		return nil, fmt.Errorf("error reading form data (%s)", vErr.Error())
 	}

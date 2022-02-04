@@ -9,7 +9,7 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/schema"
 	"github.com/ONSdigital/dp-interactives-api/upload"
-	kafka "github.com/ONSdigital/dp-kafka/v2"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 )
@@ -29,22 +29,33 @@ type API struct {
 // Setup creates the API struct and its endpoints with corresponding handlers
 func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, s3 upload.S3Interface) *API {
 
-	api := &API{
-		Router:  r,
-		mongoDB: mongoDB,
-		auth:    auth,
-		s3:      s3,
-	}
-
 	/*r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadInteractivesHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Read: true}, api.GetInteractiveInfoHandler)).Methods(http.MethodGet)
 	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Update: true}, api.UpdateInteractiveInfoHandler)).Methods(http.MethodPost)
 	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Read: true}, api.ListInteractivessHandler)).Methods(http.MethodGet)*/
-	api.producer = event.NewAvroProducer(kafkaProducer.Channels().Output, schema.InteractiveUploadedEvent)
-	r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
-	r.HandleFunc("/interactives/{id}", api.GetInteractiveInfoHandler).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", api.UpdateInteractiveInfoHandler).Methods(http.MethodPost)
-	r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
+	var kProducer *event.AvroProducer
+	if kafkaProducer != nil {
+		kProducer = event.NewAvroProducer(kafkaProducer.Channels().Output, schema.InteractiveUploadedEvent)
+	} else {
+		log.Error(ctx, "api setup error - no kafka producer", nil)
+	}
+
+	api := &API{
+		Router:   r,
+		mongoDB:  mongoDB,
+		auth:     auth,
+		s3:       s3,
+		producer: kProducer,
+	}
+
+	if r != nil {
+		r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
+		r.HandleFunc("/interactives/{id}", api.GetInteractiveInfoHandler).Methods(http.MethodGet)
+		r.HandleFunc("/interactives/{id}", api.UpdateInteractiveInfoHandler).Methods(http.MethodPost)
+		r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
+	} else {
+		log.Error(ctx, "api setup error - no router", nil)
+	}
 
 	return api
 }
