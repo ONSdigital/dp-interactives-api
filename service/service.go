@@ -164,20 +164,21 @@ func registerCheckers(ctx context.Context,
 
 	hasErrors := false
 
-	if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for mongo db", err)
-	}
-
-	if err = hc.AddCheck("Kafka Producer", producer.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
-	}
-
-	if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for s3", err)
-	}
+	//todo renable these when infra tickets worked on
+	//if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for mongo db", err)
+	//}
+	//
+	//if err = hc.AddCheck("Kafka Producer", producer.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
+	//}
+	//
+	//if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for s3", err)
+	//}
 
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
