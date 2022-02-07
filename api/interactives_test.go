@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	kMock "github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
 
@@ -126,6 +128,63 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			}
 
 			api.UploadInteractivesHandler(resp, tc.req)
+
+			require.Equal(t, tc.responseCode, resp.Result().StatusCode)
+		})
+	}
+}
+
+func TestGetInteractiveMetadataHandler(t *testing.T) {
+	t.Parallel()
+	interactiveID := "11-22-33-44"
+	tests := []struct {
+		title        string
+		responseCode int
+		mongoServer  api.MongoServer
+	}{
+		{
+			title:        "WhenMissingInDatabase_ThenStatusNotFound",
+			responseCode: http.StatusNotFound,
+			mongoServer: &mongoMock.MongoServerMock{
+				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) { return nil, nil },
+			},
+		},
+		{
+			title:        "WhenInteractiveIsDeleted_ThenStatusNotFound",
+			responseCode: http.StatusNotFound,
+			mongoServer: &mongoMock.MongoServerMock{
+				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
+					return &models.Interactive{State: models.IsDeleted.String()}, nil
+				},
+			},
+		},
+		{
+			title:        "WhenAnyOtherDBError_ThenInternalError",
+			responseCode: http.StatusInternalServerError,
+			mongoServer: &mongoMock.MongoServerMock{
+				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
+					return &models.Interactive{}, errors.New("db-error")
+				},
+			},
+		},
+		{
+			title:        "WhenAllGood_ThenStatusOK",
+			responseCode: http.StatusOK,
+			mongoServer: &mongoMock.MongoServerMock{
+				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
+					return &models.Interactive{}, nil
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.title, func(t *testing.T) {
+			ctx := context.Background()
+			api := api.Setup(ctx, nil, mux.NewRouter(), nil, tc.mongoServer, nil, nil)
+			resp := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/interactives/%s", interactiveID), nil)
+			api.Router.ServeHTTP(resp, req)
 
 			require.Equal(t, tc.responseCode, resp.Result().StatusCode)
 		})

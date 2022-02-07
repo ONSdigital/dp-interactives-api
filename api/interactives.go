@@ -97,7 +97,7 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 
 	// fetch info from DB
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if err == mongo.ErrNoRecordFound || (vis != nil && vis.State == models.IsDeleted.String()) {
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && vis.State == models.IsDeleted.String()) {
 		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
 		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
 		return
@@ -172,7 +172,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	hasher.Write(data)
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	vis, _ := api.mongoDB.GetInteractiveFromSHA(req.Context(), sha)
-	if vis != nil {
+	if vis != nil && vis.State != models.IsDeleted.String() {
 		return nil, fmt.Errorf("archive already exists (%s)", vis.FileName)
 	}
 
