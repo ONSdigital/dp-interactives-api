@@ -9,20 +9,20 @@ require (
 	github.com/ONSdigital/dp-kafka/v2 v2.4.4
 	github.com/ONSdigital/dp-mongodb/v3 v3.0.0-beta.4
 	github.com/ONSdigital/dp-net v1.2.0
+	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e
 	github.com/ONSdigital/log.go/v2 v2.0.9
+	github.com/aws/aws-sdk-go v1.42.29
 	github.com/gorilla/mux v1.8.0
-	github.com/justinas/alice v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.7.2
+	go.mongodb.org/mongo-driver v1.8.0
 )
 
 require (
-	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e // indirect
-	github.com/aws/aws-sdk-go v1.42.29 // indirect
 	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	go.mongodb.org/mongo-driver v1.8.0 // indirect
+	github.com/justinas/alice v1.2.0 // indirect
 )
 
 require (
