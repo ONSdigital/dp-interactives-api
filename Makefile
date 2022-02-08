@@ -30,3 +30,6 @@ test:
 convey:
 	goconvey ./...
 
+.PHONY: test-component
+test-component:
+	echo "TODO"
