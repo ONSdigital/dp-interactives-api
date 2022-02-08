@@ -17,10 +17,12 @@ import (
 const (
 	connectTimeoutInSeconds = 5
 	queryTimeoutInSeconds   = 15
+	interactivesCol         = "interactives"
 )
 
-// interactives collection name
-const interactivesCol = "interactives"
+var (
+	ErrNoRecordFound = errors.New("no record exists")
+)
 
 type Mongo struct {
 	Collection   string
@@ -81,7 +83,23 @@ func (m *Mongo) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.
 	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
-			return nil, err
+			return nil, ErrNoRecordFound
+		}
+		return nil, err
+	}
+
+	return &vis, nil
+}
+
+// GetInteractive retrieves an interactive by its id
+func (m *Mongo) GetInteractive(ctx context.Context, sha string) (*models.Interactive, error) {
+	log.Info(ctx, "getting interactive by id", log.Data{"_id": sha})
+
+	var vis models.Interactive
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"_id": sha}, &vis)
+	if err != nil {
+		if dpMongoDriver.IsErrNoDocumentFound(err) {
+			return nil, ErrNoRecordFound
 		}
 		return nil, err
 	}

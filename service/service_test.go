@@ -16,8 +16,8 @@ import (
 	serviceMock "github.com/ONSdigital/dp-interactives-api/service/mock"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	uploadMock "github.com/ONSdigital/dp-interactives-api/upload/mock"
-	kafka "github.com/ONSdigital/dp-kafka/v2"
-	"github.com/ONSdigital/dp-kafka/v2/kafkatest"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
+	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	"github.com/pkg/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )

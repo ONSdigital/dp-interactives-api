@@ -36,6 +36,9 @@ func (producer *AvroProducer) marshalAndSendEvent(event interface{}) error {
 	if err != nil {
 		return err
 	}
-	producer.out <- bytes
+	// highly unlikely but worth checking
+	if producer.out != nil {
+		producer.out <- bytes
+	}
 	return nil
 }
