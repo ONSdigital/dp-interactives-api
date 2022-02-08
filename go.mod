@@ -11,16 +11,16 @@ require (
 	github.com/ONSdigital/dp-net v1.2.0
 	github.com/ONSdigital/log.go/v2 v2.0.9
 	github.com/gorilla/mux v1.8.0
-	github.com/justinas/alice v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.7.2
 )
 
 require (
-	github.com/ONSdigital/go-ns v0.0.0-20210410105122-6d6a140e952e // indirect
-	github.com/aws/aws-sdk-go v1.40.13 // indirect
+	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e // indirect
+	github.com/aws/aws-sdk-go v1.42.29 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/justinas/alice v1.2.0 // indirect
 	go.mongodb.org/mongo-driver v1.8.0 // indirect
 )
 
@@ -56,7 +56,7 @@ require (
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
+	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect

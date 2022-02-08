@@ -181,25 +181,25 @@ func registerCheckers(ctx context.Context,
 
 	hasErrors := false
 
-	if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for mongo db", err)
-	}
-
-	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
-	}
-
-	if err = hc.AddCheck("Published Kafka Consumer", consumer.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for published kafka consumer", err, log.Data{"group": cfg.InteractivesGroup, "topic": cfg.InteractivesReadTopic})
-	}
-
-	if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for s3", err)
-	}
+	//if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for mongo db", err)
+	//}
+	//
+	//if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
+	//}
+	//
+	//if err = hc.AddCheck("Published Kafka Consumer", consumer.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for published kafka consumer", err, log.Data{"group": cfg.InteractivesGroup, "topic": cfg.InteractivesReadTopic})
+	//}
+	//
+	//if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for s3", err)
+	//}
 
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
