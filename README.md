@@ -11,6 +11,7 @@ Manages all interactives state and metadata (in persistent store). Talks to dp-i
 * No further dependencies other than those defined in `go.mod`
 
 ### Configuration
+
 | Environment variable   | Default                      | Description                                           |
 |------------------------|------------------------------|-------------------------------------------------------|
 | BIND_ADDR              | 27500                        | The host and port to bind to                          |
@@ -35,7 +36,7 @@ Manages all interactives state and metadata (in persistent store). Talks to dp-i
 | INTERACTIVES_GROUP     | dp-interactives-api          | The consumer group this application uses              |
 | ZEBEDEE_URL            | http://localhost:8082        | The URL of zebedee                                    |
 
-### License
+## License
 
 Copyright © 2022, Office for National Statistics (https://www.ons.gov.uk)
 
