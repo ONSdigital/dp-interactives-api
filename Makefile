@@ -32,4 +32,4 @@ convey:
 
 .PHONY: test-component
 test-component:
-	echo "TODO"
+	go test -cover -coverpkg=github.com/ONSdigital/dp-interactives-api/... -component

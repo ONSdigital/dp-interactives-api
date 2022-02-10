@@ -70,7 +70,7 @@ func (*API) Close(ctx context.Context) error {
 func WriteJSONBody(v interface{}, w http.ResponseWriter, httpStatus int) error {
 
 	// Set headers
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatus)
 
 	// Marshal provided model

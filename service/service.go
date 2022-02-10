@@ -29,11 +29,6 @@ type Service struct {
 
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
-	var zc *health.Client
-	var auth api.AuthHandler
-
-	zc = serviceList.GetHealthClient("Zebedee", cfg.ZebedeeURL)
-	auth = getAuthorisationHandlers(zc)
 
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
@@ -58,7 +53,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, s3Client)
+	a := api.Setup(ctx, cfg, r, nil, mongoDB, producer, s3Client)
 
 	//heathcheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
