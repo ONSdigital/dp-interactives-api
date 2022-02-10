@@ -92,11 +92,11 @@ func (m *Mongo) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.
 }
 
 // GetInteractive retrieves an interactive by its id
-func (m *Mongo) GetInteractive(ctx context.Context, sha string) (*models.Interactive, error) {
-	log.Info(ctx, "getting interactive by id", log.Data{"_id": sha})
+func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interactive, error) {
+	log.Info(ctx, "getting interactive by id", log.Data{"_id": id})
 
 	var vis models.Interactive
-	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"_id": sha}, &vis)
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"_id": id}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
 			return nil, ErrNoRecordFound
