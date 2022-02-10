@@ -17,19 +17,17 @@ type API struct {
 	mongoDB  MongoServer
 	auth     AuthHandler
 	producer kafka.IProducer
-	consumer kafka.IConsumerGroup
 	s3       upload.S3Interface
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
-func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, kafkaConsumer kafka.IConsumerGroup, s3 upload.S3Interface) *API {
+func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, s3 upload.S3Interface) *API {
 
 	api := &API{
 		Router:   r,
 		mongoDB:  mongoDB,
 		auth:     auth,
 		producer: kafkaProducer,
-		consumer: kafkaConsumer,
 		s3:       s3,
 	}
 

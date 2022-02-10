@@ -21,8 +21,6 @@ type Config struct {
 	KafkaSecClientKey          string        `envconfig:"KAFKA_SEC_CLIENT_KEY"             json:"-"`
 	KafkaSecSkipVerify         bool          `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
 	InteractivesWriteTopic     string        `envconfig:"INTERACTIVES_WRITE_TOPIC"`
-	InteractivesReadTopic      string        `envconfig:"INTERACTIVES_READ_TOPIC"`
-	InteractivesGroup          string        `envconfig:"INTERACTIVES_GROUP"`
 	KafkaConsumerWorkers       int           `envconfig:"KAFKA_CONSUMER_WORKERS"`
 	GracefulShutdownTimeout    time.Duration `envconfig:"GRACEFUL_SHUTDOWN_TIMEOUT"`
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
@@ -58,17 +56,15 @@ func Get() (*Config, error) {
 		Brokers:                    []string{"localhost:9092", "localhost:9093", "localhost:9094"},
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,
-		InteractivesWriteTopic:     "interactives-visualisations-api",
-		InteractivesReadTopic:      "interactives-visualisations-importer",
+		InteractivesWriteTopic:     "interactives-import",
 		KafkaConsumerWorkers:       1,
-		InteractivesGroup:          "dp-interactives-api",
 		GracefulShutdownTimeout:    5 * time.Second,
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		ZebedeeURL:                 "http://localhost:8082",
 		MongoConfig: MongoConfig{
 			BindAddr:   "localhost:27017",
-			Collection: "visualisations",
+			Collection: "metadata",
 			Database:   "interactives",
 			Username:   "",
 			Password:   "",
