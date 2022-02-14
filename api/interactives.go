@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"mime/multipart"
@@ -22,6 +23,12 @@ import (
 
 const (
 	maxUploadFileSizeMb = 50
+)
+
+var (
+	ErrEmptyBody   error = errors.New("empty request body")
+	ErrInvalidBody error = errors.New("body has invalid format")
+	ErrNoMetadata  error = errors.New("no metadata specified")
 )
 
 type validatedReq struct {
@@ -113,12 +120,85 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 	WriteJSONBody(metadata, w, http.StatusOK)
 }
 
-func (api *API) UpdateInteractiveInfoHandler(w http.ResponseWriter, req *http.Request) {
-	// called from the importer to update vis info/state
+func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
+
+	// 1. Check body has some metadata and json decodes
+	ctx := req.Context()
+	if req.Body == nil {
+		http.Error(w, "Empty body recieved", http.StatusBadRequest)
+		log.Error(ctx, "Empty body recieved", ErrEmptyBody)
+		return
+	}
+	updateResp := models.InteractiveUpdated{}
+	b, _ := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+	if err := json.Unmarshal(b, &updateResp); err != nil {
+		http.Error(w, "Error reading body", http.StatusBadRequest)
+		log.Error(ctx, "Error reading body", ErrInvalidBody)
+		return
+	}
+	if len(updateResp.Metadata) == 0 {
+		http.Error(w, "Nothing to update", http.StatusBadRequest)
+		log.Error(ctx, "Nothng to update", ErrNoMetadata)
+		return
+	}
+
+	// 2. Check that id exists and is not deleted
+	vars := mux.Vars(req)
+	id := vars["id"]
+	vis, err := api.mongoDB.GetInteractive(ctx, id)
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && vis.State == models.IsDeleted.String()) {
+		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
+		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
+		return
+	}
+
+	// 3. Update m-data and state
+	visMap := map[string]string{}
+	json.Unmarshal([]byte(vis.MetadataJson), &visMap)
+	mergedMap := mergeKeys(updateResp.Metadata, visMap)
+
+	// 4. write to DB
+	mDataJson, _ := json.Marshal(mergedMap)
+	state := models.ImportFailure
+	if updateResp.ImportStatus {
+		state = models.ImportSuccess
+	}
+	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
+		MetadataJson: string(mDataJson),
+		State:        state.String(),
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, "Unable to write to DB", err)
+		return
+	}
+
+	WriteJSONBody(mergedMap, w, http.StatusOK)
+
 }
 
 func (api *API) ListInteractivessHandler(w http.ResponseWriter, req *http.Request) {
 	// fetches all/filtered visulatisations
+}
+
+// Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left
+func mergeKeys(left, right map[string]string) map[string]string {
+	for key, rightVal := range right {
+		if leftVal, present := left[key]; present {
+			//then we don't want to replace it - recurse
+			left[key] = leftVal
+		} else {
+			// key not in left so we can just shove it in
+			left[key] = rightVal
+		}
+	}
+	return left
 }
 
 func validateReq(req *http.Request, api *API) (*validatedReq, error) {
