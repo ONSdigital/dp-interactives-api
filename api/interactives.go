@@ -129,12 +129,19 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		log.Error(ctx, "Empty body recieved", ErrEmptyBody)
 		return
 	}
-	updateResp := models.InteractiveUpdated{}
-	b, _ := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
-	if err := json.Unmarshal(b, &updateResp); err != nil {
+	updateResp := models.InteractiveUpdated{}
+	var bodyBytes, mDataJson []byte
+	var err error
+	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
 		http.Error(w, "Error reading body", http.StatusBadRequest)
 		log.Error(ctx, "Error reading body", ErrInvalidBody)
+		return
+	}
+
+	if err := json.Unmarshal(bodyBytes, &updateResp); err != nil {
+		http.Error(w, "Error reading body (unmarshal)", http.StatusBadRequest)
+		log.Error(ctx, "Error reading body (unmarshal)", ErrInvalidBody)
 		return
 	}
 	if len(updateResp.Metadata) == 0 {
@@ -164,7 +171,11 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	mergedMap := mergeKeys(updateResp.Metadata, visMap)
 
 	// 4. write to DB
-	mDataJson, _ := json.Marshal(mergedMap)
+	if mDataJson, err = json.Marshal(mergedMap); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, err.Error(), err)
+		return
+	}
 	state := models.ImportFailure
 	if updateResp.ImportStatus {
 		state = models.ImportSuccess
