@@ -39,11 +39,11 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
-	mongoDB, err := serviceList.GetMongoDB(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise mongo DB", err)
-		return nil, err
-	}
+	//mongoDB, err := serviceList.GetMongoDB(ctx, cfg)
+	//if err != nil {
+	//	log.Fatal(ctx, "failed to initialise mongo DB", err)
+	//	return nil, err
+	//}
 
 	// Get Kafka producer
 	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
@@ -53,13 +53,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Get S3Uploaded client
-	s3Client, err := serviceList.GetS3Client(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise S3 client for uploaded bucket", err)
-		return nil, err
-	}
+	//s3Client, err := serviceList.GetS3Client(ctx, cfg)
+	//if err != nil {
+	//	log.Fatal(ctx, "failed to initialise S3 client for uploaded bucket", err)
+	//	return nil, err
+	//}
 
-	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, s3Client)
+	a := api.Setup(ctx, cfg, r, auth, nil, producer, nil)
 
 	//heathcheck - start
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -67,7 +67,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client); err != nil {
+	if err := registerCheckers(ctx, cfg, hc, nil, producer, nil); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -89,7 +89,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		api:                       a,
 		serviceList:               serviceList,
 		healthCheck:               nil,
-		mongoDB:                   mongoDB,
+		mongoDB:                   nil,
 		interactivesKafkaProducer: producer,
 	}, nil
 }
@@ -166,10 +166,10 @@ func registerCheckers(ctx context.Context,
 
 	hasErrors := false
 
-	if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for mongo db", err)
-	}
+	//if err = hc.AddCheck("Mongo DB", mongoDB.Checker); err != nil {
+	//	hasErrors = true
+	//	log.Error(ctx, "error adding check for mongo db", err)
+	//}
 
 	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
 		hasErrors = true
