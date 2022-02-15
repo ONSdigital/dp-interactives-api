@@ -6,10 +6,15 @@ const (
 	ArchiveUploaded InteractiveState = iota
 	ArchiveDispatchFailed
 	ArchiveDispatchedToImporter
-	ImportFailed
+	ImportFailure
 	ImportSuccess
 	IsDeleted
 )
+
+type InteractiveUpdated struct {
+	ImportStatus bool              `json:"importstatus,omitempty"`
+	Metadata     map[string]string `json:"metadata,omitempty"`
+}
 
 type Interactive struct {
 	ID           string `bson:"_id,omitempty"       json:"_id,omitempty"`
@@ -27,8 +32,8 @@ func (s InteractiveState) String() string {
 		return "ArchiveDispatchFailed"
 	case ArchiveDispatchedToImporter:
 		return "ArchiveDispatchedToImporter"
-	case ImportFailed:
-		return "ImportFailed"
+	case ImportFailure:
+		return "ImportFailure"
 	case ImportSuccess:
 		return "ImportSuccess"
 	case IsDeleted:

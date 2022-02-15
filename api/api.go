@@ -52,7 +52,7 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 	if r != nil {
 		r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
 		r.HandleFunc("/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
-		r.HandleFunc("/interactives/{id}", api.UpdateInteractiveInfoHandler).Methods(http.MethodPost)
+		r.HandleFunc("/interactives/{id}", api.UpdateInteractiveHandler).Methods(http.MethodPut)
 		r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
 	} else {
 		log.Error(ctx, "api setup error - no router", nil)
