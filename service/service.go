@@ -46,11 +46,11 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	// Get Kafka producer
-	//producer, err := serviceList.GetKafkaProducer(ctx, cfg)
-	//if err != nil {
-	//	log.Fatal(ctx, "failed to initialise kafka producer", err)
-	//	return nil, err
-	//}
+	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
 
 	// Get S3Uploaded client
 	s3Client, err := serviceList.GetS3Client(ctx, cfg)
@@ -59,7 +59,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	a := api.Setup(ctx, cfg, r, auth, mongoDB, nil, s3Client)
+	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, s3Client)
 
 	//heathcheck - start
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -67,7 +67,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, nil, s3Client); err != nil {
+	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -90,7 +90,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		serviceList:               serviceList,
 		healthCheck:               nil,
 		mongoDB:                   mongoDB,
-		interactivesKafkaProducer: nil,
+		interactivesKafkaProducer: producer,
 	}, nil
 }
 
@@ -171,10 +171,10 @@ func registerCheckers(ctx context.Context,
 		log.Error(ctx, "error adding check for mongo db", err)
 	}
 
-	//if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
-	//	hasErrors = true
-	//	log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
-	//}
+	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
+	}
 
 	if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
 		hasErrors = true
