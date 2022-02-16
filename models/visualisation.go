@@ -11,6 +11,11 @@ const (
 	IsDeleted
 )
 
+type InteractiveInfo struct {
+	ID       string            `json:"id,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
 type InteractiveUpdated struct {
 	ImportStatus bool              `json:"importstatus,omitempty"`
 	Metadata     map[string]string `json:"metadata,omitempty"`

@@ -194,8 +194,30 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 }
 
-func (api *API) ListInteractivessHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
 	// fetches all/filtered visulatisations
+	ctx := req.Context()
+	datasets, totalCount, err := api.mongoDB.ListInteractives(ctx, offset, limit)
+	if err != nil {
+		log.Error(ctx, "api endpoint getDatasets datastore.GetDatasets returned an error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return nil, 0, err
+	}
+	return datasets, totalCount, nil
+}
+
+// Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left
+func mergeKeys(left, right map[string]string) map[string]string {
+	for key, rightVal := range right {
+		if leftVal, present := left[key]; present {
+			//then we don't want to replace it - recurse
+			left[key] = leftVal
+		} else {
+			// key not in left so we can just shove it in
+			left[key] = rightVal
+		}
+	}
+	return left
 }
 
 // Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left

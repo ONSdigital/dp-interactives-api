@@ -8,6 +8,7 @@ import (
 
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/event"
+	"github.com/ONSdigital/dp-interactives-api/pagination"
 	"github.com/ONSdigital/dp-interactives-api/schema"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
@@ -49,11 +50,13 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 		producer: kProducer,
 	}
 
+	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+
 	if r != nil {
 		r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
+		r.HandleFunc("/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
 		r.HandleFunc("/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
 		r.HandleFunc("/interactives/{id}", api.UpdateInteractiveHandler).Methods(http.MethodPut)
-		r.HandleFunc("/interactives", api.ListInteractivessHandler).Methods(http.MethodGet)
 	} else {
 		log.Error(ctx, "api setup error - no router", nil)
 	}
