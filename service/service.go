@@ -171,14 +171,16 @@ func registerCheckers(ctx context.Context,
 		log.Error(ctx, "error adding check for mongo db", err)
 	}
 
-	if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
-	}
+	if cfg.PublishingEnabled {
+		if err = hc.AddCheck("Uploaded Kafka Producer", producer.Checker); err != nil {
+			hasErrors = true
+			log.Error(ctx, "error adding check for uploaded kafka producer", err, log.Data{"topic": cfg.InteractivesWriteTopic})
+		}
 
-	if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for s3", err)
+		if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
+			hasErrors = true
+			log.Error(ctx, "error adding check for s3", err)
+		}
 	}
 
 	if hasErrors {

@@ -9,6 +9,7 @@ import (
 // Config represents service configuration for dp-interactives-api
 type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
+	PublishingEnabled          bool          `envconfig:"PUBLISHING_ENABLED"`
 	ApiURL                     string        `envconfig:"INTERACTIVES_API_URL"`
 	AwsRegion                  string        `envconfig:"AWS_REGION"`
 	UploadBucketName           string        `envconfig:"UPLOAD_BUCKET_NAME"`
@@ -50,6 +51,7 @@ func Get() (*Config, error) {
 
 	cfg := &Config{
 		BindAddr:                   "localhost:27500",
+		PublishingEnabled:          true,
 		ApiURL:                     "http://localhost:27500",
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
