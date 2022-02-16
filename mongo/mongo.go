@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -105,6 +106,50 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 	}
 
 	return &vis, nil
+}
+
+func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) (interface{}, int, error) {
+
+	selector := bson.M{}
+	selector["state"] = bson.M{"$ne": models.IsDeleted.String()}
+	f := m.Connection.GetConfiguredCollection().Find(selector).Sort(bson.M{"_id": -1})
+
+	// get total count and paginated values according to provided offset and limit
+	values := []*models.Interactive{}
+	totalCount, err := QueryPage(ctx, f, offset, limit, &values)
+	if err != nil {
+		return values, 0, err
+	}
+
+	return mapResults(values), totalCount, nil
+}
+
+func mapResults(results []*models.Interactive) []*models.InteractiveInfo {
+	items := []*models.InteractiveInfo{}
+	for _, item := range results {
+		itemInfo := models.InteractiveInfo{ID: item.ID}
+		json.Unmarshal([]byte(item.MetadataJson), &itemInfo.Metadata)
+		items = append(items, &itemInfo)
+	}
+	return items
+}
+
+func QueryPage(ctx context.Context, f *dpMongoDriver.Find, offset, limit int, result interface{}) (totalCount int, err error) {
+
+	// get total count of items for the provided query
+	totalCount, err = f.Count(ctx)
+	if err != nil {
+		log.Error(ctx, "error counting items", err)
+		return 0, err
+	}
+
+	// query the items corresponding to the provided offset and limit (only if necessary)
+	// guaranteeing at least one document will be found
+	if totalCount > 0 && limit > 0 && offset < totalCount {
+		return totalCount, f.Skip(offset).Limit(limit).IterAll(ctx, result)
+	}
+
+	return totalCount, nil
 }
 
 // UpsertInteractive adds or overides an existing interactive

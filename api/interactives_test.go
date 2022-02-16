@@ -14,6 +14,7 @@ import (
 
 	"github.com/ONSdigital/dp-interactives-api/api"
 	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
+	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	s3Mock "github.com/ONSdigital/dp-interactives-api/upload/mock"
@@ -121,7 +122,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, nil, nil, nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
+			api := api.Setup(ctx, &config.Config{}, nil, nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
 			resp := httptest.NewRecorder()
 			if tc.formFile != "" {
 				tc.req, _ = newfileUploadRequest("/interactives", map[string]string{"metadata1": "value1"}, "attachment", tc.formFile)
@@ -181,7 +182,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, nil, mux.NewRouter(), nil, tc.mongoServer, nil, nil)
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), nil, tc.mongoServer, nil, nil)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)

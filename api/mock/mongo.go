@@ -33,6 +33,9 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) {
 // 				panic("mock out the GetInteractiveFromSHA method")
 // 			},
+// 			ListInteractivesFunc: func(ctx context.Context, offset int, limit int) (interface{}, int, error) {
+// 				panic("mock out the ListInteractives method")
+// 			},
 // 			UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 // 				panic("mock out the UpsertInteractive method")
 // 			},
@@ -54,6 +57,9 @@ type MongoServerMock struct {
 
 	// GetInteractiveFromSHAFunc mocks the GetInteractiveFromSHA method.
 	GetInteractiveFromSHAFunc func(ctx context.Context, sha string) (*models.Interactive, error)
+
+	// ListInteractivesFunc mocks the ListInteractives method.
+	ListInteractivesFunc func(ctx context.Context, offset int, limit int) (interface{}, int, error)
 
 	// UpsertInteractiveFunc mocks the UpsertInteractive method.
 	UpsertInteractiveFunc func(ctx context.Context, id string, vis *models.Interactive) error
@@ -86,6 +92,15 @@ type MongoServerMock struct {
 			// Sha is the sha argument value.
 			Sha string
 		}
+		// ListInteractives holds details about calls to the ListInteractives method.
+		ListInteractives []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Offset is the offset argument value.
+			Offset int
+			// Limit is the limit argument value.
+			Limit int
+		}
 		// UpsertInteractive holds details about calls to the UpsertInteractive method.
 		UpsertInteractive []struct {
 			// Ctx is the ctx argument value.
@@ -100,6 +115,7 @@ type MongoServerMock struct {
 	lockClose                 sync.RWMutex
 	lockGetInteractive        sync.RWMutex
 	lockGetInteractiveFromSHA sync.RWMutex
+	lockListInteractives      sync.RWMutex
 	lockUpsertInteractive     sync.RWMutex
 }
 
@@ -236,6 +252,45 @@ func (mock *MongoServerMock) GetInteractiveFromSHACalls() []struct {
 	mock.lockGetInteractiveFromSHA.RLock()
 	calls = mock.calls.GetInteractiveFromSHA
 	mock.lockGetInteractiveFromSHA.RUnlock()
+	return calls
+}
+
+// ListInteractives calls ListInteractivesFunc.
+func (mock *MongoServerMock) ListInteractives(ctx context.Context, offset int, limit int) (interface{}, int, error) {
+	if mock.ListInteractivesFunc == nil {
+		panic("MongoServerMock.ListInteractivesFunc: method is nil but MongoServer.ListInteractives was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		Offset int
+		Limit  int
+	}{
+		Ctx:    ctx,
+		Offset: offset,
+		Limit:  limit,
+	}
+	mock.lockListInteractives.Lock()
+	mock.calls.ListInteractives = append(mock.calls.ListInteractives, callInfo)
+	mock.lockListInteractives.Unlock()
+	return mock.ListInteractivesFunc(ctx, offset, limit)
+}
+
+// ListInteractivesCalls gets all the calls that were made to ListInteractives.
+// Check the length with:
+//     len(mockedMongoServer.ListInteractivesCalls())
+func (mock *MongoServerMock) ListInteractivesCalls() []struct {
+	Ctx    context.Context
+	Offset int
+	Limit  int
+} {
+	var calls []struct {
+		Ctx    context.Context
+		Offset int
+		Limit  int
+	}
+	mock.lockListInteractives.RLock()
+	calls = mock.calls.ListInteractives
+	mock.lockListInteractives.RUnlock()
 	return calls
 }
 
