@@ -220,20 +220,6 @@ func mergeKeys(left, right map[string]string) map[string]string {
 	return left
 }
 
-// Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left
-func mergeKeys(left, right map[string]string) map[string]string {
-	for key, rightVal := range right {
-		if leftVal, present := left[key]; present {
-			//then we don't want to replace it - recurse
-			left[key] = leftVal
-		} else {
-			// key not in left so we can just shove it in
-			left[key] = rightVal
-		}
-	}
-	return left
-}
-
 func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	var data []byte
 	var vErr error
