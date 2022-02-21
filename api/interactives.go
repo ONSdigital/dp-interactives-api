@@ -93,7 +93,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	w.WriteHeader(http.StatusAccepted)
+	WriteJSONBody(id, w, http.StatusAccepted)
 }
 
 func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.Request) {

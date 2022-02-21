@@ -1,0 +1,172 @@
+swagger: "2.0"
+info:
+  description: "The interactives API"
+  version: "1.0.0"
+  title: "Interactives API"
+tags:
+- name: "interactives"
+  description: "CRUD for interactives"
+schemes:
+- "http"
+paths:
+  /interactives:
+    post:
+      tags:
+      - "interactives"
+      summary: "Upload a new interactive"
+      description: ""
+      operationId: "UploadInteractivesHandler"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "file"
+        in: "formData"
+        description: "interactive to upload"
+        required: true
+        type: "file"
+      - name: "metadata1"
+        in: "formData"
+        description: "metadata field 1"
+        required: true
+        type: "string"
+      - name: "metadata2"
+        in: "formData"
+        description: "metadata field 2"
+        required: false
+        type: "string"
+      - name: "metadata3"
+        in: "formData"
+        description: "metadata field 3"
+        required: false
+        type: "string"
+      responses:
+        "400":
+          description: "Bad request"
+        "500":
+          description: "Internal server error"
+        "202":
+          description: "Accepted (returns the database id)"
+          schema:
+            type: "string"
+    get:
+      tags:
+      - "interactives"
+      summary: "List all interactives (exclude deleted)"
+      description: "Returns a list of interactives"
+      operationId: "ListInteractivesHandler"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "limit"
+        in: "query"
+        description: "Pagination limit, max results (clipped at 100 results)"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "offset"
+        in: "query"
+        description: "Page offset"
+        required: false
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Interactive"
+        "500":
+          description: "Internal error"
+  /interactives/{id}:
+    put:
+      tags:
+      - "interactives"
+      summary: "Update an existing interactive (by id)"
+      description: ""
+      operationId: "UpdateInteractiveHandler"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "ID of interactive to return"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Interactive that needs updation"
+        required: true
+        schema:
+          $ref: "#/definitions/InteractiveUpdated"
+      responses:
+        "400":
+          description: "Bad request"
+        "404":
+          description: "Interactive not found"
+        "500":
+          description: "Internal error"
+        "200":
+          description: "Success"
+          schema:
+            type: object
+            properties:
+              metadata:
+                type: string
+                description: Metadata
+    get:
+      tags:
+      - "interactives"
+      summary: "Find an interactive by ID"
+      description: "Returns a single interactive"
+      operationId: "GetInteractiveMetadataHandler"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "ID of interactive to return"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Success"
+          schema:
+            type: object
+            properties:
+              metadata:
+                type: string
+                description: Metadata
+        "500":
+          description: "Internal error"
+        "404":
+          description: "Interactive not found"
+definitions:
+  InteractiveUpdated:
+    type: "object"
+    properties:
+      importstatus:
+        type: "boolean"
+      metadata:
+        type: "object"
+        additionalProperties:
+          type: "string"
+    xml:
+      name: "InteractiveUpdated"
+  Interactive:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      metadata:
+        type: "object"
+        additionalProperties:
+          type: "string"
+    xml:
+      name: "Interactive"
