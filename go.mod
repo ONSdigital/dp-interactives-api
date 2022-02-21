@@ -2,6 +2,8 @@ module github.com/ONSdigital/dp-interactives-api
 
 go 1.17
 
+replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
+
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0
 	github.com/ONSdigital/dp-authorisation v0.2.0
@@ -11,6 +13,7 @@ require (
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e
 	github.com/ONSdigital/log.go/v2 v2.0.9
 	github.com/aws/aws-sdk-go v1.42.29
+	github.com/cucumber/godog v0.12.4
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
@@ -21,21 +24,19 @@ require (
 require (
 	github.com/ONSdigital/dp-mongodb-in-memory v1.2.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
-	github.com/cucumber/godog v0.12.4 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
 	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
 	github.com/hashicorp/go-memdb v1.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/justinas/alice v1.2.0 // indirect
 	github.com/maxcnunes/httpfake v1.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.8.0 // indirect
-	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
