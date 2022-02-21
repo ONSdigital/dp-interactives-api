@@ -9,7 +9,7 @@ Feature: Interactives API (Update interactive)
             """
         Then the HTTP status code should be "400"
 
-    Scenario: Update failed if visualisation not in DB
+    Scenario: Update failed if interactive not in DB
         When I PUT "/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
@@ -19,7 +19,7 @@ Feature: Interactives API (Update interactive)
             """
         Then the HTTP status code should be "404"
 
-    Scenario: Update failed if visualisation is deleted
+    Scenario: Update failed if interactive is deleted
         Given I have these interactives:
                 """
                 [
