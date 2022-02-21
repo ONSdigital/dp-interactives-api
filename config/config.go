@@ -27,6 +27,9 @@ type Config struct {
 	HealthCheckInterval        time.Duration `envconfig:"HEALTHCHECK_INTERVAL"`
 	HealthCheckCriticalTimeout time.Duration `envconfig:"HEALTHCHECK_CRITICAL_TIMEOUT"`
 	ZebedeeURL                 string        `envconfig:"ZEBEDEE_URL"`
+	DefaultMaxLimit            int           `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
+	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
+	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
 	MongoConfig                MongoConfig
 }
 
@@ -64,6 +67,9 @@ func Get() (*Config, error) {
 		HealthCheckInterval:        30 * time.Second,
 		HealthCheckCriticalTimeout: 90 * time.Second,
 		ZebedeeURL:                 "http://localhost:8082",
+		DefaultMaxLimit:            100,
+		DefaultLimit:               20,
+		DefaultOffset:              0,
 		MongoConfig: MongoConfig{
 			BindAddr:   "localhost:27017",
 			Collection: "metadata",

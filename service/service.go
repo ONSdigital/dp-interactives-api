@@ -9,7 +9,7 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/upload"
-	kafka "github.com/ONSdigital/dp-kafka/v2"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -29,12 +29,6 @@ type Service struct {
 
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
 	log.Info(ctx, "running service")
-	var zc *health.Client
-	var auth api.AuthHandler
-
-	// Get Health client for Zebedee and permissions
-	zc = serviceList.GetHealthClient("Zebedee", cfg.ZebedeeURL)
-	auth = getAuthorisationHandlers(zc)
 
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
@@ -45,13 +39,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	// Get Kafka producer
-	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise kafka producer", err)
-		return nil, err
-	}
-
 	// Get S3Uploaded client
 	s3Client, err := serviceList.GetS3Client(ctx, cfg)
 	if err != nil {
@@ -59,9 +46,16 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	a := api.Setup(ctx, cfg, r, auth, mongoDB, producer, s3Client)
+	// Get Kafka producer
+	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
+	if err != nil {
+		log.Fatal(ctx, "failed to initialise kafka producer", err)
+		return nil, err
+	}
 
-	//heathcheck - start
+	a := api.Setup(ctx, cfg, r, nil, mongoDB, producer, s3Client)
+
+	//heathcheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
 	if err != nil {
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
@@ -73,7 +67,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	r.StrictSlash(true).Path("/health").Methods(http.MethodGet).HandlerFunc(hc.Handler)
 	hc.Start(ctx)
-	//healthcheck - end
 
 	// Run the http server in a new go-routine
 	go func() {
@@ -88,7 +81,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		router:                    r,
 		api:                       a,
 		serviceList:               serviceList,
-		healthCheck:               nil,
+		healthCheck:               hc,
 		mongoDB:                   mongoDB,
 		interactivesKafkaProducer: producer,
 	}, nil
@@ -112,6 +105,12 @@ func (svc *Service) Close(ctx context.Context) error {
 			svc.healthCheck.Stop()
 		}
 
+		// stop any incoming requests before closing any outbound connections
+		if err := svc.server.Shutdown(ctx); err != nil {
+			log.Error(ctx, "failed to shutdown http server", err)
+			hasShutdownError = true
+		}
+
 		// close API
 		if err := svc.api.Close(ctx); err != nil {
 			log.Error(ctx, "error closing API", err)
@@ -131,12 +130,6 @@ func (svc *Service) Close(ctx context.Context) error {
 				log.Error(ctx, "error closing Kafka producer", err)
 				hasShutdownError = true
 			}
-		}
-
-		// stop any incoming requests before closing any outbound connections
-		if err := svc.server.Shutdown(ctx); err != nil {
-			log.Error(ctx, "failed to shutdown http server", err)
-			hasShutdownError = true
 		}
 
 		if !hasShutdownError {

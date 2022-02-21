@@ -2,38 +2,60 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 
-	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/event"
+	"github.com/ONSdigital/dp-interactives-api/pagination"
+	"github.com/ONSdigital/dp-interactives-api/schema"
 	"github.com/ONSdigital/dp-interactives-api/upload"
-	kafka "github.com/ONSdigital/dp-kafka/v2"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+)
+
+var (
+	ErrNoBody = errors.New("no body in http request")
 )
 
 type API struct {
 	Router   *mux.Router
 	mongoDB  MongoServer
 	auth     AuthHandler
-	producer kafka.IProducer
+	producer *event.AvroProducer
 	s3       upload.S3Interface
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
 func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHandler, mongoDB MongoServer, kafkaProducer kafka.IProducer, s3 upload.S3Interface) *API {
 
+	var kProducer *event.AvroProducer
+	if kafkaProducer != nil {
+		kProducer = event.NewAvroProducer(kafkaProducer.Channels().Output, schema.InteractiveUploadedEvent)
+	} else {
+		log.Error(ctx, "api setup error - no kafka producer", nil)
+	}
+
 	api := &API{
 		Router:   r,
 		mongoDB:  mongoDB,
 		auth:     auth,
-		producer: kafkaProducer,
 		s3:       s3,
+		producer: kProducer,
 	}
 
-	r.HandleFunc("/interactives", auth.Require(dpauth.Permissions{Create: true}, api.UploadVisualisationHandler)).Methods(http.MethodPut)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Create: true}, api.GetVisualisationInfoHandler)).Methods(http.MethodGet)
-	r.HandleFunc("/interactives/{id}", auth.Require(dpauth.Permissions{Delete: true}, api.DeleteVisualisationHandler)).Methods(http.MethodDelete)
+	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+
+	if r != nil {
+		r.HandleFunc("/interactives", api.UploadInteractivesHandler).Methods(http.MethodPost)
+		r.HandleFunc("/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
+		r.HandleFunc("/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
+		r.HandleFunc("/interactives/{id}", api.UpdateInteractiveHandler).Methods(http.MethodPut)
+	} else {
+		log.Error(ctx, "api setup error - no router", nil)
+	}
 
 	return api
 }
@@ -41,5 +63,24 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
 func (*API) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
+	return nil
+}
+
+func WriteJSONBody(v interface{}, w http.ResponseWriter, httpStatus int) error {
+
+	// Set headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpStatus)
+
+	// Marshal provided model
+	payload, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	// Write payload to body
+	if _, err := w.Write(payload); err != nil {
+		return err
+	}
 	return nil
 }

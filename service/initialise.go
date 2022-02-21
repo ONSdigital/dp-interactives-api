@@ -10,9 +10,9 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/dp-interactives-api/upload"
-	kafka "github.com/ONSdigital/dp-kafka/v2"
+	kafka "github.com/ONSdigital/dp-kafka/v3"
 	dphttp "github.com/ONSdigital/dp-net/http"
-	dps3 "github.com/ONSdigital/dp-s3"
+	dps3 "github.com/ONSdigital/dp-s3/v2"
 )
 
 type ExternalServiceList struct {
@@ -114,6 +114,9 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 	pConfig := &kafka.ProducerConfig{
 		KafkaVersion:    &cfg.KafkaVersion,
 		MaxMessageBytes: &cfg.KafkaMaxBytes,
+		BrokerAddrs: cfg.Brokers,
+		Topic: cfg.InteractivesWriteTopic,
+		
 	}
 	if cfg.KafkaSecProtocol == "TLS" {
 		pConfig.SecurityConfig = kafka.GetSecurityConfig(
@@ -123,8 +126,7 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 			cfg.KafkaSecSkipVerify,
 		)
 	}
-	producerChannels := kafka.CreateProducerChannels()
-	return kafka.NewProducer(ctx, cfg.Brokers, cfg.InteractivesWriteTopic, producerChannels, pConfig)
+	return kafka.NewProducer(ctx, pConfig)
 }
 
 // DoGetS3Uploaded returns a S3Client
