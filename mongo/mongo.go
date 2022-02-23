@@ -111,7 +111,7 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) (interface{}, int, error) {
 
 	selector := bson.M{}
-	selector["state"] = bson.M{"$ne": models.IsDeleted.String()}
+	selector["active"] = bson.M{"$eq": true}
 	f := m.Connection.GetConfiguredCollection().Find(selector).Sort(bson.M{"_id": -1})
 
 	// get total count and paginated values according to provided offset and limit

@@ -8,7 +8,6 @@ const (
 	ArchiveDispatchedToImporter
 	ImportFailure
 	ImportSuccess
-	IsDeleted
 )
 
 type InteractiveInfo struct {
@@ -26,6 +25,7 @@ type Interactive struct {
 	SHA          string `bson:"sha,omitempty"       json:"sha,omitempty"`
 	FileName     string `bson:"file_name,omitempty" json:"file_name,omitempty"`
 	State        string `bson:"state,omitempty"     json:"state,omitempty"`
+	Active       bool   `bson:"active,omitempty"    json:"active,omitempty"`
 	MetadataJson string `bson:"metadata,omitempty"  json:"metadata,omitempty"`
 }
 
@@ -41,8 +41,6 @@ func (s InteractiveState) String() string {
 		return "ImportFailure"
 	case ImportSuccess:
 		return "ImportSuccess"
-	case IsDeleted:
-		return "IsDeleted"
 	}
 
 	return "InteractiveStateUnknown"

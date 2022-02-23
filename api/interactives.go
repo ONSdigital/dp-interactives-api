@@ -77,6 +77,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		SHA:          retVal.Sha,
 		FileName:     fileWithPath,
 		MetadataJson: string(mDataJson),
+		Active:       true,
 		State:        models.ArchiveUploaded.String(),
 	})
 	if err != nil {
@@ -104,7 +105,7 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 
 	// fetch info from DB
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && vis.State == models.IsDeleted.String()) {
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !vis.Active) {
 		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
 		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
 		return
@@ -154,7 +155,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	vars := mux.Vars(req)
 	id := vars["id"]
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && vis.State == models.IsDeleted.String()) {
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !vis.Active) {
 		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
 		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
 		return
@@ -271,7 +272,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	hasher.Write(data)
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	vis, _ := api.mongoDB.GetInteractiveFromSHA(req.Context(), sha)
-	if vis != nil && vis.State != models.IsDeleted.String() {
+	if vis != nil && !vis.Active {
 		return nil, fmt.Errorf("archive already exists (%s)", vis.FileName)
 	}
 

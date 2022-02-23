@@ -6,6 +6,7 @@ Feature: Interactives API (Get interactive)
             [
                 {
                     "_id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
+                    "active": true,
                     "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
                     "last_updated": {
                         "$date": "2022-02-08T19:04:52.891Z"
@@ -32,6 +33,7 @@ Feature: Interactives API (Get interactive)
             [
                 {
                     "_id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
+                    "active": true,
                     "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
                     "last_updated": {
                         "$date": "2022-02-08T19:04:52.891Z"
