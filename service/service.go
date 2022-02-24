@@ -39,18 +39,22 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	// Get S3Uploaded client
-	s3Client, err := serviceList.GetS3Client(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise S3 client for uploaded bucket", err)
-		return nil, err
-	}
+	var s3Client upload.S3Interface
+	var producer kafka.IProducer
+	if cfg.PublishingEnabled {
+		// Get S3Uploaded client
+		s3Client, err = serviceList.GetS3Client(ctx, cfg)
+		if err != nil {
+			log.Fatal(ctx, "failed to initialise S3 client for uploaded bucket", err)
+			return nil, err
+		}
 
-	// Get Kafka producer
-	producer, err := serviceList.GetKafkaProducer(ctx, cfg)
-	if err != nil {
-		log.Fatal(ctx, "failed to initialise kafka producer", err)
-		return nil, err
+		// Get Kafka producer
+		producer, err = serviceList.GetKafkaProducer(ctx, cfg)
+		if err != nil {
+			log.Fatal(ctx, "failed to initialise kafka producer", err)
+			return nil, err
+		}
 	}
 
 	a := api.Setup(ctx, cfg, r, nil, mongoDB, producer, s3Client)
