@@ -14,6 +14,7 @@ type Config struct {
 	AwsRegion                  string        `envconfig:"AWS_REGION"`
 	UploadBucketName           string        `envconfig:"UPLOAD_BUCKET_NAME"`
 	Brokers                    []string      `envconfig:"KAFKA_ADDR"`
+	MinBrokers                 int           `envconfig:"KAFKA_MIN_BROKERS"`
 	KafkaMaxBytes              int           `envconfig:"KAFKA_MAX_BYTES"`
 	KafkaVersion               string        `envconfig:"KAFKA_VERSION"`
 	KafkaSecProtocol           string        `envconfig:"KAFKA_SEC_PROTO"`
@@ -52,13 +53,13 @@ func Get() (*Config, error) {
 		return cfg, nil
 	}
 
-	cfg := &Config{
+	cfg = &Config{
 		BindAddr:                   "localhost:27500",
 		PublishingEnabled:          true,
 		ApiURL:                     "http://localhost:27500",
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
-		Brokers:                    []string{"localhost:9092", "localhost:9093", "localhost:9094"},
+		Brokers:                    []string{"localhost:9092"},
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,
 		InteractivesWriteTopic:     "interactives-import",

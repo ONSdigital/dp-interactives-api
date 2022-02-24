@@ -114,9 +114,11 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 	pConfig := &kafka.ProducerConfig{
 		KafkaVersion:    &cfg.KafkaVersion,
 		MaxMessageBytes: &cfg.KafkaMaxBytes,
-		BrokerAddrs: cfg.Brokers,
-		Topic: cfg.InteractivesWriteTopic,
-		
+		BrokerAddrs:     cfg.Brokers,
+		Topic:           cfg.InteractivesWriteTopic,
+	}
+	if cfg.MinBrokers > 0 {
+		pConfig.MinBrokersHealthy = &cfg.MinBrokers
 	}
 	if cfg.KafkaSecProtocol == "TLS" {
 		pConfig.SecurityConfig = kafka.GetSecurityConfig(

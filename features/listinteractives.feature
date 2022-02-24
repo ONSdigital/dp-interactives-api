@@ -26,7 +26,7 @@ Feature: Interactives API (List interactives)
                 }
             ]
             """
-        When I GET "/interactives?limit=10&offset=0"
+        When I GET "/v1/interactives?limit=10&offset=0"
         Then I should receive the following JSON response with status "200":
             """
                 {
@@ -53,7 +53,7 @@ Feature: Interactives API (List interactives)
             """
             []
             """
-        When I GET "/interactives?limit=10&offset=0"
+        When I GET "/v1/interactives?limit=10&offset=0"
         Then I should receive the following JSON response with status "200":
             """
                 {

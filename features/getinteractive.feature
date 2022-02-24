@@ -16,7 +16,7 @@ Feature: Interactives API (Get interactive)
                 }
             ]
             """
-        When I GET "/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When I GET "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
         Then I should receive the following JSON response with status "200":
             """
                 {
@@ -42,5 +42,5 @@ Feature: Interactives API (Get interactive)
                 }
             ]
             """
-        When I GET "/interactives/12345678-abb2-4432-ad22-9c23cf7ee222"
+        When I GET "/v1/interactives/12345678-abb2-4432-ad22-9c23cf7ee222"
         Then the HTTP status code should be "404"

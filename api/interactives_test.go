@@ -39,7 +39,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 	}{
 		{
 			title:        "WhenMissingAttachment_ThenStatusBadRequest",
-			req:          httptest.NewRequest(http.MethodPost, "/interactives", nil),
+			req:          httptest.NewRequest(http.MethodPost, "/v1/interactives", nil),
 			responseCode: http.StatusBadRequest,
 		},
 		{
@@ -125,7 +125,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			api := api.Setup(ctx, &config.Config{}, nil, nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
 			resp := httptest.NewRecorder()
 			if tc.formFile != "" {
-				tc.req, _ = newfileUploadRequest("/interactives", map[string]string{"metadata1": "value1"}, "attachment", tc.formFile)
+				tc.req, _ = newfileUploadRequest("/v1/interactives", map[string]string{"metadata1": "value1"}, "attachment", tc.formFile)
 			}
 
 			api.UploadInteractivesHandler(resp, tc.req)
@@ -184,7 +184,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			ctx := context.Background()
 			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), nil, tc.mongoServer, nil, nil)
 			resp := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/interactives/%s", interactiveID), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)
 
 			require.Equal(t, tc.responseCode, resp.Result().StatusCode)

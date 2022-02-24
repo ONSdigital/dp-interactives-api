@@ -1,7 +1,7 @@
 Feature: Interactives API (Get interactive)
 
     Scenario: POST an invalid interactive
-        When I POST "/interactives"
+        When I POST "/v1/interactives"
         """
             {
             }

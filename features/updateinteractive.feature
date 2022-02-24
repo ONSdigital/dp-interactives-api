@@ -1,7 +1,7 @@
 Feature: Interactives API (Update interactive)
 
     Scenario: Update failed if no message body
-        When I PUT "/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "baddata": true
@@ -10,7 +10,7 @@ Feature: Interactives API (Update interactive)
         Then the HTTP status code should be "400"
 
     Scenario: Update failed if interactive not in DB
-        When I PUT "/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "importstatus": true,
@@ -35,7 +35,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When I PUT "/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "importstatus": true,
@@ -60,7 +60,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When I PUT "/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "importstatus": true,

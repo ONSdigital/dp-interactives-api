@@ -3,6 +3,7 @@ module github.com/ONSdigital/dp-interactives-api
 go 1.17
 
 replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
+
 replace github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go v3.2.1-0.20210802184156-9742bd7fca1c+incompatible
 
 require (
