@@ -11,6 +11,7 @@ type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
 	PublishingEnabled          bool          `envconfig:"PUBLISHING_ENABLED"`
 	ApiURL                     string        `envconfig:"INTERACTIVES_API_URL"`
+	AwsEndpoint                string        `envconfig:"AWS_ENDPOINT"`
 	AwsRegion                  string        `envconfig:"AWS_REGION"`
 	UploadBucketName           string        `envconfig:"UPLOAD_BUCKET_NAME"`
 	Brokers                    []string      `envconfig:"KAFKA_ADDR"`

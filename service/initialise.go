@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/health"
@@ -133,6 +136,22 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 
 // DoGetS3Uploaded returns a S3Client
 func (e *Init) DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+	if cfg.AwsEndpoint != "" {
+		//for local development only - set env var to initialise
+		s, err := session.NewSession(&aws.Config{
+			Endpoint:         aws.String(cfg.AwsEndpoint),
+			Region:           aws.String(cfg.AwsRegion),
+			S3ForcePathStyle: aws.Bool(true),
+			Credentials:      credentials.NewStaticCredentials("n/a", "n/a", ""),
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		return dps3.NewClientWithSession(cfg.UploadBucketName, s), nil
+	}
+
 	s3Client, err := dps3.NewClient(cfg.AwsRegion, cfg.UploadBucketName)
 	if err != nil {
 		return nil, err

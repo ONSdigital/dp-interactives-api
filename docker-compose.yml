@@ -27,3 +27,17 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
       - zookeeper
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - '4566-4583:4566-4583'
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+      - AWS_DEFAULT_REGION=eu-west-1
+      - EDGE_PORT=4566
+    volumes:
+      - ./aws:/docker-entrypoint-initaws.d
+      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
