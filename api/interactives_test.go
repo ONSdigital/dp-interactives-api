@@ -155,7 +155,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusNotFound,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{State: models.IsDeleted.String()}, nil
+					return &models.Interactive{Active: false}, nil
 				},
 			},
 		},
@@ -164,7 +164,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{}, errors.New("db-error")
+					return &models.Interactive{Active: true}, errors.New("db-error")
 				},
 			},
 		},
@@ -173,7 +173,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{}, nil
+					return &models.Interactive{Active: true}, nil
 				},
 			},
 		},
