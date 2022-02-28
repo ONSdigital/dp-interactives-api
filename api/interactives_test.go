@@ -52,7 +52,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusBadRequest,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
+				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return errors.New("s3 error") },
@@ -71,7 +71,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
@@ -85,7 +85,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return errors.New("db upsert error")
 				},
@@ -102,7 +102,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusAccepted,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return nil
 				},
@@ -137,6 +137,8 @@ func TestUploadInteractivesHandler(t *testing.T) {
 
 func TestGetInteractiveMetadataHandler(t *testing.T) {
 	t.Parallel()
+	activeFlag := true
+	inactiveFlag := false
 	interactiveID := "11-22-33-44"
 	tests := []struct {
 		title        string
@@ -155,7 +157,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusNotFound,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: false}, nil
+					return &models.Interactive{Active: &inactiveFlag}, nil
 				},
 			},
 		},
@@ -164,7 +166,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: true}, errors.New("db-error")
+					return &models.Interactive{Active: &activeFlag}, errors.New("db-error")
 				},
 			},
 		},
@@ -173,7 +175,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: true}, nil
+					return &models.Interactive{Active: &activeFlag}, nil
 				},
 			},
 		},

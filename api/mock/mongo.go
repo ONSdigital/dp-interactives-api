@@ -27,11 +27,11 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			CloseFunc: func(ctx context.Context) error {
 // 				panic("mock out the Close method")
 // 			},
+// 			GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) {
+// 				panic("mock out the GetActiveInteractiveFromSHA method")
+// 			},
 // 			GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 // 				panic("mock out the GetInteractive method")
-// 			},
-// 			GetInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) {
-// 				panic("mock out the GetInteractiveFromSHA method")
 // 			},
 // 			ListInteractivesFunc: func(ctx context.Context, offset int, limit int) (interface{}, int, error) {
 // 				panic("mock out the ListInteractives method")
@@ -52,11 +52,11 @@ type MongoServerMock struct {
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
 
+	// GetActiveInteractiveFromSHAFunc mocks the GetActiveInteractiveFromSHA method.
+	GetActiveInteractiveFromSHAFunc func(ctx context.Context, sha string) (*models.Interactive, error)
+
 	// GetInteractiveFunc mocks the GetInteractive method.
 	GetInteractiveFunc func(ctx context.Context, id string) (*models.Interactive, error)
-
-	// GetInteractiveFromSHAFunc mocks the GetInteractiveFromSHA method.
-	GetInteractiveFromSHAFunc func(ctx context.Context, sha string) (*models.Interactive, error)
 
 	// ListInteractivesFunc mocks the ListInteractives method.
 	ListInteractivesFunc func(ctx context.Context, offset int, limit int) (interface{}, int, error)
@@ -78,19 +78,19 @@ type MongoServerMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
+		// GetActiveInteractiveFromSHA holds details about calls to the GetActiveInteractiveFromSHA method.
+		GetActiveInteractiveFromSHA []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Sha is the sha argument value.
+			Sha string
+		}
 		// GetInteractive holds details about calls to the GetInteractive method.
 		GetInteractive []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ID is the id argument value.
 			ID string
-		}
-		// GetInteractiveFromSHA holds details about calls to the GetInteractiveFromSHA method.
-		GetInteractiveFromSHA []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Sha is the sha argument value.
-			Sha string
 		}
 		// ListInteractives holds details about calls to the ListInteractives method.
 		ListInteractives []struct {
@@ -111,12 +111,12 @@ type MongoServerMock struct {
 			Vis *models.Interactive
 		}
 	}
-	lockChecker               sync.RWMutex
-	lockClose                 sync.RWMutex
-	lockGetInteractive        sync.RWMutex
-	lockGetInteractiveFromSHA sync.RWMutex
-	lockListInteractives      sync.RWMutex
-	lockUpsertInteractive     sync.RWMutex
+	lockChecker                     sync.RWMutex
+	lockClose                       sync.RWMutex
+	lockGetActiveInteractiveFromSHA sync.RWMutex
+	lockGetInteractive              sync.RWMutex
+	lockListInteractives            sync.RWMutex
+	lockUpsertInteractive           sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -185,6 +185,41 @@ func (mock *MongoServerMock) CloseCalls() []struct {
 	return calls
 }
 
+// GetActiveInteractiveFromSHA calls GetActiveInteractiveFromSHAFunc.
+func (mock *MongoServerMock) GetActiveInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
+	if mock.GetActiveInteractiveFromSHAFunc == nil {
+		panic("MongoServerMock.GetActiveInteractiveFromSHAFunc: method is nil but MongoServer.GetActiveInteractiveFromSHA was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Sha string
+	}{
+		Ctx: ctx,
+		Sha: sha,
+	}
+	mock.lockGetActiveInteractiveFromSHA.Lock()
+	mock.calls.GetActiveInteractiveFromSHA = append(mock.calls.GetActiveInteractiveFromSHA, callInfo)
+	mock.lockGetActiveInteractiveFromSHA.Unlock()
+	return mock.GetActiveInteractiveFromSHAFunc(ctx, sha)
+}
+
+// GetActiveInteractiveFromSHACalls gets all the calls that were made to GetActiveInteractiveFromSHA.
+// Check the length with:
+//     len(mockedMongoServer.GetActiveInteractiveFromSHACalls())
+func (mock *MongoServerMock) GetActiveInteractiveFromSHACalls() []struct {
+	Ctx context.Context
+	Sha string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Sha string
+	}
+	mock.lockGetActiveInteractiveFromSHA.RLock()
+	calls = mock.calls.GetActiveInteractiveFromSHA
+	mock.lockGetActiveInteractiveFromSHA.RUnlock()
+	return calls
+}
+
 // GetInteractive calls GetInteractiveFunc.
 func (mock *MongoServerMock) GetInteractive(ctx context.Context, id string) (*models.Interactive, error) {
 	if mock.GetInteractiveFunc == nil {
@@ -217,41 +252,6 @@ func (mock *MongoServerMock) GetInteractiveCalls() []struct {
 	mock.lockGetInteractive.RLock()
 	calls = mock.calls.GetInteractive
 	mock.lockGetInteractive.RUnlock()
-	return calls
-}
-
-// GetInteractiveFromSHA calls GetInteractiveFromSHAFunc.
-func (mock *MongoServerMock) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
-	if mock.GetInteractiveFromSHAFunc == nil {
-		panic("MongoServerMock.GetInteractiveFromSHAFunc: method is nil but MongoServer.GetInteractiveFromSHA was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Sha string
-	}{
-		Ctx: ctx,
-		Sha: sha,
-	}
-	mock.lockGetInteractiveFromSHA.Lock()
-	mock.calls.GetInteractiveFromSHA = append(mock.calls.GetInteractiveFromSHA, callInfo)
-	mock.lockGetInteractiveFromSHA.Unlock()
-	return mock.GetInteractiveFromSHAFunc(ctx, sha)
-}
-
-// GetInteractiveFromSHACalls gets all the calls that were made to GetInteractiveFromSHA.
-// Check the length with:
-//     len(mockedMongoServer.GetInteractiveFromSHACalls())
-func (mock *MongoServerMock) GetInteractiveFromSHACalls() []struct {
-	Ctx context.Context
-	Sha string
-} {
-	var calls []struct {
-		Ctx context.Context
-		Sha string
-	}
-	mock.lockGetInteractiveFromSHA.RLock()
-	calls = mock.calls.GetInteractiveFromSHA
-	mock.lockGetInteractiveFromSHA.RUnlock()
 	return calls
 }
 

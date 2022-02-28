@@ -53,6 +53,7 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 		r.HandleFunc("/v1/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
 		r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
 		r.HandleFunc("/v1/interactives/{id}", api.UpdateInteractiveHandler).Methods(http.MethodPut)
+		r.HandleFunc("/v1/interactives/{id}", api.DeleteInteractivesHandler).Methods(http.MethodDelete)
 	} else {
 		log.Error(ctx, "api setup error - no router", nil)
 	}

@@ -76,12 +76,12 @@ func (m *Mongo) Init(ctx context.Context, shouldEnableReadConcern, shouldEnableW
 	return nil
 }
 
-// GetInteractiveFromSHA retrieves a interactive by its SHA
-func (m *Mongo) GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
+// GetActiveInteractiveFromSHA retrieves an active interactive by its SHA
+func (m *Mongo) GetActiveInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
 	log.Info(ctx, "getting interactive by SHA", log.Data{"sha": sha})
 
 	var vis models.Interactive
-	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha}, &vis)
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha, "active": true}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
 			return nil, ErrNoRecordFound

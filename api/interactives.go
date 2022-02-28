@@ -73,11 +73,12 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	// 3. Write to DB
 	id := NewID()
 	mDataJson, _ := json.Marshal(retVal.Metadata)
+	activeFlag := true
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
 		SHA:          retVal.Sha,
 		FileName:     fileWithPath,
 		MetadataJson: string(mDataJson),
-		Active:       true,
+		Active:       &activeFlag,
 		State:        models.ArchiveUploaded.String(),
 	})
 	if err != nil {
@@ -105,7 +106,7 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 
 	// fetch info from DB
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !vis.Active) {
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !*vis.Active) {
 		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
 		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
 		return
@@ -155,7 +156,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	vars := mux.Vars(req)
 	id := vars["id"]
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !vis.Active) {
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !*vis.Active) {
 		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
 		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
 		return
@@ -205,6 +206,39 @@ func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request
 		return nil, 0, err
 	}
 	return datasets, totalCount, nil
+}
+
+func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Request) {
+	// get id
+	ctx := req.Context()
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	// error if it doesnt exist
+	vis, err := api.mongoDB.GetInteractive(ctx, id)
+	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound {
+		http.Error(w, fmt.Sprintf("interactive-id (%s) does not exist", id), http.StatusNotFound)
+		log.Error(ctx, fmt.Sprintf("interactive-id (%s) does not exist", id), err)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
+		return
+	}
+
+	// set to inactive
+	activeFlag := false
+	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
+		Active:   &activeFlag,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, "Unable to unset active flag", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left
@@ -271,9 +305,9 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	hasher := sha1.New()
 	hasher.Write(data)
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	vis, _ := api.mongoDB.GetInteractiveFromSHA(req.Context(), sha)
-	if vis != nil && !vis.Active {
-		return nil, fmt.Errorf("archive already exists (%s)", vis.FileName)
+	vis, _ := api.mongoDB.GetActiveInteractiveFromSHA(req.Context(), sha)
+	if vis != nil {
+		return nil, fmt.Errorf("archive already exists id (%s) with interactive (%s)", vis.ID, vis.FileName)
 	}
 
 	return &validatedReq{

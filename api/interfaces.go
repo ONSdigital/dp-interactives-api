@@ -16,7 +16,7 @@ type MongoServer interface {
 	Close(ctx context.Context) error
 	Checker(ctx context.Context, state *healthcheck.CheckState) (err error)
 	UpsertInteractive(ctx context.Context, id string, vis *models.Interactive) (err error)
-	GetInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error)
+	GetActiveInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error)
 	GetInteractive(ctx context.Context, id string) (*models.Interactive, error)
 	ListInteractives(ctx context.Context, offset, limit int) (interface{}, int, error)
 }

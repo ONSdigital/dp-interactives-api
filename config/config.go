@@ -61,6 +61,7 @@ func Get() (*Config, error) {
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
 		Brokers:                    []string{"localhost:9092"},
+		MinBrokers:                 1,
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,
 		InteractivesWriteTopic:     "interactives-import",

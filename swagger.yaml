@@ -147,6 +147,30 @@ paths:
           description: "Internal error"
         "404":
           description: "Interactive not found"
+    delete:
+      tags:
+      - "interactives"
+      summary: "Sets the interactive as inactive"
+      description: "Does not physically delete, only unsets the active flag."
+      operationId: "DeleteInteractivesHandler"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "ID of interactive to inactivate"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "404":
+          description: "Interactive not found"
+        "500":
+          description: "Internal error"
+        "200":
+          description: "Success"
 definitions:
   InteractiveUpdated:
     type: "object"
