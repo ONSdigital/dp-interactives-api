@@ -18,7 +18,7 @@ type MongoServer interface {
 	UpsertInteractive(ctx context.Context, id string, vis *models.Interactive) (err error)
 	GetActiveInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error)
 	GetInteractive(ctx context.Context, id string) (*models.Interactive, error)
-	ListInteractives(ctx context.Context, offset, limit int) (interface{}, int, error)
+	ListInteractives(ctx context.Context, offset, limit int) ([]*models.Interactive, int, error)
 }
 
 // AuthHandler interface for adding auth to endpoints

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
@@ -26,9 +27,9 @@ const (
 )
 
 var (
-	ErrEmptyBody   error = errors.New("empty request body")
-	ErrInvalidBody error = errors.New("body has invalid format")
-	ErrNoMetadata  error = errors.New("no metadata specified")
+	ErrEmptyBody   = errors.New("empty request body")
+	ErrInvalidBody = errors.New("body has invalid format")
+	ErrNoMetadata  = errors.New("no metadata specified")
 )
 
 type validatedReq struct {
@@ -76,10 +77,10 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	activeFlag := true
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
 		SHA:          retVal.Sha,
-		FileName:     fileWithPath,
 		MetadataJson: string(mDataJson),
 		Active:       &activeFlag,
 		State:        models.ArchiveUploaded.String(),
+		Archive:      models.Archive{Name: fileWithPath},
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -132,7 +133,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 	defer req.Body.Close()
-	updateResp := models.InteractiveUpdated{}
+	update := interactives.InteractiveUpdate{}
 	var bodyBytes, mDataJson []byte
 	var err error
 	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
@@ -141,12 +142,12 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	if err := json.Unmarshal(bodyBytes, &updateResp); err != nil {
+	if err := json.Unmarshal(bodyBytes, &update); err != nil {
 		http.Error(w, "Error reading body (unmarshal)", http.StatusBadRequest)
 		log.Error(ctx, "Error reading body (unmarshal)", ErrInvalidBody)
 		return
 	}
-	if len(updateResp.Metadata) == 0 {
+	if update.ImportSuccessful == nil {
 		http.Error(w, "Nothing to update", http.StatusBadRequest)
 		log.Error(ctx, "Nothng to update", ErrNoMetadata)
 		return
@@ -155,8 +156,8 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	// 2. Check that id exists and is not deleted
 	vars := mux.Vars(req)
 	id := vars["id"]
-	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !*vis.Active) {
+	existing, err := api.mongoDB.GetInteractive(ctx, id)
+	if (existing == nil && err == nil) || err == mongo.ErrNoRecordFound || (existing != nil && !*existing.Active) {
 		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
 		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
 		return
@@ -167,24 +168,40 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	// 3. Update m-data and state
-	visMap := map[string]string{}
-	json.Unmarshal([]byte(vis.MetadataJson), &visMap)
-	mergedMap := mergeKeys(updateResp.Metadata, visMap)
+	// 3. Update model
+	existingMap := map[string]string{}
+	json.Unmarshal([]byte(existing.MetadataJson), &existingMap)
+	mergedMap := mergeKeys(update.Interactive.Metadata, existingMap)
 
-	// 4. write to DB
 	if mDataJson, err = json.Marshal(mergedMap); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, err.Error(), err)
 		return
 	}
 	state := models.ImportFailure
-	if updateResp.ImportStatus {
+	if *update.ImportSuccessful {
 		state = models.ImportSuccess
 	}
+	var archive models.Archive
+	if update.Interactive.Archive != nil {
+		archive = models.Archive{
+			Name: update.Interactive.Archive.Name,
+			Size: update.Interactive.Archive.Size,
+		}
+		for _, f := range update.Interactive.Archive.Files {
+			archive.Files = append(archive.Files, &models.File{
+				Name:     f.Name,
+				Mimetype: f.Mimetype,
+				Size:     f.Size,
+			})
+		}
+	}
+
+	// 4. write to DB
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
 		MetadataJson: string(mDataJson),
 		State:        state.String(),
+		Archive:      archive,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -193,19 +210,29 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	}
 
 	WriteJSONBody(mergedMap, w, http.StatusOK)
-
 }
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
 	// fetches all/filtered visulatisations
 	ctx := req.Context()
-	datasets, totalCount, err := api.mongoDB.ListInteractives(ctx, offset, limit)
+	db, totalCount, err := api.mongoDB.ListInteractives(ctx, offset, limit)
 	if err != nil {
 		log.Error(ctx, "api endpoint getDatasets datastore.GetDatasets returned an error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil, 0, err
 	}
-	return datasets, totalCount, nil
+	response := make([]*interactives.Interactive, 0)
+	for _, interactive := range db {
+		i, err := models.ToRest(interactive)
+		if err != nil {
+			log.Error(ctx, "cannot map db to http response", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return nil, 0, err
+		}
+		response = append(response, i)
+	}
+
+	return response, totalCount, nil
 }
 
 func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Request) {
@@ -230,7 +257,7 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	// set to inactive
 	activeFlag := false
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		Active:   &activeFlag,
+		Active: &activeFlag,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -243,6 +270,9 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 
 // Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left
 func mergeKeys(left, right map[string]string) map[string]string {
+	if left == nil {
+		left = make(map[string]string)
+	}
 	for key, rightVal := range right {
 		if leftVal, present := left[key]; present {
 			//then we don't want to replace it - recurse
@@ -307,7 +337,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	vis, _ := api.mongoDB.GetActiveInteractiveFromSHA(req.Context(), sha)
 	if vis != nil {
-		return nil, fmt.Errorf("archive already exists id (%s) with interactive (%s)", vis.ID, vis.FileName)
+		return nil, fmt.Errorf("archive already exists id (%s) with interactive (%s)", vis.ID, vis.Archive.Name)
 	}
 
 	return &validatedReq{

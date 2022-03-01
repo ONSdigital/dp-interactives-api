@@ -6,8 +6,11 @@ replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 
 replace github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go v3.2.1-0.20210802184156-9742bd7fca1c+incompatible
 
+replace github.com/ONSdigital/dp-api-clients-go/v2 => /Users/markryan/workspace/methods/ons/dp-api-clients-go
+
 require (
 	github.com/ONSdigital/dp-api-clients-go v1.43.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.0.0-00010101000000-000000000000
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-healthcheck v1.2.3
 	github.com/ONSdigital/dp-mongodb/v3 v3.0.0-beta.4

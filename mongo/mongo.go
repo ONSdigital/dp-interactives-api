@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -108,33 +107,23 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 	return &vis, nil
 }
 
-func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) (interface{}, int, error) {
+func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) ([]*models.Interactive, int, error) {
 
 	selector := bson.M{}
 	selector["active"] = bson.M{"$eq": true}
 	f := m.Connection.GetConfiguredCollection().Find(selector).Sort(bson.M{"_id": -1})
 
 	// get total count and paginated values according to provided offset and limit
-	values := []*models.Interactive{}
+	var values []*models.Interactive
 	totalCount, err := QueryPage(ctx, f, offset, limit, &values)
 	if err != nil {
 		return values, 0, err
 	}
 
-	return mapResults(values), totalCount, nil
+	return values, totalCount, nil
 }
 
-func mapResults(results []*models.Interactive) []*models.InteractiveInfo {
-	items := []*models.InteractiveInfo{}
-	for _, item := range results {
-		itemInfo := models.InteractiveInfo{ID: item.ID}
-		json.Unmarshal([]byte(item.MetadataJson), &itemInfo.Metadata)
-		items = append(items, &itemInfo)
-	}
-	return items
-}
-
-func QueryPage(ctx context.Context, f *dpMongoDriver.Find, offset, limit int, result interface{}) (totalCount int, err error) {
+func QueryPage(ctx context.Context, f *dpMongoDriver.Find, offset, limit int, result *[]*models.Interactive) (totalCount int, err error) {
 
 	// get total count of items for the provided query
 	totalCount, err = f.Count(ctx)

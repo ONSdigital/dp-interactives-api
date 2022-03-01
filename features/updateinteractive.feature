@@ -13,8 +13,10 @@ Feature: Interactives API (Update interactive)
         When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "importstatus": true,
-                    "metadata": {"metadata1" : "updatedval1", "metadata5" : "val5"}
+                    "import_successful": true,
+                    "interactive": {
+                        "metadata": {"metadata1" : "updatedval1", "metadata5" : "val5"}
+                    }
                 }
             """
         Then the HTTP status code should be "404"
@@ -39,8 +41,10 @@ Feature: Interactives API (Update interactive)
         When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "importstatus": true,
-                    "metadata": {"metadata1" : "updatedval1", "metadata5" : "val5"}
+                    "import_successful": true,
+                    "interactive": {
+                        "metadata": {"metadata1" : "updatedval1", "metadata5" : "val5"}
+                    }
                 }
             """
         Then the HTTP status code should be "404"
@@ -65,8 +69,10 @@ Feature: Interactives API (Update interactive)
         When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "importstatus": true,
-                    "metadata": {"metadata1" : "updatedvalue1", "metadata5" : "value5"}
+                    "import_successful": true,
+                    "interactive": {
+                        "metadata": {"metadata1" : "updatedvalue1", "metadata5" : "value5"}
+                    }
                 }
             """
         Then I should receive the following JSON response with status "200":
