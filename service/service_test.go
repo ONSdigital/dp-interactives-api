@@ -19,6 +19,8 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	"github.com/pkg/errors"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
