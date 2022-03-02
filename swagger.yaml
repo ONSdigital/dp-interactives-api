@@ -26,19 +26,66 @@ paths:
         description: "interactive to upload"
         required: true
         type: "file"
-      - name: "metadata1"
+      - name: "title"
         in: "formData"
-        description: "metadata field 1"
+        description: "interactive title (needs to be unique per interactive)"
         required: true
         type: "string"
-      - name: "metadata2"
+      - name: "primary_topic"
         in: "formData"
-        description: "metadata field 2"
+        description: "most relevant/canonical topic"
+        required: true
+        type: "string"
+      - name: "topics"
+        in: "formData"
+        description: "interactive topics"
+        required: true
+        type: "array"
+        items:
+          type: "string"
+      - name: "surveys"
+        in: "formData"
+        description: "interactive surveys"
+        required: true
+        type: "array"
+        items:
+          type: "string"
+      - name: "release_date"
+        in: "formData"
+        description: "interactive release date"
+        required: true
+        type: "string"
+        format: "date-time"
+      - name: "uri"
+        in: "formData"
+        description: "the website URL"
+        required: true
+        type: "string"
+      - name: "edition"
+        in: "formData"
+        description: "interactive edition"
         required: false
         type: "string"
-      - name: "metadata3"
+      - name: "keywords"
         in: "formData"
-        description: "metadata field 3"
+        description: "interactive keywords"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+      - name: "meta_description"
+        in: "formData"
+        description: "interactive metadata description"
+        required: false
+        type: "string"
+      - name: "source"
+        in: "formData"
+        description: "interactive source"
+        required: false
+        type: "string"
+      - name: "summary"
+        in: "formData"
+        description: "interactive summary"
         required: false
         type: "string"
       responses:

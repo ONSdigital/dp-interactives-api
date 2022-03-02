@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -77,11 +76,27 @@ func (m *Mongo) Init(ctx context.Context, shouldEnableReadConcern, shouldEnableW
 }
 
 // GetActiveInteractiveFromSHA retrieves an active interactive by its SHA
-func (m *Mongo) GetActiveInteractiveFromSHA(ctx context.Context, sha string) (*models.Interactive, error) {
+func (m *Mongo) GetActiveInteractiveGivenSha(ctx context.Context, sha string) (*models.Interactive, error) {
 	log.Info(ctx, "getting interactive by SHA", log.Data{"sha": sha})
 
 	var vis models.Interactive
 	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"sha": sha, "active": true}, &vis)
+	if err != nil {
+		if dpMongoDriver.IsErrNoDocumentFound(err) {
+			return nil, ErrNoRecordFound
+		}
+		return nil, err
+	}
+
+	return &vis, nil
+}
+
+// GetActiveInteractiveFromTitle retrieves an active interactive by its title
+func (m *Mongo) GetActiveInteractiveGivenTitle(ctx context.Context, title string) (*models.Interactive, error) {
+	log.Info(ctx, "getting interactive by Title", log.Data{"title": title})
+
+	var vis models.Interactive
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"metadata.title": title, "active": true}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
 			return nil, ErrNoRecordFound
@@ -127,8 +142,7 @@ func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) (interf
 func mapResults(results []*models.Interactive) []*models.InteractiveInfo {
 	items := []*models.InteractiveInfo{}
 	for _, item := range results {
-		itemInfo := models.InteractiveInfo{ID: item.ID}
-		json.Unmarshal([]byte(item.MetadataJson), &itemInfo.Metadata)
+		itemInfo := models.InteractiveInfo{ID: item.ID, Metadata: *item.Metadata}
 		items = append(items, &itemInfo)
 	}
 	return items

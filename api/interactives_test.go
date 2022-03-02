@@ -52,7 +52,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusBadRequest,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
+				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
 			},
 		},
 		{
@@ -60,7 +60,8 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return errors.New("s3 error") },
@@ -71,7 +72,8 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
@@ -85,7 +87,8 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return errors.New("db upsert error")
 				},
@@ -102,7 +105,8 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusAccepted,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveFromSHAFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return nil
 				},
@@ -125,7 +129,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			api := api.Setup(ctx, &config.Config{}, nil, nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
 			resp := httptest.NewRecorder()
 			if tc.formFile != "" {
-				tc.req, _ = newfileUploadRequest("/v1/interactives", map[string]string{"metadata1": "value1"}, "attachment", tc.formFile)
+				tc.req, _ = newfileUploadRequest("/v1/interactives", map[string]string{"title": "value1", "uri": "value2"}, "attachment", tc.formFile)
 			}
 
 			api.UploadInteractivesHandler(resp, tc.req)
@@ -175,7 +179,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &activeFlag}, nil
+					return &models.Interactive{Active: &activeFlag, Metadata: &models.InteractiveMetadata{}}, nil
 				},
 			},
 		},

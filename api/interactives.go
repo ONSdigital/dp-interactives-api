@@ -11,6 +11,10 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/monoculum/formam/v3"
 
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -35,7 +39,7 @@ type validatedReq struct {
 	Reader   *bytes.Reader
 	Sha      string
 	FileName string
-	Metadata map[string]string
+	Metadata *models.InteractiveMetadata
 }
 
 var NewID = func() string {
@@ -72,14 +76,13 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 
 	// 3. Write to DB
 	id := NewID()
-	mDataJson, _ := json.Marshal(retVal.Metadata)
 	activeFlag := true
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		SHA:          retVal.Sha,
-		FileName:     fileWithPath,
-		MetadataJson: string(mDataJson),
-		Active:       &activeFlag,
-		State:        models.ArchiveUploaded.String(),
+		SHA:      retVal.Sha,
+		FileName: fileWithPath,
+		Metadata: retVal.Metadata,
+		Active:   &activeFlag,
+		State:    models.ArchiveUploaded.String(),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -117,14 +120,12 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 		return
 	}
 
-	metadata := map[string]string{}
-	json.Unmarshal([]byte(vis.MetadataJson), &metadata)
-	WriteJSONBody(metadata, w, http.StatusOK)
+	WriteJSONBody(*vis.Metadata, w, http.StatusOK)
 }
 
 func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
 
-	// 1. Check body has some metadata and json decodes
+	// 1. Check body json decodes
 	ctx := req.Context()
 	if req.Body == nil {
 		http.Error(w, "Empty body recieved", http.StatusBadRequest)
@@ -132,8 +133,8 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 	defer req.Body.Close()
-	updateResp := models.InteractiveUpdated{}
-	var bodyBytes, mDataJson []byte
+	updateResp := &models.InteractiveUpdated{}
+	var bodyBytes []byte
 	var err error
 	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
 		http.Error(w, "Error reading body", http.StatusBadRequest)
@@ -141,14 +142,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	if err := json.Unmarshal(bodyBytes, &updateResp); err != nil {
+	if err := json.Unmarshal(bodyBytes, updateResp); err != nil {
 		http.Error(w, "Error reading body (unmarshal)", http.StatusBadRequest)
 		log.Error(ctx, "Error reading body (unmarshal)", ErrInvalidBody)
-		return
-	}
-	if len(updateResp.Metadata) == 0 {
-		http.Error(w, "Nothing to update", http.StatusBadRequest)
-		log.Error(ctx, "Nothng to update", ErrNoMetadata)
 		return
 	}
 
@@ -167,24 +163,16 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	// 3. Update m-data and state
-	visMap := map[string]string{}
-	json.Unmarshal([]byte(vis.MetadataJson), &visMap)
-	mergedMap := mergeKeys(updateResp.Metadata, visMap)
-
 	// 4. write to DB
-	if mDataJson, err = json.Marshal(mergedMap); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, err.Error(), err)
-		return
-	}
 	state := models.ImportFailure
 	if updateResp.ImportStatus {
 		state = models.ImportSuccess
 	}
+	// dont update title (is the primary key)
+	updateResp.Metadata.Title = vis.Metadata.Title
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		MetadataJson: string(mDataJson),
-		State:        state.String(),
+		Metadata: &updateResp.Metadata,
+		State:    state.String(),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -192,7 +180,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	WriteJSONBody(mergedMap, w, http.StatusOK)
+	WriteJSONBody(updateResp.Metadata, w, http.StatusOK)
 
 }
 
@@ -230,7 +218,7 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	// set to inactive
 	activeFlag := false
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		Active:   &activeFlag,
+		Active: &activeFlag,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -241,26 +229,12 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	w.WriteHeader(http.StatusOK)
 }
 
-// Given two maps, recursively merge right into left, NEVER replacing any key that already exists in left
-func mergeKeys(left, right map[string]string) map[string]string {
-	for key, rightVal := range right {
-		if leftVal, present := left[key]; present {
-			//then we don't want to replace it - recurse
-			left[key] = leftVal
-		} else {
-			// key not in left so we can just shove it in
-			left[key] = rightVal
-		}
-	}
-	return left
-}
-
 func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	var data []byte
 	var vErr error
 	var fileHeader *multipart.FileHeader
 	var fileKey string
-	metadata := map[string]string{}
+	metadata := &models.InteractiveMetadata{}
 
 	// 1. Expecting 1 file attachment and some metadata
 	vErr = req.ParseMultipartForm(50 << 20)
@@ -274,9 +248,16 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 		return nil, fmt.Errorf("expecting some metadata")
 	}
 
-	for k, v := range req.MultipartForm.Value {
-		metadata[k] = v[0]
+	dec := formam.NewDecoder(&formam.DecoderOptions{TagName: "bson"})
+	// special handler for date-time
+	dec.RegisterCustomType(func(vals []string) (interface{}, error) {
+		return time.Parse("2006-01-02T15:04:05Z07:00", vals[0])
+	}, []interface{}{time.Time{}}, []interface{}{&time.Time{}})
+	vErr = dec.Decode(req.Form, metadata)
+	if vErr != nil {
+		return nil, fmt.Errorf("parsing form data (%s)", vErr.Error())
 	}
+
 	for k, v := range req.MultipartForm.File {
 		fileHeader = v[0]
 		fileKey = k
@@ -301,13 +282,25 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 		return nil, fmt.Errorf("http body read error (%s)", vErr.Error())
 	}
 
+	// title must be non empty
+	metadata.Title = strings.TrimSpace(metadata.Title)
+	if len(metadata.Title) == 0  {
+		return nil, fmt.Errorf("title must be non empty")
+	} 
+
 	// 3. Check if duplicate exists
 	hasher := sha1.New()
 	hasher.Write(data)
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	vis, _ := api.mongoDB.GetActiveInteractiveFromSHA(req.Context(), sha)
+	vis, _ := api.mongoDB.GetActiveInteractiveGivenSha(req.Context(), sha)
 	if vis != nil {
 		return nil, fmt.Errorf("archive already exists id (%s) with interactive (%s)", vis.ID, vis.FileName)
+	}
+
+	// 4. Check "title is unique"
+	vis, _ = api.mongoDB.GetActiveInteractiveGivenTitle(req.Context(), metadata.Title)
+	if vis != nil {
+		return nil, fmt.Errorf("archive with title (%s) already exists (%s)", vis.Metadata.Title, vis.ID)
 	}
 
 	return &validatedReq{

@@ -35,6 +35,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/justinas/alice v1.2.0 // indirect
 	github.com/maxcnunes/httpfake v1.2.4 // indirect
+	github.com/monoculum/formam/v3 v3.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
