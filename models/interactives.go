@@ -26,23 +26,25 @@ type InteractiveMetadata struct { // TODO : Geography
 	Summary         string    `bson:"summary,omitempty"          json:"summary,omitempty"`
 }
 
-type InteractiveInfo struct {
-	ID       string              `json:"id,omitempty"`
-	Metadata InteractiveMetadata `json:"metadata,omitempty"`
-}
-
-type InteractiveUpdated struct {
-	ImportStatus bool                `json:"importstatus,omitempty"`
-	Metadata     InteractiveMetadata `json:"metadata,omitempty"`
-}
-
 type Interactive struct {
-	ID           string               `bson:"_id,omitempty"       json:"_id,omitempty"`
-	SHA          string               `bson:"sha,omitempty"       json:"sha,omitempty"`
-	FileName     string               `bson:"file_name,omitempty" json:"file_name,omitempty"`
-	State        string               `bson:"state,omitempty"     json:"state,omitempty"`
-	Active       *bool                `bson:"active,omitempty"    json:"active,omitempty"`
-	Metadata     *InteractiveMetadata `bson:"metadata,omitempty"  json:"metadata,omitempty"`
+	ID       string               `bson:"_id,omitempty"       json:"_id,omitempty"`
+	SHA      string               `bson:"sha,omitempty"       json:"sha,omitempty"`
+	State    string               `bson:"state,omitempty"     json:"state,omitempty"`
+	Active   *bool                `bson:"active,omitempty"    json:"active,omitempty"`
+	Metadata *InteractiveMetadata `bson:"metadata,omitempty"  json:"metadata,omitempty"`
+	Archive  Archive              `bson:"archive,omitempty"   json:"archive,omitempty"`
+}
+
+type Archive struct {
+	Name  string  `bson:"name,omitempty"`
+	Size  int64   `bson:"size_in_bytes,omitempty"`
+	Files []*File `bson:"files,omitempty"`
+}
+
+type File struct {
+	Name     string `bson:"name,omitempty"`
+	Mimetype string `bson:"mimetype,omitempty"`
+	Size     int64  `bson:"size_in_bytes,omitempty"`
 }
 
 func (s InteractiveState) String() string {

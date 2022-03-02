@@ -36,7 +36,7 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 // 				panic("mock out the GetInteractive method")
 // 			},
-// 			ListInteractivesFunc: func(ctx context.Context, offset int, limit int) (interface{}, int, error) {
+// 			ListInteractivesFunc: func(ctx context.Context, offset int, limit int) ([]*models.Interactive, int, error) {
 // 				panic("mock out the ListInteractives method")
 // 			},
 // 			UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
@@ -65,7 +65,7 @@ type MongoServerMock struct {
 	GetInteractiveFunc func(ctx context.Context, id string) (*models.Interactive, error)
 
 	// ListInteractivesFunc mocks the ListInteractives method.
-	ListInteractivesFunc func(ctx context.Context, offset int, limit int) (interface{}, int, error)
+	ListInteractivesFunc func(ctx context.Context, offset int, limit int) ([]*models.Interactive, int, error)
 
 	// UpsertInteractiveFunc mocks the UpsertInteractive method.
 	UpsertInteractiveFunc func(ctx context.Context, id string, vis *models.Interactive) error
@@ -305,7 +305,7 @@ func (mock *MongoServerMock) GetInteractiveCalls() []struct {
 }
 
 // ListInteractives calls ListInteractivesFunc.
-func (mock *MongoServerMock) ListInteractives(ctx context.Context, offset int, limit int) (interface{}, int, error) {
+func (mock *MongoServerMock) ListInteractives(ctx context.Context, offset int, limit int) ([]*models.Interactive, int, error) {
 	if mock.ListInteractivesFunc == nil {
 		panic("MongoServerMock.ListInteractivesFunc: method is nil but MongoServer.ListInteractives was just called")
 	}
