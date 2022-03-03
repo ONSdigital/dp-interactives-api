@@ -12,6 +12,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
@@ -179,7 +180,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &activeFlag, Metadata: &models.InteractiveMetadata{}}, nil
+					return &models.Interactive{Active: &activeFlag, Metadata: &interactives.InteractiveMetadata{}}, nil
 				},
 			},
 		},

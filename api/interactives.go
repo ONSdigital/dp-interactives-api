@@ -40,7 +40,7 @@ type validatedReq struct {
 	Reader   *bytes.Reader
 	Sha      string
 	FileName string
-	Metadata *models.InteractiveMetadata
+	Metadata *interactives.InteractiveMetadata
 }
 
 var NewID = func() string {
@@ -148,7 +148,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		log.Error(ctx, "Error reading body (unmarshal)", ErrInvalidBody)
 		return
 	}
-	if update.ImportSuccessful == nil {
+	if update.ImportSuccessful == nil || update.Interactive.Metadata == nil {
 		http.Error(w, "Nothing to update", http.StatusBadRequest)
 		log.Error(ctx, "Nothng to update", ErrNoMetadata)
 		return
@@ -170,11 +170,11 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	}
 
 	state := models.ImportFailure
-	if update.ImportSuccessful {
+	if *(update.ImportSuccessful) {
 		state = models.ImportSuccess
 	}
 	// dont update title (is the primary key)
-	update.Metadata.Title = existing.Metadata.Title
+	update.Interactive.Metadata.Title = existing.Metadata.Title
 
 	var archive models.Archive
 	if update.Interactive.Archive != nil {
@@ -193,7 +193,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 	// 4. write to DB
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		Metadata: update.Metadata,
+		Metadata: update.Interactive.Metadata,
 		State:    state.String(),
 		Archive:  archive,
 	})
@@ -203,7 +203,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	WriteJSONBody(update.Metadata, w, http.StatusOK)
+	WriteJSONBody(update.Interactive.Metadata, w, http.StatusOK)
 
 }
 
@@ -268,7 +268,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	var vErr error
 	var fileHeader *multipart.FileHeader
 	var fileKey string
-	metadata := &models.InteractiveMetadata{}
+	metadata := &interactives.InteractiveMetadata{}
 
 	// 1. Expecting 1 file attachment and some metadata
 	vErr = req.ParseMultipartForm(50 << 20)

@@ -5,26 +5,63 @@ Feature: Interactives API (List interactives)
             """
             [
                 {
-                    "_id": "671375fa-2fc4-41cc-b845-ad04a56d96a7",
+                    "_id": "bd459093-1207-45f6-981f-d12522ffc499",
                     "active": false,
-                    "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
-                    "last_updated": {
-                        "$date": "2022-02-15T18:57:16.359Z"
+                    "archive": {},
+                    "last_updated": "2022-03-02T16:23:05.201Z",
+                    "metadata": {
+                        "title": "ad fugiat cillum12",
+                        "primary_topic": "",
+                        "topics": [
+                        "topic1",
+                        "topic2",
+                        "topic3"
+                        ],
+                        "surveys": [
+                        "survey1",
+                        "survey2"
+                        ],
+                        "release_date": "0001-01-01T00:00:00.000Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
                     },
-                    "metadata": "{\"metadata1\":\"value1\",\"metadata2\":\"value2\",\"metadata3\":\"value3\"}",
-                    "sha": "rhyCq4GCknxx0nzeqx2LE077Ruo=",
+                    "sha": "PQ3EkWb2MQ0l5TLc9jZM8RiY2j0=",
                     "state": "ImportSuccess"
-                },
-                {
-                    "_id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
+                    },
+                    {
+                    "_id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
                     "active": true,
-                    "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
-                    "last_updated": {
-                        "$date": "2022-02-15T19:00:46.816Z"
+                    "archive": {
+                        "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                     },
-                    "metadata": "{\"metadata1\":\"val1\",\"metadata2\":\"val2\",\"metadata3\":\"val3\",\"metadata5\":\"val5\"}",
-                    "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
-                    "state": "ImportSuccess"
+                    "last_updated": "2022-03-02T16:44:32.443Z",
+                    "metadata": {
+                        "title": "ad fugiat cillum",
+                        "primary_topic": "commodo sint labore",
+                        "topics": [
+                        "topic1"
+                        ],
+                        "surveys": [
+                        "survey1"
+                        ],
+                        "release_date": "2022-03-01T22:04:06.311Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
+                    },
+                    "sha": "rhyCq4GCknxx0nzeqx2LE077Ruo=",
+                    "state": "ArchiveUploaded"
                 }
             ]
             """
@@ -34,12 +71,28 @@ Feature: Interactives API (List interactives)
                 {
                     "items": [
                         {
-                            "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
+                            "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
                             "metadata": {
-                                "metadata1": "val1",
-                                "metadata2": "val2",
-                                "metadata3": "val3",
-                                "metadata5": "val5"
+                                "title": "ad fugiat cillum",
+                                "primary_topic": "commodo sint labore",
+                                "topics": [
+                                    "topic1"
+                                ],
+                                "surveys": [
+                                    "survey1"
+                                ],
+                                "release_date": "2022-03-01T22:04:06.311Z",
+                                "uri": "id occaecat do",
+                                "edition": "in quis cupidatat tempor",
+                                "keywords": [
+                                    "keywd1"
+                                ],
+                                "meta_description": "cillum Excepteur",
+                                "source": "reprehenderit do",
+                                "summary": "aliqua Ut amet laboris exercitation"
+                            },
+                            "archive": {
+                                "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             }
                         }
                     ],

@@ -224,10 +224,13 @@ definitions:
     properties:
       importstatus:
         type: "boolean"
-      metadata:
+      interactives:
         type: "object"
-        additionalProperties:
-          type: "string"
+        properties:
+          metadata:
+            type: "object"
+            additionalProperties:
+              type: "string"
     xml:
       name: "InteractiveUpdated"
   Interactive:

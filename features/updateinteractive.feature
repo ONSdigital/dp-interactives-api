@@ -32,7 +32,25 @@ Feature: Interactives API (Update interactive)
                         "last_updated": {
                             "$date": "2022-02-08T19:04:52.891Z"
                         },
-                        "metadata": "{\"metadata1\":\"XXX\",\"metadata2\":\"YYY\",\"metadata3\":\"ZZZ\"}",
+                        "metadata": {
+                            "title": "ad fugiat cillum",
+                            "primary_topic": "commodo sint labore",
+                            "topics": [
+                            "topic1"
+                            ],
+                            "surveys": [
+                            "survey1"
+                            ],
+                            "release_date": "2022-03-01T22:04:06.311Z",
+                            "uri": "id occaecat do",
+                            "edition": "in quis cupidatat tempor",
+                            "keywords": [
+                            "keywd1"
+                            ],
+                            "meta_description": "cillum Excepteur",
+                            "source": "reprehenderit do",
+                            "summary": "aliqua Ut amet laboris exercitation"
+                        },
                         "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
                         "state": "ArchiveUploaded"
                     }
@@ -43,7 +61,25 @@ Feature: Interactives API (Update interactive)
                 {
                     "import_successful": true,
                     "interactive": {
-                        "metadata": {"metadata1" : "updatedval1", "metadata5" : "val5"}
+                        "metadata": {
+                            "title": "ad fugiat cillum",
+                            "primary_topic": "updated primary topic",
+                            "topics": [
+                            "topic1"
+                            ],
+                            "surveys": [
+                            "survey1"
+                            ],
+                            "release_date": "2022-03-01T22:04:06.311Z",
+                            "uri": "id occaecat do",
+                            "edition": "in quis cupidatat tempor",
+                            "keywords": [
+                            "keywd1"
+                            ],
+                            "meta_description": "cillum Excepteur",
+                            "source": "reprehenderit do",
+                            "summary": "aliqua Ut amet laboris exercitation"
+                        }
                     }
                 }
             """
@@ -60,7 +96,25 @@ Feature: Interactives API (Update interactive)
                         "last_updated": {
                             "$date": "2022-02-08T19:04:52.891Z"
                         },
-                        "metadata": "{\"metadata1\":\"value1\",\"metadata2\":\"value2\",\"metadata3\":\"value3\"}",
+                        "metadata": {
+                            "title": "ad fugiat cillum",
+                            "primary_topic": "commodo sint labore",
+                            "topics": [
+                            "topic1"
+                            ],
+                            "surveys": [
+                            "survey1"
+                            ],
+                            "release_date": "2022-03-01T22:04:06.311Z",
+                            "uri": "id occaecat do",
+                            "edition": "in quis cupidatat tempor",
+                            "keywords": [
+                            "keywd1"
+                            ],
+                            "meta_description": "cillum Excepteur",
+                            "source": "reprehenderit do",
+                            "summary": "aliqua Ut amet laboris exercitation"
+                        },
                         "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
                         "state": "ArchiveUploaded"
                     }
@@ -71,16 +125,47 @@ Feature: Interactives API (Update interactive)
                 {
                     "import_successful": true,
                     "interactive": {
-                        "metadata": {"metadata1" : "updatedvalue1", "metadata5" : "value5"}
+                        "metadata": {
+                            "title": "ad fugiat cillum",
+                            "primary_topic": "updated primary topic",
+                            "topics": [
+                            "topic1"
+                            ],
+                            "surveys": [
+                            "survey1"
+                            ],
+                            "release_date": "2022-03-01T22:04:06.311Z",
+                            "uri": "id occaecat do",
+                            "edition": "in quis cupidatat tempor",
+                            "keywords": [
+                            "keywd1"
+                            ],
+                            "meta_description": "cillum Excepteur",
+                            "source": "reprehenderit do",
+                            "summary": "aliqua Ut amet laboris exercitation"
+                        }
                     }
                 }
             """
         Then I should receive the following JSON response with status "200":
             """
                 {
-                    "metadata1": "updatedvalue1",
-                    "metadata2": "value2",
-                    "metadata3": "value3",
-                    "metadata5": "value5"
+                    "title": "ad fugiat cillum",
+                    "primary_topic": "updated primary topic",
+                    "topics": [
+                    "topic1"
+                    ],
+                    "surveys": [
+                    "survey1"
+                    ],
+                    "release_date": "2022-03-01T22:04:06.311Z",
+                    "uri": "id occaecat do",
+                    "edition": "in quis cupidatat tempor",
+                    "keywords": [
+                    "keywd1"
+                    ],
+                    "meta_description": "cillum Excepteur",
+                    "source": "reprehenderit do",
+                    "summary": "aliqua Ut amet laboris exercitation"
                 }
             """

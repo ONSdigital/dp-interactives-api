@@ -10,14 +10,33 @@ Feature: Interactives API (Delete interactive)
             [
                 {
                     "_id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
-                    "active": true,
-                    "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
-                    "last_updated": {
-                        "$date": "2022-02-08T19:04:52.891Z"
+                    "active": false,
+                    "archive": {},
+                    "last_updated": "2022-03-02T16:23:05.201Z",
+                    "metadata": {
+                        "title": "ad fugiat cillum12",
+                        "primary_topic": "",
+                        "topics": [
+                        "topic1",
+                        "topic2",
+                        "topic3"
+                        ],
+                        "surveys": [
+                        "survey1",
+                        "survey2"
+                        ],
+                        "release_date": "0001-01-01T00:00:00.000Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
                     },
-                    "metadata": "{\"metadata1\":\"XXX\",\"metadata2\":\"YYY\",\"metadata3\":\"ZZZ\"}",
-                    "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
-                    "state": "ArchiveUploaded"
+                    "sha": "PQ3EkWb2MQ0l5TLc9jZM8RiY2j0=",
+                    "state": "ImportSuccess"
                 }
             ]
             """
