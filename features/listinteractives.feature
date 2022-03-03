@@ -7,14 +7,50 @@ Feature: Interactives API (List interactives)
                 {
                     "id": "671375fa-2fc4-41cc-b845-ad04a56d96a7",
                     "active": false,
-                    "metadata": "{\"metadata1\":\"value1\",\"metadata2\":\"value2\",\"metadata3\":\"value3\"}",
+                    "metadata": {
+                        "title": "ad fugiat cillum",
+                        "primary_topic": "",
+                        "topics": [
+                        "topic1"
+                        ],
+                        "surveys": [
+                        "survey1"
+                        ],
+                        "release_date": "2022-03-01T22:04:06.311Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
+                    },
                     "state": "ImportSuccess"
                 },
                 {
                     "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                     "active": true,
                     "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
-                    "metadata": "{\"metadata1\":\"val1\",\"metadata2\":\"val2\",\"metadata3\":\"val3\",\"metadata5\":\"val5\"}",
+                    "metadata": {
+                        "title": "ad fugiat cillum",
+                        "primary_topic": "",
+                        "topics": [
+                        "topic1"
+                        ],
+                        "surveys": [
+                        "survey1"
+                        ],
+                        "release_date": "2022-03-01T22:04:06.311Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
+                    },
                     "state": "ImportSuccess"
                 }
             ]
@@ -31,18 +67,18 @@ Feature: Interactives API (List interactives)
                             },
                             "metadata": {
                                 "title": "ad fugiat cillum",
-                                "primary_topic": "commodo sint labore",
+                                "primary_topic": "",
                                 "topics": [
-                                    "topic1"
+                                "topic1"
                                 ],
                                 "surveys": [
-                                    "survey1"
+                                "survey1"
                                 ],
                                 "release_date": "2022-03-01T22:04:06.311Z",
                                 "uri": "id occaecat do",
                                 "edition": "in quis cupidatat tempor",
                                 "keywords": [
-                                    "keywd1"
+                                "keywd1"
                                 ],
                                 "meta_description": "cillum Excepteur",
                                 "source": "reprehenderit do",

@@ -39,12 +39,12 @@ type InteractiveUpdate struct {
 // Mongo/HTTP models
 
 type InteractiveMetadata struct { // TODO : Geography
-	Title           string    `bson:"title"         	 		 json:"title"`
-	PrimaryTopic    string    `bson:"primary_topic" 	 		 json:"primary_topic"`
-	Topics          []string  `bson:"topics"        			 json:"topics"`
-	Surveys         []string  `bson:"surveys"          			 json:"surveys"`
-	ReleaseDate     time.Time `bson:"release_date"     			 json:"release_date"`
-	Uri             string    `bson:"uri"              			 json:"uri"`
+	Title           string    `bson:"title"                      json:"title"`
+	PrimaryTopic    string    `bson:"primary_topic"              json:"primary_topic"`
+	Topics          []string  `bson:"topics"                     json:"topics"`
+	Surveys         []string  `bson:"surveys"                    json:"surveys"`
+	ReleaseDate     time.Time `bson:"release_date"               json:"release_date"`
+	Uri             string    `bson:"uri"                        json:"uri"`
 	Edition         string    `bson:"edition,omitempty"          json:"edition,omitempty"`
 	Keywords        []string  `bson:"keywords,omitempty"         json:"keywords,omitempty"`
 	MetaDescription string    `bson:"meta_description,omitempty" json:"meta_description,omitempty"`
@@ -60,7 +60,7 @@ type Interactive struct {
 	State  string `bson:"state,omitempty"     json:"-"`
 	Active *bool  `bson:"active,omitempty"    json:"-"`
 	// HTTP only
-	Metadata *InteractiveMetadata `bson:"-"            json:"metadata,omitempty"`
+	Metadata *InteractiveMetadata `bson:"metadata,omitempty"            json:"metadata,omitempty"`
 }
 
 type Archive struct {

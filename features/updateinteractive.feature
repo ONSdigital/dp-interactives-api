@@ -27,7 +27,25 @@ Feature: Interactives API (Update interactive)
                 [
                     {
                         "active": false,
-                        "metadata": "{\"metadata1\":\"XXX\",\"metadata2\":\"YYY\",\"metadata3\":\"ZZZ\"}",
+                        "metadata": {
+                            "title": "ad fugiat cillum",
+                            "primary_topic": "updated primary topic",
+                            "topics": [
+                            "topic1"
+                            ],
+                            "surveys": [
+                            "survey1"
+                            ],
+                            "release_date": "2022-03-01T22:04:06.311Z",
+                            "uri": "id occaecat do",
+                            "edition": "in quis cupidatat tempor",
+                            "keywords": [
+                            "keywd1"
+                            ],
+                            "meta_description": "cillum Excepteur",
+                            "source": "reprehenderit do",
+                            "summary": "aliqua Ut amet laboris exercitation"
+                        },
                         "state": "ArchiveUploaded"
                     }
                 ]
@@ -67,7 +85,25 @@ Feature: Interactives API (Update interactive)
                 [
                     {
                         "active": true,
-                        "metadata": "{\"metadata1\":\"value1\",\"metadata2\":\"value2\",\"metadata3\":\"value3\"}",
+                        "metadata": {
+                        "title": "ad fugiat cillum",
+                        "primary_topic": "",
+                        "topics": [
+                        "topic1"
+                        ],
+                        "surveys": [
+                        "survey1"
+                        ],
+                        "release_date": "2022-03-01T22:04:06.311Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
+                    },
                         "state": "ArchiveUploaded"
                     }
                 ]

@@ -39,7 +39,7 @@ type validatedReq struct {
 	Reader   *bytes.Reader
 	Sha      string
 	FileName string
-	Metadata *interactives.InteractiveMetadata
+	Metadata *models.InteractiveMetadata
 }
 
 var NewID = func() string {
@@ -267,7 +267,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	var vErr error
 	var fileHeader *multipart.FileHeader
 	var fileKey string
-	metadata := &interactives.InteractiveMetadata{}
+	metadata := &models.InteractiveMetadata{}
 
 	// 1. Expecting 1 file attachment and some metadata
 	vErr = req.ParseMultipartForm(50 << 20)

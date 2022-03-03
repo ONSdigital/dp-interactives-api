@@ -7,7 +7,7 @@ replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 replace github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go v3.2.1-0.20210802184156-9742bd7fca1c+incompatible
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.96.7
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.96.8
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-healthcheck v1.2.3
 	github.com/ONSdigital/dp-mongodb/v3 v3.0.0-beta.4
@@ -18,6 +18,7 @@ require (
 	github.com/cucumber/godog v0.12.4
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/monoculum/formam/v3 v3.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.7.2
 	go.mongodb.org/mongo-driver v1.8.3
@@ -36,7 +37,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/justinas/alice v1.2.0 // indirect
 	github.com/maxcnunes/httpfake v1.2.4 // indirect
-	github.com/monoculum/formam/v3 v3.6.0 // indirect
+	github.com/monoculum/formam v3.5.5+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

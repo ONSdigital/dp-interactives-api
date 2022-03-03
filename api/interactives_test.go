@@ -12,7 +12,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
@@ -61,7 +60,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
@@ -73,7 +72,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
@@ -88,7 +87,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return errors.New("db upsert error")
@@ -106,7 +105,7 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			formFile:     "./mock/interactives.zip",
 			responseCode: http.StatusAccepted,
 			mongoServer: &mongoMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return nil
@@ -180,7 +179,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &mongoMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &activeFlag, Metadata: &interactives.InteractiveMetadata{}}, nil
+					return &models.Interactive{Active: &activeFlag, Metadata: &models.InteractiveMetadata{}}, nil
 				},
 			},
 		},

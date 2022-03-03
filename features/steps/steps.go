@@ -3,8 +3,9 @@ package steps
 import (
 	"context"
 	"encoding/json"
-	"github.com/ONSdigital/dp-interactives-api/models"
 	"time"
+
+	"github.com/ONSdigital/dp-interactives-api/models"
 
 	"github.com/cucumber/godog"
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,11 +23,11 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 
 func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.DocString) error {
 	var componentTestData []struct {
-		ID           string `json:"id,omitempty"`
-		ArchiveName  string `json:"file_name,omitempty"`
-		State        string `json:"state,omitempty"`
-		Active       bool   `json:"active,omitempty"`
-		MetadataJson string `json:"metadata,omitempty"`
+		ID          string                      `json:"id,omitempty"`
+		ArchiveName string                      `json:"file_name,omitempty"`
+		State       string                      `json:"state,omitempty"`
+		Active      bool                        `json:"active,omitempty"`
+		MetaData    *models.InteractiveMetadata `json:"metadata,omitempty"`
 	}
 
 	err := json.Unmarshal([]byte(datasetsJson.Content), &componentTestData)
@@ -40,10 +41,10 @@ func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.Do
 			Archive: &models.Archive{
 				Name: "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
 			},
-			SHA:          "kqA7qPo1GeOJeff69lByWLbPiZM=",
-			State:        testData.State,
-			Active:       &testData.Active,
-			MetadataJson: testData.MetadataJson,
+			SHA:      "kqA7qPo1GeOJeff69lByWLbPiZM=",
+			State:    testData.State,
+			Active:   &testData.Active,
+			Metadata: testData.MetaData,
 		}
 		if testData.ID != "" {
 			mongoInteractive.ID = testData.ID
