@@ -1,18 +1,14 @@
 package models
 
-import (
-	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
-)
+func Map(in *Interactive) (*Interactive, error) {
 
-func ToRest(i *Interactive) (*interactives.Interactive, error) {
-
-	response := &interactives.Interactive{ID: i.ID, Metadata: i.Metadata}
-	if i.Archive.Name != "" {
-		response.Archive = &interactives.InteractiveArchive{Name: i.Archive.Name}
-		if len(i.Archive.Files) > 0 {
-			response.Archive.Size = i.Archive.Size
-			for _, f := range i.Archive.Files {
-				response.Archive.Files = append(response.Archive.Files, &interactives.InteractiveFile{
+	response := &Interactive{ID: in.ID, Metadata: in.Metadata}
+	if in.Archive.Name != "" {
+		response.Archive = &Archive{Name: in.Archive.Name}
+		if len(in.Archive.Files) > 0 {
+			response.Archive.Size = in.Archive.Size
+			for _, f := range in.Archive.Files {
+				response.Archive.Files = append(response.Archive.Files, &File{
 					Name:     f.Name,
 					Mimetype: f.Mimetype,
 					Size:     f.Size,
