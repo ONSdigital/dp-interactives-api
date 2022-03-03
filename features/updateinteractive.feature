@@ -26,14 +26,8 @@ Feature: Interactives API (Update interactive)
                 """
                 [
                     {
-                        "_id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                         "active": false,
-                        "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
-                        "last_updated": {
-                            "$date": "2022-02-08T19:04:52.891Z"
-                        },
                         "metadata": "{\"metadata1\":\"XXX\",\"metadata2\":\"YYY\",\"metadata3\":\"ZZZ\"}",
-                        "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
                         "state": "ArchiveUploaded"
                     }
                 ]
@@ -54,14 +48,8 @@ Feature: Interactives API (Update interactive)
                 """
                 [
                     {
-                        "_id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                         "active": true,
-                        "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
-                        "last_updated": {
-                            "$date": "2022-02-08T19:04:52.891Z"
-                        },
                         "metadata": "{\"metadata1\":\"value1\",\"metadata2\":\"value2\",\"metadata3\":\"value3\"}",
-                        "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
                         "state": "ArchiveUploaded"
                     }
                 ]

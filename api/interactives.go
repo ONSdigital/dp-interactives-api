@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
@@ -80,7 +79,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		MetadataJson: string(mDataJson),
 		Active:       &activeFlag,
 		State:        models.ArchiveUploaded.String(),
-		Archive:      models.Archive{Name: fileWithPath},
+		Archive:      &models.Archive{Name: fileWithPath},
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -133,7 +132,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 	defer req.Body.Close()
-	update := interactives.InteractiveUpdate{}
+	update := models.InteractiveUpdate{}
 	var bodyBytes, mDataJson []byte
 	var err error
 	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
@@ -182,9 +181,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	if *update.ImportSuccessful {
 		state = models.ImportSuccess
 	}
-	var archive models.Archive
+	var archive *models.Archive
 	if update.Interactive.Archive != nil {
-		archive = models.Archive{
+		archive = &models.Archive{
 			Name: update.Interactive.Archive.Name,
 			Size: update.Interactive.Archive.Size,
 		}
@@ -221,9 +220,9 @@ func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil, 0, err
 	}
-	response := make([]*interactives.Interactive, 0)
+	response := make([]*models.Interactive, 0)
 	for _, interactive := range db {
-		i, err := models.ToRest(interactive)
+		i, err := models.Map(interactive)
 		if err != nil {
 			log.Error(ctx, "cannot map db to http response", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -337,7 +336,7 @@ func validateReq(req *http.Request, api *API) (*validatedReq, error) {
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	vis, _ := api.mongoDB.GetActiveInteractiveFromSHA(req.Context(), sha)
 	if vis != nil {
-		return nil, fmt.Errorf("archive already exists id (%s) with interactive (%s)", vis.ID, vis.Archive.Name)
+		return nil, fmt.Errorf("archive already exists id (%s) with sha (%s)", vis.ID, vis.SHA)
 	}
 
 	return &validatedReq{

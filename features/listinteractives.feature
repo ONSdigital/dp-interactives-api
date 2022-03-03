@@ -5,25 +5,16 @@ Feature: Interactives API (List interactives)
             """
             [
                 {
-                    "_id": "671375fa-2fc4-41cc-b845-ad04a56d96a7",
+                    "id": "671375fa-2fc4-41cc-b845-ad04a56d96a7",
                     "active": false,
-                    "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
-                    "last_updated": {
-                        "$date": "2022-02-15T18:57:16.359Z"
-                    },
                     "metadata": "{\"metadata1\":\"value1\",\"metadata2\":\"value2\",\"metadata3\":\"value3\"}",
-                    "sha": "rhyCq4GCknxx0nzeqx2LE077Ruo=",
                     "state": "ImportSuccess"
                 },
                 {
-                    "_id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
+                    "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                     "active": true,
-                    "file_name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
-                    "last_updated": {
-                        "$date": "2022-02-15T19:00:46.816Z"
-                    },
+                    "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
                     "metadata": "{\"metadata1\":\"val1\",\"metadata2\":\"val2\",\"metadata3\":\"val3\",\"metadata5\":\"val5\"}",
-                    "sha": "kqA7qPo1GeOJeff69lByWLbPiZM=",
                     "state": "ImportSuccess"
                 }
             ]
@@ -35,6 +26,9 @@ Feature: Interactives API (List interactives)
                     "items": [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
+                            "archive": {
+                               "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
+                            },
                             "metadata": {
                                 "metadata1": "val1",
                                 "metadata2": "val2",
