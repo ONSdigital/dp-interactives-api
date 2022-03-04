@@ -78,11 +78,11 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	id := NewID()
 	activeFlag := true
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		SHA:          retVal.Sha,
-		Metadata: 	  retVal.Metadata,
-		Active:       &activeFlag,
-		State:        models.ArchiveUploaded.String(),
-		Archive:      &models.Archive{Name: fileWithPath},
+		SHA:      retVal.Sha,
+		Metadata: retVal.Metadata,
+		Active:   &activeFlag,
+		State:    models.ArchiveUploaded.String(),
+		Archive:  &models.Archive{Name: fileWithPath},
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -128,8 +128,8 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	// 1. Check body json decodes
 	ctx := req.Context()
 	if req.Body == nil {
-		http.Error(w, "Empty body recieved", http.StatusBadRequest)
-		log.Error(ctx, "Empty body recieved", ErrEmptyBody)
+		http.Error(w, "Empty body received", http.StatusBadRequest)
+		log.Error(ctx, "Empty body received", ErrEmptyBody)
 		return
 	}
 	defer req.Body.Close()
@@ -147,9 +147,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		log.Error(ctx, "Error reading body (unmarshal)", ErrInvalidBody)
 		return
 	}
-	if update.ImportSuccessful == nil || update.Interactive.Metadata == nil {
+	if update.ImportSuccessful == nil && update.Interactive.Metadata == nil {
 		http.Error(w, "Nothing to update", http.StatusBadRequest)
-		log.Error(ctx, "Nothng to update", ErrNoMetadata)
+		log.Error(ctx, "Nothing to update", ErrNoMetadata)
 		return
 	}
 
@@ -168,21 +168,29 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	state := models.ImportFailure
-	if *(update.ImportSuccessful) {
-		state = models.ImportSuccess
+	// 3. prepare updated model
+	updatedModel := &models.Interactive{
+		State:         models.ImportFailure.String(),
+		ImportMessage: &update.ImportMessage,
 	}
-	// dont update title (is the primary key)
-	update.Interactive.Metadata.Title = existing.Metadata.Title
 
-	var archive *models.Archive
+	if update.ImportSuccessful != nil && *update.ImportSuccessful {
+		updatedModel.State = models.ImportSuccess.String()
+	}
+
+	if update.Interactive.Metadata != nil {
+		updatedModel.Metadata = update.Interactive.Metadata
+		// dont update title (is the primary key)
+		updatedModel.Metadata.Title = existing.Metadata.Title
+	}
+
 	if update.Interactive.Archive != nil {
-		archive = &models.Archive{
+		updatedModel.Archive = &models.Archive{
 			Name: update.Interactive.Archive.Name,
 			Size: update.Interactive.Archive.Size,
 		}
 		for _, f := range update.Interactive.Archive.Files {
-			archive.Files = append(archive.Files, &models.File{
+			updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
 				Name:     f.Name,
 				Mimetype: f.Mimetype,
 				Size:     f.Size,
@@ -190,12 +198,8 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		}
 	}
 
-	// 4. write to DB
-	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		Metadata: update.Interactive.Metadata,
-		State:    state.String(),
-		Archive:  archive,
-	})
+	// 5. write to DB
+	err = api.mongoDB.UpsertInteractive(ctx, id, updatedModel)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to write to DB", err)
