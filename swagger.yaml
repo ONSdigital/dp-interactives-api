@@ -94,9 +94,9 @@ paths:
         "500":
           description: "Internal server error"
         "202":
-          description: "Accepted (returns the database id)"
+          description: "Accepted (returns the interactive)"
           schema:
-            type: "string"
+            $ref: '#/definitions/Interactive'
     get:
       tags:
       - "interactives"
@@ -161,11 +161,7 @@ paths:
         "200":
           description: "Success"
           schema:
-            type: object
-            properties:
-              metadata:
-                type: string
-                description: Metadata
+            $ref: '#/definitions/Interactive'
     get:
       tags:
       - "interactives"
@@ -185,11 +181,7 @@ paths:
         "200":
           description: "Success"
           schema:
-            type: object
-            properties:
-              metadata:
-                type: string
-                description: Metadata
+            $ref: '#/definitions/Interactive'
         "500":
           description: "Internal error"
         "404":
@@ -216,21 +208,19 @@ paths:
           description: "Interactive not found"
         "500":
           description: "Internal error"
-        "200":
-          description: "Success"
+        "204":
+          description: "Success (no content)"
 definitions:
   InteractiveUpdated:
     type: "object"
     properties:
-      importstatus:
+      import_successful:
         type: "boolean"
-      interactives:
+      import_message:
+        type: "string"
+      interactive:
         type: "object"
-        properties:
-          metadata:
-            type: "object"
-            additionalProperties:
-              type: "string"
+        $ref: "#/definitions/Interactive"
     xml:
       name: "InteractiveUpdated"
   Interactive:
@@ -238,9 +228,48 @@ definitions:
     properties:
       id:
         type: "string"
+      archive:
+        type: object
+        properties:
+          name:
+            type: string
+          size_in_bytes:
+            type: integer
+          files:
+            type: array
+            items:
+              type: object
+              properties:
+                mimetype:
+                  type: string
+                size_in_bytes:
+                  type: integer
+                name:
+                  type: string
       metadata:
-        type: "object"
-        additionalProperties:
-          type: "string"
+        type: object
+        properties:
+          edition:
+            type: string
+          keywords:
+            type: array
+            items: {}
+          meta_description:
+            type: string
+          title:
+            type: string
+          topics:
+            type: array
+            items: {}
+          surveys:
+            type: array
+            items: {}
+          release_date:
+            type: string
+          uri:
+            type: string
+          primary_topic:
+            type: string
+
     xml:
       name: "Interactive"

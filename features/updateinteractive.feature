@@ -138,22 +138,25 @@ Feature: Interactives API (Update interactive)
         Then I should receive the following JSON response with status "200":
             """
                 {
-                    "title": "ad fugiat cillum",
-                    "primary_topic": "updated primary topic",
-                    "topics": [
-                    "topic1"
-                    ],
-                    "surveys": [
-                    "survey1"
-                    ],
-                    "release_date": "2022-03-01T22:04:06.311Z",
-                    "uri": "id occaecat do",
-                    "edition": "in quis cupidatat tempor",
-                    "keywords": [
-                    "keywd1"
-                    ],
-                    "meta_description": "cillum Excepteur",
-                    "source": "reprehenderit do",
-                    "summary": "aliqua Ut amet laboris exercitation"
+                    "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
+                    "metadata": {
+                        "title": "ad fugiat cillum",
+                        "primary_topic": "updated primary topic",
+                        "topics": [
+                        "topic1"
+                        ],
+                        "surveys": [
+                        "survey1"
+                        ],
+                        "release_date": "2022-03-01T22:04:06.311Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                        "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
+                    }
                 }
             """

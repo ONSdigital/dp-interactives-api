@@ -77,13 +77,15 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	// 3. Write to DB
 	id := NewID()
 	activeFlag := true
-	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
+	interact := &models.Interactive{
+		ID:       id,
 		SHA:      retVal.Sha,
 		Metadata: retVal.Metadata,
 		Active:   &activeFlag,
 		State:    models.ArchiveUploaded.String(),
 		Archive:  &models.Archive{Name: fileWithPath},
-	})
+	}
+	err = api.mongoDB.UpsertInteractive(ctx, id, interact)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to write to DB", err)
@@ -98,7 +100,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	WriteJSONBody(id, w, http.StatusAccepted)
+	WriteJSONBody(interact, w, http.StatusAccepted)
 }
 
 func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.Request) {
@@ -120,7 +122,7 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 		return
 	}
 
-	WriteJSONBody(*vis.Metadata, w, http.StatusOK)
+	WriteJSONBody(*vis, w, http.StatusOK)
 }
 
 func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
@@ -170,6 +172,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 	// 3. prepare updated model
 	updatedModel := &models.Interactive{
+		ID:            id,
 		State:         models.ImportFailure.String(),
 		ImportMessage: &update.ImportMessage,
 	}
@@ -206,8 +209,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	WriteJSONBody(update.Interactive.Metadata, w, http.StatusOK)
-
+	WriteJSONBody(updatedModel, w, http.StatusOK)
 }
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {

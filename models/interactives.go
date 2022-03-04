@@ -54,15 +54,14 @@ type InteractiveMetadata struct { // TODO : Geography
 }
 
 type Interactive struct {
-	ID      string   `bson:"_id,omitempty"           json:"id,omitempty"`
-	Archive *Archive `bson:"archive,omitempty"       json:"archive,omitempty"`
+	ID       string               `bson:"_id,omitempty"           json:"id,omitempty"`
+	Archive  *Archive             `bson:"archive,omitempty"       json:"archive,omitempty"`
+	Metadata *InteractiveMetadata `bson:"metadata,omitempty"      json:"metadata,omitempty"`
 	//Mongo only
 	SHA           string  `bson:"sha,omitempty"               json:"-"`
 	State         string  `bson:"state,omitempty"             json:"-"`
 	Active        *bool   `bson:"active,omitempty"            json:"-"`
 	ImportMessage *string `bson:"import_message,omitempty"    json:"-"`
-	// HTTP only
-	Metadata *InteractiveMetadata `bson:"metadata,omitempty"            json:"metadata,omitempty"`
 }
 
 type Archive struct {
