@@ -2,7 +2,7 @@ package models
 
 func Map(in *Interactive) (*Interactive, error) {
 
-	response := &Interactive{ID: in.ID, Metadata: in.Metadata}
+	response := &Interactive{ID: in.ID, Metadata: in.Metadata, Published: in.Published}
 	if in.Archive.Name != "" {
 		response.Archive = &Archive{Name: in.Archive.Name}
 		if len(in.Archive.Files) > 0 {

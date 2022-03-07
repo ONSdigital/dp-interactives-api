@@ -7,13 +7,15 @@ Feature: Interactives API (Get interactive)
                 {
                     "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
                     "active": true,
+                    "published": false,
                     "archive": {
-                        "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
+                        "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
                         "title": "ad fugiat cillum",
                         "primary_topic": "",
+                        "slug": "human readable slug",
                         "topics": [
                         "topic1"
                         ],
@@ -39,23 +41,31 @@ Feature: Interactives API (Get interactive)
         Then I should receive the following JSON response with status "200":
             """
                 {
-                    "title": "ad fugiat cillum",
-                    "primary_topic": "",
-                    "topics": [
-                        "topic1"
-                    ],
-                    "surveys": [
-                        "survey1"
-                    ],
-                    "release_date": "2022-03-01T22:04:06.311Z",
-                    "uri": "id occaecat do",
-                    "edition": "in quis cupidatat tempor",
-                    "keywords": [
-                        "keywd1"
-                    ],
-                    "meta_description": "cillum Excepteur",
-                    "source": "reprehenderit do",
-                    "summary": "aliqua Ut amet laboris exercitation"
+                    "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
+                    "published": false,
+                    "archive": {
+                        "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
+                    },
+                    "metadata": {
+                        "title": "ad fugiat cillum",
+                        "slug": "human readable slug",
+                        "primary_topic": "",
+                        "topics": [
+                            "topic1"
+                        ],
+                        "surveys": [
+                            "survey1"
+                        ],
+                        "release_date": "2022-03-01T22:04:06.311Z",
+                        "uri": "id occaecat do",
+                        "edition": "in quis cupidatat tempor",
+                        "keywords": [
+                            "keywd1"
+                        ],
+                        "meta_description": "cillum Excepteur",
+                        "source": "reprehenderit do",
+                        "summary": "aliqua Ut amet laboris exercitation"
+                    }
                 }
             """
 
@@ -65,8 +75,10 @@ Feature: Interactives API (Get interactive)
             [
                 {
                     "active": true,
+                    "published": false,
                     "metadata": {
                         "title": "ad fugiat cillum",
+                        "slug": "human readable slug",
                         "primary_topic": "",
                         "topics": [
                         "topic1"

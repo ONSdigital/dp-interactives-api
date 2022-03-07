@@ -40,29 +40,30 @@ type InteractiveUpdate struct {
 // Mongo/HTTP models
 
 type InteractiveMetadata struct { // TODO : Geography
-	Title           string    `bson:"title"                      json:"title"`
-	PrimaryTopic    string    `bson:"primary_topic"              json:"primary_topic"`
-	Topics          []string  `bson:"topics"                     json:"topics"`
-	Surveys         []string  `bson:"surveys"                    json:"surveys"`
-	ReleaseDate     time.Time `bson:"release_date"               json:"release_date"`
-	Uri             string    `bson:"uri"                        json:"uri"`
-	Edition         string    `bson:"edition,omitempty"          json:"edition,omitempty"`
-	Keywords        []string  `bson:"keywords,omitempty"         json:"keywords,omitempty"`
-	MetaDescription string    `bson:"meta_description,omitempty" json:"meta_description,omitempty"`
-	Source          string    `bson:"source,omitempty"           json:"source,omitempty"`
-	Summary         string    `bson:"summary,omitempty"          json:"summary,omitempty"`
+	Title             string    `bson:"title"                      json:"title"`
+	PrimaryTopic      string    `bson:"primary_topic"              json:"primary_topic"`
+	Topics            []string  `bson:"topics"                     json:"topics"`
+	Surveys           []string  `bson:"surveys"                    json:"surveys"`
+	ReleaseDate       time.Time `bson:"release_date"               json:"release_date"`
+	Uri               string    `bson:"uri"                        json:"uri"`
+	HumanReadableSlug string    `bson:"slug"                       json:"slug"`
+	Edition           string    `bson:"edition,omitempty"          json:"edition,omitempty"`
+	Keywords          []string  `bson:"keywords,omitempty"         json:"keywords,omitempty"`
+	MetaDescription   string    `bson:"meta_description,omitempty" json:"meta_description,omitempty"`
+	Source            string    `bson:"source,omitempty"           json:"source,omitempty"`
+	Summary           string    `bson:"summary,omitempty"          json:"summary,omitempty"`
 }
 
 type Interactive struct {
-	ID      string   `bson:"_id,omitempty"           json:"id,omitempty"`
-	Archive *Archive `bson:"archive,omitempty"       json:"archive,omitempty"`
+	ID        string               `bson:"_id,omitempty"               json:"id,omitempty"`
+	Archive   *Archive             `bson:"archive,omitempty"           json:"archive,omitempty"`
+	Metadata  *InteractiveMetadata `bson:"metadata,omitempty"          json:"metadata,omitempty"`
+	Published *bool                `bson:"published,omitempty"         json:"published,omitempty"`
 	//Mongo only
 	SHA           string  `bson:"sha,omitempty"               json:"-"`
 	State         string  `bson:"state,omitempty"             json:"-"`
 	Active        *bool   `bson:"active,omitempty"            json:"-"`
 	ImportMessage *string `bson:"import_message,omitempty"    json:"-"`
-	// HTTP only
-	Metadata *InteractiveMetadata `bson:"metadata,omitempty"            json:"metadata,omitempty"`
 }
 
 type Archive struct {

@@ -35,6 +35,7 @@ func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.Do
 		ArchiveName string                      `json:"file_name,omitempty"`
 		State       string                      `json:"state,omitempty"`
 		Active      bool                        `json:"active,omitempty"`
+		Published   bool                        `json:"published,omitempty"`
 		MetaData    *models.InteractiveMetadata `json:"metadata,omitempty"`
 	}
 
@@ -49,10 +50,11 @@ func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.Do
 			Archive: &models.Archive{
 				Name: "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip",
 			},
-			SHA:      "kqA7qPo1GeOJeff69lByWLbPiZM=",
-			State:    testData.State,
-			Active:   &testData.Active,
-			Metadata: testData.MetaData,
+			SHA:       "kqA7qPo1GeOJeff69lByWLbPiZM=",
+			State:     testData.State,
+			Active:    &testData.Active,
+			Published: &testData.Published,
+			Metadata:  testData.MetaData,
 		}
 		if testData.ID != "" {
 			mongoInteractive.ID = testData.ID

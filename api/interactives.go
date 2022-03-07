@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	ErrEmptyBody   = errors.New("empty request body")
-	ErrInvalidBody = errors.New("body has invalid format")
-	ErrNoMetadata  = errors.New("no metadata specified")
+	ErrEmptyBody      = errors.New("empty request body")
+	ErrInvalidBody    = errors.New("body has invalid format")
+	ErrNoMetadata     = errors.New("no metadata specified")
+	ErrCantUpdateSlug = errors.New("cannot update readable slug for a published interactive")
 
 	NewID = func() string {
 		return uuid.NewV4().String()
@@ -67,14 +68,17 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 
 	// 5. Write to DB
 	id := NewID()
-	activeFlag := true
-	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		SHA:      formDataRequest.Sha,
-		Metadata: formDataRequest.Update.Interactive.Metadata,
-		Active:   &activeFlag,
-		State:    models.ArchiveUploaded.String(),
-		Archive:  &models.Archive{Name: formDataRequest.FileName},
-	})
+	var activeFlag, pubFlag = true, false
+	interact := &models.Interactive{
+		ID:        id,
+		SHA:       formDataRequest.Sha,
+		Metadata:  formDataRequest.Update.Interactive.Metadata,
+		Active:    &activeFlag,
+		Published: &pubFlag,
+		State:     models.ArchiveUploaded.String(),
+		Archive:   &models.Archive{Name: formDataRequest.FileName},
+	}
+	err = api.mongoDB.UpsertInteractive(ctx, id, interact)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to write to DB", err)
@@ -89,7 +93,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	WriteJSONBody(id, w, http.StatusAccepted)
+	WriteJSONBody(interact, w, http.StatusAccepted)
 }
 
 func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.Request) {
@@ -111,7 +115,7 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 		return
 	}
 
-	WriteJSONBody(*vis.Metadata, w, http.StatusOK)
+	WriteJSONBody(*vis, w, http.StatusOK)
 }
 
 func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
@@ -160,8 +164,18 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
+	// 4. fail if attempting to update the slug for a published model
+	if *existing.Published && formDataRequest.Update.Interactive.Metadata != nil && existing.Metadata.HumanReadableSlug != formDataRequest.Update.Interactive.Metadata.HumanReadableSlug {
+		http.Error(w, ErrCantUpdateSlug.Error(), http.StatusForbidden)
+		logMsg := fmt.Sprintf("attempting to update slug for a published model existing (%s), update (%s)", existing.Metadata.HumanReadableSlug, formDataRequest.Update.Interactive.Metadata.HumanReadableSlug)
+		log.Error(ctx, logMsg, ErrCantUpdateSlug)
+		return
+	}
+
 	// 5. prepare updated model
 	updatedModel := &models.Interactive{
+		ID:            id,
+		Published:     formDataRequest.Update.Interactive.Published,
 		State:         models.ImportFailure.String(),
 		ImportMessage: &formDataRequest.Update.ImportMessage,
 	}
@@ -174,6 +188,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		updatedModel.Metadata = formDataRequest.Update.Interactive.Metadata
 		// dont update title (is the primary key)
 		updatedModel.Metadata.Title = existing.Metadata.Title
+		updatedModel.Metadata.Uri = existing.Metadata.Uri
 	}
 
 	if formDataRequest.Update.Interactive.Archive != nil {
@@ -198,8 +213,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	WriteJSONBody(formDataRequest.Update.Interactive.Metadata, w, http.StatusOK)
-
+	WriteJSONBody(updatedModel, w, http.StatusOK)
 }
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
