@@ -7,6 +7,7 @@ Feature: Interactives API (Get interactive)
                 {
                     "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
                     "active": true,
+                    "published": false,
                     "archive": {
                         "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
@@ -14,6 +15,7 @@ Feature: Interactives API (Get interactive)
                     "metadata": {
                         "title": "ad fugiat cillum",
                         "primary_topic": "",
+                        "slug": "human readable slug",
                         "topics": [
                         "topic1"
                         ],
@@ -40,11 +42,13 @@ Feature: Interactives API (Get interactive)
             """
                 {
                     "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
+                    "published": false,
                     "archive": {
                         "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
                         "title": "ad fugiat cillum",
+                        "slug": "human readable slug",
                         "primary_topic": "",
                         "topics": [
                             "topic1"
@@ -71,8 +75,10 @@ Feature: Interactives API (Get interactive)
             [
                 {
                     "active": true,
+                    "published": false,
                     "metadata": {
                         "title": "ad fugiat cillum",
+                        "slug": "human readable slug",
                         "primary_topic": "",
                         "topics": [
                         "topic1"

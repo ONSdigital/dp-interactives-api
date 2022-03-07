@@ -228,6 +228,8 @@ definitions:
     properties:
       id:
         type: "string"
+      published:
+        type: "boolean"
       archive:
         type: object
         properties:

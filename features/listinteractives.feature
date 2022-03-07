@@ -7,9 +7,11 @@ Feature: Interactives API (List interactives)
                 {
                     "id": "671375fa-2fc4-41cc-b845-ad04a56d96a7",
                     "active": false,
+                    "published" : false,
                     "metadata": {
                         "title": "ad fugiat cillum",
                         "primary_topic": "",
+                        "slug": "human readable slug",
                         "topics": [
                         "topic1"
                         ],
@@ -32,9 +34,11 @@ Feature: Interactives API (List interactives)
                     "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                     "active": true,
                     "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
+                    "published" : false,
                     "metadata": {
                         "title": "ad fugiat cillum",
                         "primary_topic": "",
+                        "slug": "human readable slug",
                         "topics": [
                         "topic1"
                         ],
@@ -62,12 +66,14 @@ Feature: Interactives API (List interactives)
                     "items": [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
+                            "published" : false,
                             "archive": {
                                "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "metadata": {
                                 "title": "ad fugiat cillum",
                                 "primary_topic": "",
+                                "slug": "human readable slug",
                                 "topics": [
                                 "topic1"
                                 ],
