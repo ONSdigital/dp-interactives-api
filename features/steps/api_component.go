@@ -2,6 +2,7 @@ package steps
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"net/http"
 	"strings"
 
@@ -21,6 +22,7 @@ import (
 
 type InteractivesApiComponent struct {
 	ErrorFeature   componenttest.ErrorFeature
+	ApiFeature     *componenttest.APIFeature
 	svc            *service.Service
 	errorChan      chan error
 	MongoClient    *mongo.Mongo
@@ -130,7 +132,11 @@ func (f *InteractivesApiComponent) DoGetMongoDB(_ context.Context, _ *config.Con
 
 func (f *InteractivesApiComponent) DoS3Client(_ context.Context, _ *config.Config) (upload.S3Interface, error) {
 	return &uploadMock.S3InterfaceMock{
-		CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		CheckerFunc:        func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		ValidateBucketFunc: func() error { return nil },
+		UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
+			return nil, nil
+		},
 	}, nil
 }
 

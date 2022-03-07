@@ -1,20 +1,13 @@
 package api_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
-
 	"github.com/ONSdigital/dp-interactives-api/api"
 	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	s3Mock "github.com/ONSdigital/dp-interactives-api/upload/mock"
@@ -23,42 +16,82 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
-func TestUploadInteractivesHandler(t *testing.T) {
+var (
+	active, inactive   = true, false
+	getInteractiveFunc = func(ctx context.Context, id string) (*models.Interactive, error) {
+		if id != "" {
+			b := &active
+			if id == "inactive-id" {
+				b = &inactive
+			}
+			return &models.Interactive{
+				ID:     id,
+				SHA:    "sha",
+				State:  models.ImportSuccess.String(),
+				Active: b,
+				Metadata: &models.InteractiveMetadata{
+					Title: "title",
+				},
+			}, nil
+		}
+		return nil, nil
+	}
+)
+
+func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 	t.Parallel()
 
+	type request struct {
+		uri          string
+		method       string
+		responseCode int
+	}
 	tests := []struct {
+		requests      []request
 		title         string
-		req           *http.Request
-		responseCode  int
 		formFile      string
 		mongoServer   api.MongoServer
 		s3            upload.S3Interface
 		kafkaProducer kafka.IProducer
 	}{
 		{
-			title:        "WhenMissingAttachment_ThenStatusBadRequest",
-			req:          httptest.NewRequest(http.MethodPost, "/v1/interactives", nil),
-			responseCode: http.StatusBadRequest,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusBadRequest},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusBadRequest},
+			},
+			title: "WhenMissingAttachment_ThenStatusBadRequest",
 		},
 		{
-			title:        "WhenUploadedFileIsNotZip_ThenStatusBadRequest",
-			formFile:     "./mock/fortest.txt",
-			responseCode: http.StatusBadRequest,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusBadRequest},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusBadRequest},
+			},
+			title:    "WhenUploadedFileIsNotZip_ThenStatusBadRequest",
+			formFile: "resources/fortest.txt",
 		},
 		{
-			title:        "WhenFileIsZipButAlreadyExists_ThenStatusBadRequest",
-			formFile:     "./mock/interactives.zip",
-			responseCode: http.StatusBadRequest,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusBadRequest},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusBadRequest},
+			},
+			title:    "WhenFileIsZipButAlreadyExists_ThenStatusBadRequest",
+			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
 			},
 		},
 		{
-			title:        "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
-			formFile:     "./mock/interactives.zip",
-			responseCode: http.StatusInternalServerError,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
+			},
+			title:    "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
+			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
@@ -68,9 +101,12 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			},
 		},
 		{
-			title:        "WhenUploadError_ThenInternalServerError",
-			formFile:     "./mock/interactives.zip",
-			responseCode: http.StatusInternalServerError,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
+			},
+			title:    "WhenUploadError_ThenInternalServerError",
+			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
@@ -83,15 +119,19 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			},
 		},
 		{
-			title:        "WhenDbError_ThenInternalServerError",
-			formFile:     "./mock/interactives.zip",
-			responseCode: http.StatusInternalServerError,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
+			},
+			title:    "WhenDbError_ThenInternalServerError",
+			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return errors.New("db upsert error")
 				},
+				GetInteractiveFunc: getInteractiveFunc,
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
@@ -101,15 +141,20 @@ func TestUploadInteractivesHandler(t *testing.T) {
 			},
 		},
 		{
-			title:        "WhenAllSuccess_ThenStatusAccepted",
-			formFile:     "./mock/interactives.zip",
-			responseCode: http.StatusAccepted,
+			requests: []request{
+				{"/v1/interactives", http.MethodPost, http.StatusAccepted},
+				{"/v1/interactives/an-id", http.MethodPut, http.StatusOK},
+				{"/v1/interactives/inactive-id", http.MethodPut, http.StatusNotFound},
+			},
+			title:    "WhenAllSuccess_ThenStatus20x",
+			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return nil
 				},
+				GetInteractiveFunc: getInteractiveFunc,
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
@@ -126,15 +171,29 @@ func TestUploadInteractivesHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{}, nil, nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
-			resp := httptest.NewRecorder()
-			if tc.formFile != "" {
-				tc.req, _ = newfileUploadRequest("/v1/interactives", map[string]string{"title": "value1", "uri": "value2"}, "attachment", tc.formFile)
+
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
+
+			for _, testReq := range tc.requests {
+				var req *http.Request
+				if tc.formFile != "" {
+					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.InteractiveUpdate{
+						Interactive: models.Interactive{
+							Metadata: &models.InteractiveMetadata{
+								Title: "value1",
+								Uri:   "value2",
+							},
+						},
+					})
+				} else {
+					req = httptest.NewRequest(testReq.method, testReq.uri, nil)
+				}
+
+				resp := httptest.NewRecorder()
+
+				api.Router.ServeHTTP(resp, req)
+				require.Equal(t, testReq.responseCode, resp.Result().StatusCode)
 			}
-
-			api.UploadInteractivesHandler(resp, tc.req)
-
-			require.Equal(t, tc.responseCode, resp.Result().StatusCode)
 		})
 	}
 }
@@ -196,26 +255,4 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			require.Equal(t, tc.responseCode, resp.Result().StatusCode)
 		})
 	}
-}
-
-// Creates a new file upload http request with optional extra params
-func newfileUploadRequest(uri string, params map[string]string, paramName, path string) (*http.Request, error) {
-	file, _ := os.Open(path)
-	fileContents, _ := ioutil.ReadAll(file)
-	fi, _ := file.Stat()
-	file.Close()
-
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	part, _ := writer.CreateFormFile(paramName, fi.Name())
-	part.Write(fileContents)
-
-	for key, val := range params {
-		_ = writer.WriteField(key, val)
-	}
-	request, err := http.NewRequest("POST", uri, body)
-	request.Header.Add("Content-Type", writer.FormDataContentType())
-	writer.Close()
-
-	return request, err
 }

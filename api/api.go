@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"net/http"
 
 	"github.com/ONSdigital/dp-interactives-api/config"
@@ -14,10 +16,6 @@ import (
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-)
-
-var (
-	ErrNoBody = errors.New("no body in http request")
 )
 
 type API struct {
@@ -64,6 +62,21 @@ func Setup(ctx context.Context, cfg *config.Config, r *mux.Router, auth AuthHand
 // Close is called during graceful shutdown to give the API an opportunity to perform any required disposal task
 func (*API) Close(ctx context.Context) error {
 	log.Info(ctx, "graceful shutdown of api complete")
+	return nil
+}
+
+func (api *API) uploadFile(sha, filename string, data []byte) error {
+	err := api.s3.ValidateBucket()
+	if err != nil {
+		return fmt.Errorf("invalid s3 bucket %w", err)
+	}
+
+	fileWithPath := fmt.Sprintf("%s/%s", sha, filename)
+	_, err = api.s3.Upload(&s3manager.UploadInput{Body: bytes.NewReader(data), Key: &fileWithPath})
+	if err != nil {
+		return fmt.Errorf("s3 upload error %w", err)
+	}
+
 	return nil
 }
 

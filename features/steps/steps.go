@@ -3,6 +3,9 @@ package steps
 import (
 	"context"
 	"encoding/json"
+	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
+	"net/http"
+	"net/http/httptest"
 	"time"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -19,6 +22,11 @@ func init() {
 
 func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have these interactives:$`, c.iHaveTheseInteractives)
+	//todo probabaly should move these to dp-component-test library
+	ctx.Step(`^I POST file "([^"]*)" with form-data "([^"]*)"$`, c.IPostToWithFormData)
+	ctx.Step(`^I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdata)
+	ctx.Step(`^I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdata)
+	ctx.Step(`^I should receive the following JSON response:$`, c.ApiFeature.IShouldReceiveTheFollowingJSONResponse)
 }
 
 func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.DocString) error {
@@ -75,4 +83,36 @@ func (c *InteractivesApiComponent) putDocumentInDatabase(document interface{}, i
 		return err
 	}
 	return nil
+}
+
+func (c *InteractivesApiComponent) IPostToWithFormData(formFile, path string, body *godog.DocString) error {
+	return c.makeRequest(http.MethodPost, path, formFile, []byte(body.Content))
+}
+
+func (c *InteractivesApiComponent) iPUTNoFileWithFormdata(path string, body *godog.DocString) error {
+	return c.makeRequest(http.MethodPut, path, "-", []byte(body.Content))
+}
+
+func (c *InteractivesApiComponent) iPUTFileWithFormdata(formFile, path string, body *godog.DocString) error {
+	return c.makeRequest(http.MethodPut, path, formFile, []byte(body.Content))
+}
+
+func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, data []byte) error {
+	handler, err := c.InitialiseService()
+	if err != nil {
+		return err
+	}
+
+	var update *models.InteractiveUpdate
+	err = json.Unmarshal(data, &update)
+	if err != nil {
+		return err
+	}
+
+	req := test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, update)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	c.ApiFeature.HttpResponse = w.Result()
+	return c.ApiFeature.StepError()
 }

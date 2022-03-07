@@ -1,88 +1,79 @@
 package api
 
 import (
-	"bytes"
-	"crypto/sha1"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
-	"path/filepath"
-	"strings"
-	"time"
-
-	"github.com/monoculum/formam/v3"
-
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
-)
-
-const (
-	maxUploadFileSizeMb = 50
+	"net/http"
 )
 
 var (
 	ErrEmptyBody   = errors.New("empty request body")
 	ErrInvalidBody = errors.New("body has invalid format")
 	ErrNoMetadata  = errors.New("no metadata specified")
+
+	NewID = func() string {
+		return uuid.NewV4().String()
+	}
 )
-
-type validatedReq struct {
-	Reader   *bytes.Reader
-	Sha      string
-	FileName string
-	Metadata *models.InteractiveMetadata
-}
-
-var NewID = func() string {
-	return uuid.NewV4().String()
-}
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	var err error
-	var retVal *validatedReq
 
 	// 1. Validate request
-	if retVal, err = validateReq(req, api); err != nil {
+	formDataRequest, err := NewFormDataRequest(req, api, WantOnlyOneAttachment)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "http response validation failed", err)
+		log.Error(ctx, "http request validation failed", err)
+		return
+	}
+	if len(formDataRequest.Update.Interactive.Metadata.Title) == 0 {
+		err = errors.New("title must be non empty")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(ctx, "title must be non empty", err)
 		return
 	}
 
-	err = api.s3.ValidateBucket()
+	// 2. Check if duplicate exists
+	vis, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
+	if vis != nil {
+		err = fmt.Errorf("archive already exists id (%s) with sha (%s)", vis.ID, vis.SHA)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(ctx, "archive with sha already exists", err)
+		return
+	}
+
+	// 3. Check "title is unique"
+	vis, _ = api.mongoDB.GetActiveInteractiveGivenTitle(ctx, formDataRequest.Update.Interactive.Metadata.Title)
+	if vis != nil {
+		err = fmt.Errorf("archive already exists id (%s) with title (%s)", vis.ID, vis.Metadata.Title)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(ctx, "archive with title already exists", err)
+		return
+	}
+
+	// 4. Process form data (S3)
+	err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "Invalid s3 bucket", err)
+		log.Error(ctx, "processing form data", err)
 		return
 	}
 
-	// 2. upload file to s3 bucket
-	fileWithPath := retVal.Sha + "/" + retVal.FileName
-	_, err = api.s3.Upload(&s3manager.UploadInput{Body: retVal.Reader, Key: &fileWithPath})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "S3 upload error", err)
-		return
-	}
-
-	// 3. Write to DB
+	// 5. Write to DB
 	id := NewID()
 	activeFlag := true
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		SHA:      retVal.Sha,
-		Metadata: retVal.Metadata,
+		SHA:      formDataRequest.Sha,
+		Metadata: formDataRequest.Update.Interactive.Metadata,
 		Active:   &activeFlag,
 		State:    models.ArchiveUploaded.String(),
-		Archive:  &models.Archive{Name: fileWithPath},
+		Archive:  &models.Archive{Name: formDataRequest.FileName},
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -90,8 +81,8 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	// 4. send kafka message to importer
-	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: fileWithPath})
+	// 5. send kafka message to importer
+	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: formDataRequest.FileName})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to notify importer", err)
@@ -124,36 +115,37 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 }
 
 func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
-
-	// 1. Check body json decodes
 	ctx := req.Context()
-	if req.Body == nil {
-		http.Error(w, "Empty body received", http.StatusBadRequest)
-		log.Error(ctx, "Empty body received", ErrEmptyBody)
-		return
-	}
-	defer req.Body.Close()
-	update := models.InteractiveUpdate{}
-	var bodyBytes []byte
-	var err error
-	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
-		http.Error(w, "Error reading body", http.StatusBadRequest)
-		log.Error(ctx, "Error reading body", ErrInvalidBody)
+
+	// 1. Validate request
+	formDataRequest, err := NewFormDataRequest(req, api, WantMaxOneAttachment)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(ctx, "http request validation failed", err)
 		return
 	}
 
-	if err := json.Unmarshal(bodyBytes, &update); err != nil {
-		http.Error(w, "Error reading body (unmarshal)", http.StatusBadRequest)
-		log.Error(ctx, "Error reading body (unmarshal)", ErrInvalidBody)
-		return
-	}
-	if update.ImportSuccessful == nil && update.Interactive.Metadata == nil {
-		http.Error(w, "Nothing to update", http.StatusBadRequest)
-		log.Error(ctx, "Nothing to update", ErrNoMetadata)
-		return
+	// 2. Upload file if requested
+	if formDataRequest.FileData != nil {
+		// Check if duplicate SHA exists
+		i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
+		if i != nil {
+			err = fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Error(ctx, "archive with sha already exists", err)
+			return
+		}
+
+		// Process form data (S3)
+		err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Error(ctx, "processing form data", err)
+			return
+		}
 	}
 
-	// 2. Check that id exists and is not deleted
+	// 3. Check that id exists and is not deleted
 	vars := mux.Vars(req)
 	id := vars["id"]
 	existing, err := api.mongoDB.GetInteractive(ctx, id)
@@ -168,28 +160,28 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	// 3. prepare updated model
+	// 5. prepare updated model
 	updatedModel := &models.Interactive{
 		State:         models.ImportFailure.String(),
-		ImportMessage: &update.ImportMessage,
+		ImportMessage: &formDataRequest.Update.ImportMessage,
 	}
 
-	if update.ImportSuccessful != nil && *update.ImportSuccessful {
+	if formDataRequest.Update.ImportSuccessful != nil && *formDataRequest.Update.ImportSuccessful {
 		updatedModel.State = models.ImportSuccess.String()
 	}
 
-	if update.Interactive.Metadata != nil {
-		updatedModel.Metadata = update.Interactive.Metadata
+	if formDataRequest.Update.Interactive.Metadata != nil {
+		updatedModel.Metadata = formDataRequest.Update.Interactive.Metadata
 		// dont update title (is the primary key)
 		updatedModel.Metadata.Title = existing.Metadata.Title
 	}
 
-	if update.Interactive.Archive != nil {
+	if formDataRequest.Update.Interactive.Archive != nil {
 		updatedModel.Archive = &models.Archive{
-			Name: update.Interactive.Archive.Name,
-			Size: update.Interactive.Archive.Size,
+			Name: formDataRequest.Update.Interactive.Archive.Name,
+			Size: formDataRequest.Update.Interactive.Archive.Size,
 		}
-		for _, f := range update.Interactive.Archive.Files {
+		for _, f := range formDataRequest.Update.Interactive.Archive.Files {
 			updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
 				Name:     f.Name,
 				Mimetype: f.Mimetype,
@@ -198,7 +190,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		}
 	}
 
-	// 5. write to DB
+	// 6. write to DB
 	err = api.mongoDB.UpsertInteractive(ctx, id, updatedModel)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -206,7 +198,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	WriteJSONBody(update.Interactive.Metadata, w, http.StatusOK)
+	WriteJSONBody(formDataRequest.Update.Interactive.Metadata, w, http.StatusOK)
 
 }
 
@@ -264,85 +256,4 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func validateReq(req *http.Request, api *API) (*validatedReq, error) {
-	var data []byte
-	var vErr error
-	var fileHeader *multipart.FileHeader
-	var fileKey string
-	metadata := &models.InteractiveMetadata{}
-
-	// 1. Expecting 1 file attachment and some metadata
-	vErr = req.ParseMultipartForm(50 << 20)
-	if vErr != nil {
-		return nil, fmt.Errorf("parsing form data (%s)", vErr.Error())
-	}
-	if numOfAttach := len(req.MultipartForm.File); numOfAttach != 1 {
-		return nil, fmt.Errorf("expecting only 1 attachment, not (%d)", numOfAttach)
-	}
-	if numOfMetadata := len(req.MultipartForm.Value); numOfMetadata == 0 {
-		return nil, fmt.Errorf("expecting some metadata")
-	}
-
-	dec := formam.NewDecoder(&formam.DecoderOptions{TagName: "bson"})
-	// special handler for date-time
-	dec.RegisterCustomType(func(vals []string) (interface{}, error) {
-		return time.Parse("2006-01-02T15:04:05Z07:00", vals[0])
-	}, []interface{}{time.Time{}}, []interface{}{&time.Time{}})
-	vErr = dec.Decode(req.Form, metadata)
-	if vErr != nil {
-		return nil, fmt.Errorf("parsing form data (%s)", vErr.Error())
-	}
-
-	for k, v := range req.MultipartForm.File {
-		fileHeader = v[0]
-		fileKey = k
-	}
-
-	file, _, vErr := req.FormFile(fileKey)
-	if vErr != nil {
-		return nil, fmt.Errorf("error reading form data (%s)", vErr.Error())
-	}
-	defer file.Close()
-
-	// 2. Expecting a zip file
-	if ext := filepath.Ext(fileHeader.Filename); ext != ".zip" {
-		return nil, fmt.Errorf("file extention (%s) should be zip", ext)
-	}
-	mb := fileHeader.Size / (1 << 20)
-	if mb >= maxUploadFileSizeMb {
-		return nil, fmt.Errorf("size of content (%d) MB exceeded allowed limit (%d MB)", maxUploadFileSizeMb, mb)
-	}
-
-	if data, vErr = ioutil.ReadAll(file); vErr != nil {
-		return nil, fmt.Errorf("http body read error (%s)", vErr.Error())
-	}
-
-	// title must be non empty
-	metadata.Title = strings.TrimSpace(metadata.Title)
-	if len(metadata.Title) == 0 {
-		return nil, fmt.Errorf("title must be non empty")
-	}
-
-	// 3. Check if duplicate exists
-	hasher := sha1.New()
-	hasher.Write(data)
-	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	vis, _ := api.mongoDB.GetActiveInteractiveGivenSha(req.Context(), sha)
-	if vis != nil {
-		return nil, fmt.Errorf("archive already exists id (%s) with sha (%s)", vis.ID, vis.SHA)
-	}
-
-	// 4. Check "title is unique"
-	vis, _ = api.mongoDB.GetActiveInteractiveGivenTitle(req.Context(), metadata.Title)
-	if vis != nil {
-		return nil, fmt.Errorf("archive with title (%s) already exists (%s)", vis.Metadata.Title, vis.ID)
-	}
-
-	return &validatedReq{
-		Reader:   bytes.NewReader(data),
-		Sha:      sha,
-		FileName: fileHeader.Filename,
-		Metadata: metadata}, nil
 }

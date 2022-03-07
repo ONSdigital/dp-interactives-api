@@ -27,6 +27,7 @@ func (c *componenttestSuite) InitializeScenario(ctx *godog.ScenarioContext) {
 	}
 
 	apiFeature := componenttest.NewAPIFeature(interactivesFtr.InitialiseService)
+	interactivesFtr.ApiFeature = apiFeature
 
 	ctx.BeforeScenario(func(*godog.Scenario) {
 		apiFeature.Reset()
