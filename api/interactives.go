@@ -33,7 +33,8 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		log.Error(ctx, "http request validation failed", err)
 		return
 	}
-	if len(formDataRequest.Update.Interactive.Metadata.Title) == 0 {
+	update := formDataRequest.Update.Interactive
+	if len(update.Metadata.Title) == 0 {
 		err = errors.New("title must be non empty")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "title must be non empty", err)
@@ -41,18 +42,18 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// 2. Check if duplicate exists
-	vis, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-	if vis != nil {
-		err = fmt.Errorf("archive already exists id (%s) with sha (%s)", vis.ID, vis.SHA)
+	existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
+	if existing != nil {
+		err = fmt.Errorf("archive already exists id (%s) with sha (%s)", existing.ID, existing.SHA)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "archive with sha already exists", err)
 		return
 	}
 
 	// 3. Check "title is unique"
-	vis, _ = api.mongoDB.GetActiveInteractiveGivenTitle(ctx, formDataRequest.Update.Interactive.Metadata.Title)
-	if vis != nil {
-		err = fmt.Errorf("archive already exists id (%s) with title (%s)", vis.ID, vis.Metadata.Title)
+	existing, _ = api.mongoDB.GetActiveInteractiveGivenTitle(ctx, update.Metadata.Title)
+	if existing != nil {
+		err = fmt.Errorf("archive already exists id (%s) with title (%s)", existing.ID, existing.Metadata.Title)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "archive with title already exists", err)
 		return
@@ -72,7 +73,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	interact := &models.Interactive{
 		ID:        id,
 		SHA:       formDataRequest.Sha,
-		Metadata:  formDataRequest.Update.Interactive.Metadata,
+		Metadata:  update.Metadata,
 		Active:    &activeFlag,
 		Published: &pubFlag,
 		State:     models.ArchiveUploaded.String(),
@@ -128,6 +129,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		log.Error(ctx, "http request validation failed", err)
 		return
 	}
+	update := formDataRequest.Update.Interactive
 
 	// 2. Upload file if requested
 	if formDataRequest.FileData != nil {
@@ -165,9 +167,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	}
 
 	// 4. fail if attempting to update the slug for a published model
-	if *existing.Published && formDataRequest.Update.Interactive.Metadata != nil && existing.Metadata.HumanReadableSlug != formDataRequest.Update.Interactive.Metadata.HumanReadableSlug {
+	if *existing.Published && update.Metadata != nil && existing.Metadata.HumanReadableSlug != update.Metadata.HumanReadableSlug {
 		http.Error(w, ErrCantUpdateSlug.Error(), http.StatusForbidden)
-		logMsg := fmt.Sprintf("attempting to update slug for a published model existing (%s), update (%s)", existing.Metadata.HumanReadableSlug, formDataRequest.Update.Interactive.Metadata.HumanReadableSlug)
+		logMsg := fmt.Sprintf("attempting to update slug for a published model existing (%s), update (%s)", existing.Metadata.HumanReadableSlug, update.Metadata.HumanReadableSlug)
 		log.Error(ctx, logMsg, ErrCantUpdateSlug)
 		return
 	}
@@ -175,7 +177,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	// 5. prepare updated model
 	updatedModel := &models.Interactive{
 		ID:            id,
-		Published:     formDataRequest.Update.Interactive.Published,
+		Published:     update.Published,
 		State:         models.ImportFailure.String(),
 		ImportMessage: &formDataRequest.Update.ImportMessage,
 	}
@@ -184,19 +186,19 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		updatedModel.State = models.ImportSuccess.String()
 	}
 
-	if formDataRequest.Update.Interactive.Metadata != nil {
-		updatedModel.Metadata = formDataRequest.Update.Interactive.Metadata
+	if update.Metadata != nil {
+		updatedModel.Metadata = update.Metadata
 		// dont update title (is the primary key)
 		updatedModel.Metadata.Title = existing.Metadata.Title
 		updatedModel.Metadata.Uri = existing.Metadata.Uri
 	}
 
-	if formDataRequest.Update.Interactive.Archive != nil {
+	if update.Archive != nil {
 		updatedModel.Archive = &models.Archive{
-			Name: formDataRequest.Update.Interactive.Archive.Name,
-			Size: formDataRequest.Update.Interactive.Archive.Size,
+			Name: update.Archive.Name,
+			Size: update.Archive.Size,
 		}
-		for _, f := range formDataRequest.Update.Interactive.Archive.Files {
+		for _, f := range update.Archive.Files {
 			updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
 				Name:     f.Name,
 				Mimetype: f.Mimetype,

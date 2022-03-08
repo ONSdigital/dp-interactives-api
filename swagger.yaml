@@ -15,7 +15,7 @@ paths:
       description: ""
       operationId: UploadInteractivesHandler
       requestBody:
-        $ref: "#/components/requestBodies/UploadInteractivesHandler"
+        $ref: "#/components/requestBodies/NewInteractiveHandler"
       responses:
         "202":
           description: Accepted (returns the interactive)
@@ -31,7 +31,7 @@ paths:
       tags:
         - interactives
       summary: List all interactives (exclude deleted)
-      description: Returns a list of interactives
+      description: ""
       operationId: ListInteractivesHandler
       parameters:
         - name: limit
@@ -75,7 +75,7 @@ paths:
             type: integer
             format: int64
       requestBody:
-        $ref: "#/components/requestBodies/UploadInteractivesHandler"
+        $ref: "#/components/requestBodies/UpdateInteractiveHandler"
       responses:
         "200":
           description: Success
@@ -93,7 +93,7 @@ paths:
       tags:
         - interactives
       summary: Find an interactive by ID
-      description: Returns a single interactive
+      description: ""
       operationId: GetInteractiveMetadataHandler
       parameters:
         - name: id
@@ -118,7 +118,7 @@ paths:
       tags:
         - interactives
       summary: Sets the interactive as inactive
-      description: Does not physically delete, only unsets the active flag.
+      description: "Does not physically delete, only unsets the active flag."
       operationId: DeleteInteractivesHandler
       parameters:
         - name: id
@@ -137,7 +137,7 @@ paths:
           description: Internal error
 components:
   requestBodies:
-    UploadInteractivesHandler:
+    NewInteractiveHandler:
       content:
         multipart/form-data:
           schema:
@@ -151,6 +151,23 @@ components:
                 $ref: '#/components/schemas/InteractiveUpdate'
             required:
               - file
+              - update
+          encoding:
+            update:
+              contentType: application/json
+    UpdateInteractiveHandler:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                description: Archive file for interactive
+                type: string
+                format: binary
+              update:
+                $ref: '#/components/schemas/InteractiveUpdate'
+            required:
               - update
           encoding:
             update:
