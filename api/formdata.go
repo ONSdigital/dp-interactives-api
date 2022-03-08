@@ -38,15 +38,15 @@ type FormDataRequest struct {
 	Update   *models.InteractiveUpdate
 }
 
-func NewFormDataRequest(req *http.Request, api *API, attachmentValidator AttachmentValidator) (*FormDataRequest, error) {
+func newFormDataRequest(req *http.Request, api *API, attachmentValidator AttachmentValidator) (*FormDataRequest, error) {
 	f := &FormDataRequest{
 		req: req,
 		api: api,
 	}
-	return f, f.Validate(attachmentValidator)
+	return f, f.validate(attachmentValidator)
 }
 
-func (f *FormDataRequest) Validate(attachmentValidator AttachmentValidator) error {
+func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) error {
 	var data []byte
 	var vErr error
 	var filename string

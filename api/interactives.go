@@ -27,7 +27,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	ctx := req.Context()
 
 	// 1. Validate request
-	formDataRequest, err := NewFormDataRequest(req, api, WantOnlyOneAttachment)
+	formDataRequest, err := newFormDataRequest(req, api, WantOnlyOneAttachment)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "http request validation failed", err)
@@ -122,7 +122,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	ctx := req.Context()
 
 	// 1. Validate request
-	formDataRequest, err := NewFormDataRequest(req, api, WantMaxOneAttachment)
+	formDataRequest, err := newFormDataRequest(req, api, WantMaxOneAttachment)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "http request validation failed", err)
