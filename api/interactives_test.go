@@ -22,18 +22,19 @@ import (
 )
 
 var (
-	active, inactive   = true, false
+	t, f               = true, false
 	getInteractiveFunc = func(ctx context.Context, id string) (*models.Interactive, error) {
 		if id != "" {
-			b := &active
+			b := &t
 			if id == "inactive-id" {
-				b = &inactive
+				b = &f
 			}
 			return &models.Interactive{
-				ID:     id,
-				SHA:    "sha",
-				State:  models.ImportSuccess.String(),
-				Active: b,
+				ID:        id,
+				SHA:       "sha",
+				State:     models.ImportSuccess.String(),
+				Active:    b,
+				Published: &f,
 				Metadata: &models.InteractiveMetadata{
 					Title: "title",
 				},

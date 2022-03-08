@@ -213,7 +213,15 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	WriteJSONBody(updatedModel, w, http.StatusOK)
+	// 7. get updated model
+	i, err := api.mongoDB.GetInteractive(ctx, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
+		return
+	}
+
+	WriteJSONBody(i, w, http.StatusOK)
 }
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {

@@ -21,7 +21,7 @@ import (
 )
 
 type InteractivesApiComponent struct {
-	ErrorFeature   componenttest.ErrorFeature
+	componenttest.ErrorFeature
 	ApiFeature     *componenttest.APIFeature
 	svc            *service.Service
 	errorChan      chan error

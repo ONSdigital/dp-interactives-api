@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
+	uuid "github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -26,7 +29,8 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I POST file "([^"]*)" with form-data "([^"]*)"$`, c.IPostToWithFormData)
 	ctx.Step(`^I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdata)
 	ctx.Step(`^I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdata)
-	ctx.Step(`^I should receive the following JSON response:$`, c.ApiFeature.IShouldReceiveTheFollowingJSONResponse)
+	ctx.Step(`^I should receive the following model response with status "([^"]*)":$`, c.IShouldReceiveTheFollowingModelResponse)
+
 }
 
 func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.DocString) error {
@@ -116,5 +120,41 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	handler.ServeHTTP(w, req)
 
 	c.ApiFeature.HttpResponse = w.Result()
-	return c.ApiFeature.StepError()
+	return c.StepError()
+}
+
+func (c *InteractivesApiComponent) IShouldReceiveTheFollowingModelResponse(expectedCodeStr string, expectedAPIResponse *godog.DocString) error {
+	if err := c.ApiFeature.TheHTTPStatusCodeShouldBe(expectedCodeStr); err != nil {
+		return err
+	}
+	if err := c.ApiFeature.TheResponseHeaderShouldBe("Content-Type", "application/json"); err != nil {
+		return err
+	}
+
+	var expected *models.Interactive
+	err := json.Unmarshal([]byte(expectedAPIResponse.Content), &expected)
+	if err != nil {
+		return err
+	}
+
+	var actual *models.Interactive
+	responseBody := c.ApiFeature.HttpResponse.Body
+	body, _ := ioutil.ReadAll(responseBody)
+	err = json.Unmarshal(body, &actual)
+	if err != nil {
+		return err
+	}
+
+	if expected.ID == "uuid" {
+		//fuzzy match only
+		_, err := uuid.FromString(actual.ID)
+		if err != nil {
+			return err
+		}
+		expected.ID, actual.ID = "", ""
+	}
+
+	assert.Equal(c, expected, actual)
+
+	return c.StepError()
 }
