@@ -3,14 +3,16 @@ package steps
 import (
 	"context"
 	"encoding/json"
-	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
-	uuid "github.com/satori/go.uuid"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"time"
 
+	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
+	uuid "github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
 	"github.com/ONSdigital/dp-interactives-api/models"
 
 	"github.com/cucumber/godog"
@@ -30,7 +32,15 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdata)
 	ctx.Step(`^I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdata)
 	ctx.Step(`^I should receive the following model response with status "([^"]*)":$`, c.IShouldReceiveTheFollowingModelResponse)
+	ctx.Step(`^I am an interactives user$`, c.adminJWTToken)
+	ctx.Step(`^As an interactives user I POST file "([^"]*)" with form-data "([^"]*)"$`, c.IPostToWithFormDataAsAdmin)
+	ctx.Step(`^As an interactives user I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdataAsAdmin)
+	ctx.Step(`^As an interactives user I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdataAsAdmin)
+}
 
+func (c *InteractivesApiComponent) adminJWTToken() error {
+	err := c.ApiFeature.ISetTheHeaderTo("Authorization", authorisationtest.AdminJWTToken)
+	return err
 }
 
 func (c *InteractivesApiComponent) iHaveTheseInteractives(datasetsJson *godog.DocString) error {
@@ -92,18 +102,30 @@ func (c *InteractivesApiComponent) putDocumentInDatabase(document interface{}, i
 }
 
 func (c *InteractivesApiComponent) IPostToWithFormData(formFile, path string, body *godog.DocString) error {
-	return c.makeRequest(http.MethodPost, path, formFile, []byte(body.Content))
+	return c.makeRequest(http.MethodPost, path, formFile, []byte(body.Content), false)
 }
 
 func (c *InteractivesApiComponent) iPUTNoFileWithFormdata(path string, body *godog.DocString) error {
-	return c.makeRequest(http.MethodPut, path, "-", []byte(body.Content))
+	return c.makeRequest(http.MethodPut, path, "-", []byte(body.Content), false)
 }
 
 func (c *InteractivesApiComponent) iPUTFileWithFormdata(formFile, path string, body *godog.DocString) error {
-	return c.makeRequest(http.MethodPut, path, formFile, []byte(body.Content))
+	return c.makeRequest(http.MethodPut, path, formFile, []byte(body.Content), false)
 }
 
-func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, data []byte) error {
+func (c *InteractivesApiComponent) IPostToWithFormDataAsAdmin(formFile, path string, body *godog.DocString) error {
+	return c.makeRequest(http.MethodPost, path, formFile, []byte(body.Content), true)
+}
+
+func (c *InteractivesApiComponent) iPUTNoFileWithFormdataAsAdmin(path string, body *godog.DocString) error {
+	return c.makeRequest(http.MethodPut, path, "-", []byte(body.Content), true)
+}
+
+func (c *InteractivesApiComponent) iPUTFileWithFormdataAsAdmin(formFile, path string, body *godog.DocString) error {
+	return c.makeRequest(http.MethodPut, path, formFile, []byte(body.Content), true)
+}
+
+func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, data []byte, admin bool) error {
 	handler, err := c.InitialiseService()
 	if err != nil {
 		return err
@@ -116,6 +138,9 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	}
 
 	req := test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, update)
+	if admin {
+		req.Header.Set("Authorization", authorisationtest.AdminJWTToken)
+	}
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 

@@ -2,10 +2,14 @@ package steps
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"net/http"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
+	"github.com/ONSdigital/dp-authorisation/v2/permissions"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
@@ -30,7 +34,47 @@ type InteractivesApiComponent struct {
 	HTTPServer     *http.Server
 	ServiceRunning bool
 	initialiser    service.Initialiser
-	s3             uploadMock.S3InterfaceMock
+}
+
+func setupFakePermissionsAPI() *authorisationtest.FakePermissionsAPI {
+	fakePermissionsAPI := authorisationtest.NewFakePermissionsAPI()
+	bundle := getPermissionsBundle()
+	fakePermissionsAPI.Reset()
+	fakePermissionsAPI.UpdatePermissionsBundleResponse(bundle)
+	return fakePermissionsAPI
+}
+
+func getPermissionsBundle() *permissions.Bundle {
+	return &permissions.Bundle{
+		"interactives:create": { // role
+			"groups/role-admin": { // group
+				{
+					ID: "1", // policy
+				},
+			},
+		},
+		"interactives:read": { // role
+			"groups/role-admin": { // group
+				{
+					ID: "2", // policy
+				},
+			},
+		},
+		"interactives:update": { // role
+			"groups/role-admin": { // group
+				{
+					ID: "2", // policy
+				},
+			},
+		},
+		"interactives:delete": { // role
+			"groups/role-admin": { // group
+				{
+					ID: "2", // policy
+				},
+			},
+		},
+	}
 }
 
 func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, error) {
@@ -61,6 +105,8 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 	}
 
 	c.MongoClient = mongodb
+
+	cfg.AuthorisationConfig.PermissionsAPIURL = setupFakePermissionsAPI().URL()
 
 	return c, nil
 }
@@ -140,12 +186,21 @@ func (f *InteractivesApiComponent) DoS3Client(_ context.Context, _ *config.Confi
 	}, nil
 }
 
+func (f *InteractivesApiComponent) DoGetAuthorisationMiddleware(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
+	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return middleware, nil
+}
+
 func (c *InteractivesApiComponent) setInitialiserMock() {
 	c.initialiser = &serviceMock.InitialiserMock{
-		DoGetMongoDBFunc:       c.DoGetMongoDB,
-		DoGetKafkaProducerFunc: c.DoGetMockedKafkaProducerOk,
-		DoGetHealthCheckFunc:   c.DoGetHealthcheckOk,
-		DoGetHTTPServerFunc:    c.DoGetHTTPServer,
-		DoGetS3ClientFunc:      c.DoS3Client,
+		DoGetMongoDBFunc:                 c.DoGetMongoDB,
+		DoGetKafkaProducerFunc:           c.DoGetMockedKafkaProducerOk,
+		DoGetHealthCheckFunc:             c.DoGetHealthcheckOk,
+		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
+		DoGetS3ClientFunc:                c.DoS3Client,
+		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	dpauth "github.com/ONSdigital/dp-authorisation/auth"
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/upload"
@@ -25,6 +26,7 @@ type Service struct {
 	healthCheck               HealthChecker
 	mongoDB                   api.MongoServer
 	interactivesKafkaProducer kafka.IProducer
+	authorisationMiddleware   authorisation.Middleware
 }
 
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
@@ -32,6 +34,12 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
+
+	authorisationMiddleware, err := serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig)
+	if err != nil {
+		log.Fatal(ctx, "could not instantiate authorisation middleware", err)
+		return nil, err
+	}
 
 	mongoDB, err := serviceList.GetMongoDB(ctx, cfg)
 	if err != nil {
@@ -57,7 +65,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		}
 	}
 
-	a := api.Setup(ctx, cfg, r, nil, mongoDB, producer, s3Client)
+	a := api.Setup(ctx, cfg, r, authorisationMiddleware, mongoDB, producer, s3Client)
 
 	//heathcheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -65,7 +73,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client); err != nil {
+	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client, authorisationMiddleware); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -88,6 +96,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		healthCheck:               hc,
 		mongoDB:                   mongoDB,
 		interactivesKafkaProducer: producer,
+		authorisationMiddleware:   authorisationMiddleware,
 	}, nil
 }
 
@@ -136,6 +145,11 @@ func (svc *Service) Close(ctx context.Context) error {
 			}
 		}
 
+		if err := svc.authorisationMiddleware.Close(ctx); err != nil {
+			log.Error(ctx, "failed to close authorisation middleware", err)
+			hasShutdownError = true
+		}
+
 		if !hasShutdownError {
 			gracefulShutdown = true
 		}
@@ -159,7 +173,8 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	mongoDB api.MongoServer,
 	producer kafka.IProducer,
-	s3 upload.S3Interface) (err error) {
+	s3 upload.S3Interface,
+	authorisationMiddleware authorisation.Middleware) (err error) {
 
 	hasErrors := false
 
@@ -178,6 +193,11 @@ func registerCheckers(ctx context.Context,
 			hasErrors = true
 			log.Error(ctx, "error adding check for s3", err)
 		}
+	}
+
+	if err := hc.AddCheck("permissions cache health check", authorisationMiddleware.HealthCheck); err != nil {
+		hasErrors = true
+		log.Error(ctx, "error adding check for permissions cache", err)
 	}
 
 	if hasErrors {

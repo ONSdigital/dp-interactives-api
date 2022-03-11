@@ -1,7 +1,8 @@
 Feature: Interactives API (List interactives)
 
     Scenario: GET a list of all interactives (skip deleted)
-        Given I have these interactives:
+        Given I am an interactives user
+        And I have these interactives:
             """
             [
                 {
@@ -103,7 +104,8 @@ Feature: Interactives API (List interactives)
             """
 
     Scenario: GET returns an empty array if nothing in the database
-        Given I have these interactives:
+        Given I am an interactives user
+        And I have these interactives:
             """
             []
             """

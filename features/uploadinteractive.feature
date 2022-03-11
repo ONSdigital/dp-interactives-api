@@ -1,15 +1,15 @@
 Feature: Interactives API (Get interactive)
 
-    Scenario: POST an invalid interactive
+    Scenario: POST return unauthorized
         When I POST "/v1/interactives"
         """
             {
             }
         """
-        Then the HTTP status code should be "400"
-
+        Then the HTTP status code should be "403"
+        
     Scenario: New interactive success with file
-        When I POST file "resources/interactives.zip" with form-data "/v1/interactives"
+        When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
             """
                 {
                     "interactive": {

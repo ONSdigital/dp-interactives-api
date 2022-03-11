@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -33,6 +34,7 @@ type Config struct {
 	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
 	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
 	MongoConfig                MongoConfig
+	AuthorisationConfig        *authorisation.Config
 }
 
 // MongoConfig contains the config required to connect to MongoDB.
@@ -81,6 +83,7 @@ func Get() (*Config, error) {
 			Password:   "",
 			IsSSL:      false,
 		},
+		AuthorisationConfig: authorisation.NewDefaultConfig(),
 	}
 
 	return cfg, envconfig.Process("", cfg)

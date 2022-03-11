@@ -37,6 +37,7 @@ func TestConfig(t *testing.T) {
 				So(cfg.MongoConfig.Username, ShouldEqual, "")
 				So(cfg.MongoConfig.Password, ShouldEqual, "")
 				So(cfg.MongoConfig.IsSSL, ShouldEqual, false)
+				So(cfg.AuthorisationConfig, ShouldNotBeNil)
 			})
 
 			Convey("Then a second call to config should return the same config", func() {

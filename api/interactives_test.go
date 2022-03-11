@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ONSdigital/dp-interactives-api/api"
+	authorisation "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
@@ -173,7 +174,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), nil, tc.mongoServer, tc.kafkaProducer, tc.s3)
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -248,12 +249,20 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), nil, tc.mongoServer, nil, nil)
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)
 
 			require.Equal(t, tc.responseCode, resp.Result().StatusCode)
 		})
+	}
+}
+
+func newAuthMiddlwareMock() *authorisation.MiddlewareMock {
+	return &authorisation.MiddlewareMock{
+		RequireFunc: func(permission string, handlerFunc http.HandlerFunc) http.HandlerFunc {
+			return handlerFunc
+		},
 	}
 }

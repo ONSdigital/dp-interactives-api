@@ -1,6 +1,7 @@
 Feature: Interactives API (Update interactive)
 
     Scenario: Update failed if no message body
+        Given I am an interactives user
         When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
@@ -10,7 +11,7 @@ Feature: Interactives API (Update interactive)
         Then the HTTP status code should be "400"
 
     Scenario: Update failed if interactive not in DB
-        When I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "import_successful": true,
@@ -51,7 +52,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "import_successful": true,
@@ -113,7 +114,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When I PUT file "resources/interactives.zip" with form-data "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
+        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
             """
                 {
                     "import_successful": true,
@@ -173,7 +174,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "import_successful": true,
@@ -264,7 +265,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When I PUT no file with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT no file with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "import_successful": true,
