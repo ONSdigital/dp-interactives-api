@@ -102,7 +102,7 @@ func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) erro
 	update.Interactive.Metadata.Title = strings.TrimSpace(update.Interactive.Metadata.Title)
 
 	hasher := sha1.New()
-	hasher.Write(f.FileData)
+	hasher.Write(data)
 	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 
 	f.FileData = data
