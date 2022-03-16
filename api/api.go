@@ -80,19 +80,19 @@ func (*API) Close(ctx context.Context) error {
 	return nil
 }
 
-func (api *API) uploadFile(sha, filename string, data []byte) error {
+func (api *API) uploadFile(sha, filename string, data []byte) (string, error) {
 	err := api.s3.ValidateBucket()
 	if err != nil {
-		return fmt.Errorf("invalid s3 bucket %w", err)
+		return "", fmt.Errorf("invalid s3 bucket %w", err)
 	}
 
 	fileWithPath := fmt.Sprintf("%s/%s", sha, filename)
 	_, err = api.s3.Upload(&s3manager.UploadInput{Body: bytes.NewReader(data), Key: &fileWithPath})
 	if err != nil {
-		return fmt.Errorf("s3 upload error %w", err)
+		return "", fmt.Errorf("s3 upload error %w", err)
 	}
 
-	return nil
+	return fileWithPath, nil
 }
 
 func WriteJSONBody(v interface{}, w http.ResponseWriter, httpStatus int) error {
