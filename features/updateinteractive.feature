@@ -30,6 +30,7 @@ Feature: Interactives API (Update interactive)
                         "active": false,
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "collectionID" : "",
                             "primary_topic": "updated primary topic",
                             "slug": "human readable slug",
                             "topics": [
@@ -59,6 +60,7 @@ Feature: Interactives API (Update interactive)
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "collectionID" : "",
                             "primary_topic": "updated primary topic",
                             "slug": "human readable slug",
                             "topics": [
@@ -92,6 +94,7 @@ Feature: Interactives API (Update interactive)
                         "published": true,
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "collectionID" : "",
                             "slug": "human readable slug",
                             "primary_topic": "",
                             "topics": [
@@ -121,6 +124,7 @@ Feature: Interactives API (Update interactive)
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "collectionID" : "",
                             "primary_topic": "updated primary topic",
                             "slug": "a different human readable slug",
                             "topics": [
@@ -152,6 +156,7 @@ Feature: Interactives API (Update interactive)
                         "active": true,
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "collectionID" : "",
                             "slug": "human readable slug",
                             "primary_topic": "",
                             "topics": [
@@ -184,6 +189,7 @@ Feature: Interactives API (Update interactive)
                         },
                         "metadata": {
                             "title": "ad fugiat cillum [should not get updated]",
+                            "collectionID" : "",
                             "slug": "updated human readable slug",
                             "primary_topic": "updated primary topic",
                             "topics": [
@@ -215,6 +221,7 @@ Feature: Interactives API (Update interactive)
                     },
                     "metadata": {
                         "title": "ad fugiat cillum",
+                        "collectionID" : "",
                         "primary_topic": "updated primary topic",
                         "slug": "updated human readable slug",
                         "topics": [
@@ -244,6 +251,7 @@ Feature: Interactives API (Update interactive)
                         "active": true,
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "collectionID" : "",
                             "primary_topic": "",
                             "topics": [
                             "topic1"
@@ -272,6 +280,7 @@ Feature: Interactives API (Update interactive)
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum [should not get updated]",
+                            "collectionID" : "",
                             "primary_topic": "updated primary topic",
                             "slug": "human readable slug",
                             "topics": [
@@ -303,6 +312,7 @@ Feature: Interactives API (Update interactive)
                     },
                     "metadata": {
                         "title": "ad fugiat cillum",
+                        "collectionID" : "",
                         "primary_topic": "updated primary topic",
                         "slug": "human readable slug",
                         "topics": [

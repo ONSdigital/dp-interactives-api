@@ -41,6 +41,7 @@ type InteractiveUpdate struct {
 
 type InteractiveMetadata struct { // TODO : Geography
 	Title             string    `bson:"title"                      json:"title"`
+	CollectionID      string    `bson:"collectionID"               json:"collectionID"`
 	PrimaryTopic      string    `bson:"primary_topic"              json:"primary_topic"`
 	Topics            []string  `bson:"topics"                     json:"topics"`
 	Surveys           []string  `bson:"surveys"                    json:"surveys"`

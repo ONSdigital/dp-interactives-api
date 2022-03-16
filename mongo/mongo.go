@@ -3,6 +3,8 @@ package mongo
 import (
 	"context"
 	"errors"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -123,11 +125,10 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 	return &vis, nil
 }
 
-func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) ([]*models.Interactive, int, error) {
+func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFilter *models.InteractiveMetadata) ([]*models.Interactive, int, error) {
 
-	selector := bson.M{}
-	selector["active"] = bson.M{"$eq": true}
-	f := m.Connection.GetConfiguredCollection().Find(selector).Sort(bson.M{"_id": -1})
+	filter := generateFilter(modelFilter)
+	f := m.Connection.GetConfiguredCollection().Find(filter).Sort(bson.M{"_id": -1})
 
 	// get total count and paginated values according to provided offset and limit
 	var values []*models.Interactive
@@ -137,6 +138,39 @@ func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int) ([]*mod
 	}
 
 	return values, totalCount, nil
+}
+
+// Reflect into the metadata structure
+// generate filter string depending on data type
+// string eq value
+// array in value(s)
+func generateFilter(model *models.InteractiveMetadata) bson.M {
+	filter := bson.M{}
+	filter["active"] = bson.M{"$eq": true}
+	if model == nil {
+		return filter
+	}
+	v := reflect.ValueOf(*model)
+	typeOfS := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		tag := strings.Split(typeOfS.Field(i).Tag.Get("json"), ",")[0]
+		valType := typeOfS.Field(i).Type.Kind()
+		val := v.Field(i).Interface()
+
+		switch valType {
+		case reflect.String:
+			if val != "" {
+				filter["metadata."+tag] = bson.M{"$eq": val}
+			}
+		case reflect.Slice:
+			stringSlice := val.([]string)
+			if len(stringSlice) > 0 {
+				filter["metadata."+tag] = bson.M{"$in": stringSlice}
+			}
+		}
+	}
+	return filter
 }
 
 func QueryPage(ctx context.Context, f *dpMongoDriver.Find, offset, limit int, result *[]*models.Interactive) (totalCount int, err error) {

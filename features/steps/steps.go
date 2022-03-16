@@ -1,6 +1,7 @@
 package steps
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -36,6 +37,7 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^As an interactives user I POST file "([^"]*)" with form-data "([^"]*)"$`, c.IPostToWithFormDataAsAdmin)
 	ctx.Step(`^As an interactives user I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdataAsAdmin)
 	ctx.Step(`^As an interactives user I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdataAsAdmin)
+	ctx.Step(`^As an interactives user with filter I GET '(.*)'$`, c.IGetWithFilterString)
 }
 
 func (c *InteractivesApiComponent) adminJWTToken() error {
@@ -117,6 +119,10 @@ func (c *InteractivesApiComponent) IPostToWithFormDataAsAdmin(formFile, path str
 	return c.makeRequest(http.MethodPost, path, formFile, []byte(body.Content), true)
 }
 
+func (c *InteractivesApiComponent) IGetWithFilterString(path string) error {
+	return c.makeRequest(http.MethodGet, path, "-", nil, true)
+}
+
 func (c *InteractivesApiComponent) iPUTNoFileWithFormdataAsAdmin(path string, body *godog.DocString) error {
 	return c.makeRequest(http.MethodPut, path, "-", []byte(body.Content), true)
 }
@@ -131,16 +137,22 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 		return err
 	}
 
+	var req *http.Request
 	var update *models.InteractiveUpdate
-	err = json.Unmarshal(data, &update)
-	if err != nil {
-		return err
-	}
+	if data != nil {
+		err = json.Unmarshal(data, &update)
+		if err != nil {
+			return err
+		}
 
-	req := test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, update)
+		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, update)
+	} else {
+		req = httptest.NewRequest(method, "http://foo"+path, bytes.NewReader(data))
+	}
 	if admin {
 		req.Header.Set("Authorization", authorisationtest.AdminJWTToken)
 	}
+
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 

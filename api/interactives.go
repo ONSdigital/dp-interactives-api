@@ -1,15 +1,17 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
-	"net/http"
 )
 
 var (
@@ -229,7 +231,20 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
 	// fetches all/filtered visulatisations
 	ctx := req.Context()
-	db, totalCount, err := api.mongoDB.ListInteractives(ctx, offset, limit)
+	var filter *models.InteractiveMetadata
+	// get an optional metadata filter
+	filterJson := req.URL.Query().Get("filter")
+	if filterJson != "" {
+		defer req.Body.Close()
+		filter = &models.InteractiveMetadata{}
+
+		if err := json.Unmarshal([]byte(filterJson), &filter); err != nil {
+			http.Error(w, "Error unmarshalling body", http.StatusBadRequest)
+			log.Error(ctx, "Error unmarshalling body", ErrInvalidBody)
+			return nil, 0, err
+		}
+	}
+	db, totalCount, err := api.mongoDB.ListInteractives(ctx, offset, limit, filter)
 	if err != nil {
 		log.Error(ctx, "api endpoint getDatasets datastore.GetDatasets returned an error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

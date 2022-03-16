@@ -48,6 +48,12 @@ paths:
           schema:
             type: integer
             format: int64
+        - name: filter
+          in: query
+          description: '{"title":"Interactive title","keywords": ["kwd1", "kwd2"]}'
+          required: false
+          schema:
+            $ref: "#/components/schemas/InteractiveMetadata"
       responses:
         "200":
           description: Success
@@ -173,6 +179,32 @@ components:
             update:
               contentType: application/json
   schemas:
+    InteractiveMetadata:
+      type: object
+      properties:
+        title:
+          type: string
+        collectionID:
+          type: string
+        edition:
+          type: string
+        keywords:
+          type: array
+          items: {}
+        meta_description:
+          type: string
+        topics:
+          type: array
+          items: {}
+        surveys:
+          type: array
+          items: {}
+        release_date:
+          type: string
+        uri:
+          type: string
+        primary_topic:
+          type: string
     InteractiveUpdate:
       type: object
       properties:
@@ -210,28 +242,6 @@ components:
                   name:
                     type: string
         metadata:
-          type: object
-          properties:
-            edition:
-              type: string
-            keywords:
-              type: array
-              items: {}
-            meta_description:
-              type: string
-            title:
-              type: string
-            topics:
-              type: array
-              items: {}
-            surveys:
-              type: array
-              items: {}
-            release_date:
-              type: string
-            uri:
-              type: string
-            primary_topic:
-              type: string
+          $ref: "#/components/schemas/InteractiveMetadata"
       xml:
         name: Interactive
