@@ -44,10 +44,6 @@ var funcDoGetMongoDbErr = func(ctx context.Context, cfg *config.Config) (api.Mon
 	return nil, errMongoDB
 }
 
-/*var funcDoGetKafkaProducerErr = func(ctx context.Context, brokers []string, maxBytes int) (kafka.IProducer, error) {
-	return nil, errKafkaProducer
-}*/
-
 var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 	return nil, errHealthcheck
 }
@@ -147,17 +143,17 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising mongoDB returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:       funcDoGetMongoDbErr,
-				DoGetKafkaProducerFunc: funcDoGetKafkaProducerOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
-				DoGetS3ClientFunc:      funcDoGetS3Ok,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:                 funcDoGetMongoDbErr,
+				DoGetKafkaProducerFunc:           funcDoGetKafkaProducerOk,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
+				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
-		
+
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errMongoDB)
 				So(svcList.MongoDB, ShouldBeFalse)
@@ -169,17 +165,17 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising kafka image-uploaded producer returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetKafkaProducerFunc: funcDoGetKafkaProducerErr,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
-				DoGetS3ClientFunc:      funcDoGetS3Ok,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:                 funcDoGetMongoDbOk,
+				DoGetKafkaProducerFunc:           funcDoGetKafkaProducerErr,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
+				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
-		
+
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errKafkaProducer)
 				So(svcList.MongoDB, ShouldBeTrue)
@@ -191,17 +187,17 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising s3 returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetKafkaProducerFunc: funcDoGetKafkaProducerOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
-				DoGetS3ClientFunc:      funcDoGetS3Err,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:                 funcDoGetMongoDbOk,
+				DoGetKafkaProducerFunc:           funcDoGetKafkaProducerOk,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
+				DoGetS3ClientFunc:                funcDoGetS3Err,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
-		
+
 			Convey("Then service Run fails with the same error and the flag is not set. No further initialisations are attempted", func() {
 				So(err, ShouldResemble, errS3)
 				So(svcList.MongoDB, ShouldBeTrue)
@@ -213,12 +209,12 @@ func TestRun(t *testing.T) {
 
 		Convey("Given that initialising healthcheck returns an error", func() {
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetHealthCheckFunc:   funcDoGetHealthcheckErr,
-				DoGetKafkaProducerFunc: funcDoGetKafkaProducerOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
-				DoGetS3ClientFunc:      funcDoGetS3Ok,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServerNil,
+				DoGetMongoDBFunc:                 funcDoGetMongoDbOk,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckErr,
+				DoGetKafkaProducerFunc:           funcDoGetKafkaProducerOk,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
+				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
@@ -235,13 +231,13 @@ func TestRun(t *testing.T) {
 		})
 
 		Convey("Given that Checkers cannot be registered", func() {
-		
+
 			errAddheckFail := errors.New("Error(s) registering checkers for healthcheck")
 			hcMockAddFail := &serviceMock.HealthCheckerMock{
 				AddCheckFunc: func(name string, checker healthcheck.Checker) error { return errAddheckFail },
 				StartFunc:    func(ctx context.Context) {},
 			}
-		
+
 			initMock := &serviceMock.InitialiserMock{
 				DoGetHTTPServerFunc:    funcDoGetHTTPServerNil,
 				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
@@ -250,13 +246,13 @@ func TestRun(t *testing.T) {
 				DoGetHealthCheckFunc: func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
 					return hcMockAddFail, nil
 				},
-				DoGetHealthClientFunc: funcDoGetHealthClientOk,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
 			_, err := service.Run(ctx, cfg, svcList, testBuildTime, testGitCommit, testVersion, svcErrors)
-		
+
 			Convey("Then service Run fails, but all checks try to register", func() {
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddheckFail.Error()))
@@ -273,12 +269,12 @@ func TestRun(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised", func() {
 
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetHTTPServer,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetKafkaProducerFunc: funcDoGetKafkaProducerOk,
-				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
-				DoGetS3ClientFunc:      funcDoGetS3Ok,
+				DoGetHTTPServerFunc:              funcDoGetHTTPServer,
+				DoGetMongoDBFunc:                 funcDoGetMongoDbOk,
+				DoGetKafkaProducerFunc:           funcDoGetKafkaProducerOk,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
+				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
@@ -301,7 +297,7 @@ func TestRun(t *testing.T) {
 				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "S3 checker")
 				So(hcMock.AddCheckCalls()[3].Name, ShouldResemble, "permissions cache health check")
 				So(initMock.DoGetHTTPServerCalls(), ShouldHaveLength, 1)
-				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, "localhost:27500")
+				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, ":27500")
 				So(hcMock.StartCalls(), ShouldHaveLength, 1)
 				serverWg.Wait() // Wait for HTTP server go-routine to finish
 				So(serverMock.ListenAndServeCalls(), ShouldHaveLength, 1)
@@ -311,12 +307,12 @@ func TestRun(t *testing.T) {
 		Convey("Given that all dependencies are successfully initialised but the http server fails", func() {
 
 			initMock := &serviceMock.InitialiserMock{
-				DoGetHTTPServerFunc:    funcDoGetFailingHTTPSerer,
-				DoGetMongoDBFunc:       funcDoGetMongoDbOk,
-				DoGetKafkaProducerFunc: funcDoGetKafkaProducerOk,
-				DoGetHealthCheckFunc:   funcDoGetHealthcheckOk,
-				DoGetHealthClientFunc:  funcDoGetHealthClientOk,
-				DoGetS3ClientFunc:      funcDoGetS3Ok,
+				DoGetHTTPServerFunc:              funcDoGetFailingHTTPSerer,
+				DoGetMongoDBFunc:                 funcDoGetMongoDbOk,
+				DoGetKafkaProducerFunc:           funcDoGetKafkaProducerOk,
+				DoGetHealthCheckFunc:             funcDoGetHealthcheckOk,
+				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
+				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 			}
 			svcErrors := make(chan error, 1)
@@ -413,7 +409,9 @@ func TestClose(t *testing.T) {
 				},
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
 				DoGetS3ClientFunc:     func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) { return s3Mock, nil },
-				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {return authorisationMiddleware, nil},
+				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+					return authorisationMiddleware, nil
+				},
 			}
 
 			svcErrors := make(chan error, 1)
@@ -447,7 +445,9 @@ func TestClose(t *testing.T) {
 				},
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
 				DoGetS3ClientFunc:     func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) { return s3Mock, nil },
-				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {return authorisationMiddleware, nil},
+				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
+					return authorisationMiddleware, nil
+				},
 			}
 
 			svcErrors := make(chan error, 1)

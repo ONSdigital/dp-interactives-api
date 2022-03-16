@@ -62,7 +62,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// 4. Process form data (S3)
-	err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
+	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "processing form data", err)
@@ -89,7 +89,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// 5. send kafka message to importer
-	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: formDataRequest.FileName})
+	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: uri})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to notify importer", err)
@@ -145,7 +145,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		}
 
 		// Process form data (S3)
-		err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
+		_, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			log.Error(ctx, "processing form data", err)

@@ -56,8 +56,11 @@ func Get() (*Config, error) {
 		return cfg, nil
 	}
 
+	auth := authorisation.NewDefaultConfig()
+	auth.Enabled = false
+
 	cfg = &Config{
-		BindAddr:                   "localhost:27500",
+		BindAddr:                   ":27500",
 		PublishingEnabled:          true,
 		ApiURL:                     "http://localhost:27500",
 		AwsRegion:                  "eu-west-1",
@@ -83,7 +86,7 @@ func Get() (*Config, error) {
 			Password:   "",
 			IsSSL:      false,
 		},
-		AuthorisationConfig: authorisation.NewDefaultConfig(),
+		AuthorisationConfig: auth,
 	}
 
 	return cfg, envconfig.Process("", cfg)

@@ -18,7 +18,7 @@ func TestConfig(t *testing.T) {
 			})
 
 			Convey("Then the values should be set to the expected defaults", func() {
-				So(cfg.BindAddr, ShouldEqual, "localhost:27500")
+				So(cfg.BindAddr, ShouldEqual, ":27500")
 				So(cfg.ApiURL, ShouldResemble, "http://localhost:27500")
 				So(cfg.Brokers, ShouldResemble, []string{"localhost:9092"})
 				So(cfg.KafkaVersion, ShouldEqual, "1.0.2")
