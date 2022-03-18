@@ -65,7 +65,7 @@ func Get() (*Config, error) {
 		ApiURL:                     "http://localhost:27500",
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
-		Brokers:                    []string{"localhost:9092"},
+		Brokers:                    []string{"localhost:9093"},
 		MinBrokers:                 1,
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,

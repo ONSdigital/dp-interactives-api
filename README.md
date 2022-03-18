@@ -4,7 +4,10 @@ Manages all interactives state and metadata (in persistent store). Talks to dp-i
 
 ## Getting started
 
+* Start docker-compose environment here: https://github.com/ONSdigital/dp-interactives-compose: `docker-compose --env-file=start-backend.env`
 * Run `make debug`
+* `curl 'http://localhost:27500/health' | jq`
+* Should see 200 with "status: OK"
 
 ### Dependencies
 
