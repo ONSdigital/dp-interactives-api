@@ -184,7 +184,9 @@ components:
       properties:
         title:
           type: string
-        collectionID:
+        collection_id:
+          type: string
+        resource_id:
           type: string
         edition:
           type: string

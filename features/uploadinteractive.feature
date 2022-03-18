@@ -15,7 +15,6 @@ Feature: Interactives API (Get interactive)
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum",
-                            "collectionID" : "",
                             "slug": "human readable slug",
                             "primary_topic": "primary topic",
                             "topics": [
@@ -47,7 +46,6 @@ Feature: Interactives API (Get interactive)
                     },
                     "metadata": {
                         "title": "ad fugiat cillum",
-                        "collectionID" : "",
                         "primary_topic": "primary topic",
                         "slug": "human readable slug",
                         "topics": [

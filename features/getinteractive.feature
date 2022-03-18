@@ -15,7 +15,6 @@ Feature: Interactives API (Get interactive)
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
                         "title": "ad fugiat cillum",
-                        "collectionID" : "",
                         "primary_topic": "",
                         "slug": "human readable slug",
                         "topics": [
@@ -50,7 +49,6 @@ Feature: Interactives API (Get interactive)
                     },
                     "metadata": {
                         "title": "ad fugiat cillum",
-                        "collectionID" : "",
                         "slug": "human readable slug",
                         "primary_topic": "",
                         "topics": [
@@ -82,7 +80,6 @@ Feature: Interactives API (Get interactive)
                     "published": false,
                     "metadata": {
                         "title": "ad fugiat cillum",
-                        "collectionID" : "",
                         "slug": "human readable slug",
                         "primary_topic": "",
                         "topics": [
@@ -122,7 +119,6 @@ Feature: Interactives API (Get interactive)
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
                         "title": "ad fugiat cillum",
-                        "collectionID" : "",
                         "primary_topic": "",
                         "slug": "human readable slug",
                         "topics": [

@@ -41,13 +41,14 @@ type InteractiveUpdate struct {
 
 type InteractiveMetadata struct { // TODO : Geography
 	Title             string    `bson:"title"                      json:"title"`
-	CollectionID      string    `bson:"collectionID"               json:"collectionID"`
 	PrimaryTopic      string    `bson:"primary_topic"              json:"primary_topic"`
 	Topics            []string  `bson:"topics"                     json:"topics"`
 	Surveys           []string  `bson:"surveys"                    json:"surveys"`
 	ReleaseDate       time.Time `bson:"release_date"               json:"release_date"`
 	Uri               string    `bson:"uri"                        json:"uri"`
 	HumanReadableSlug string    `bson:"slug"                       json:"slug"`
+	ResourceID        string    `bson:"resource_id,omitempty"      json:"resource_id,omitempty"`
+	CollectionID      string    `bson:"collection_id,omitempty"    json:"collection_id,omitempty"`
 	Edition           string    `bson:"edition,omitempty"          json:"edition,omitempty"`
 	Keywords          []string  `bson:"keywords,omitempty"         json:"keywords,omitempty"`
 	MetaDescription   string    `bson:"meta_description,omitempty" json:"meta_description,omitempty"`

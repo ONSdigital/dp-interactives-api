@@ -14,7 +14,6 @@ Feature: Interactives API (Delete interactive)
                         "active": true,
                         "metadata": {
                             "title": "ad fugiat cillum",
-                            "collectionID" : "",
                             "primary_topic": "",
                             "topics": [
                             "topic1"

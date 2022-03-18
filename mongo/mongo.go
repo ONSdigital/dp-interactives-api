@@ -150,6 +150,14 @@ func generateFilter(model *models.InteractiveMetadata) bson.M {
 	if model == nil {
 		return filter
 	}
+	
+	// if there is a resource_id set, filter using that
+	if model.ResourceID != "" {
+		filter["metadata.resource_id"] = bson.M{"$eq": model.ResourceID}
+		return filter
+	}
+
+	// else filter using other metadata
 	v := reflect.ValueOf(*model)
 	typeOfS := v.Type()
 
