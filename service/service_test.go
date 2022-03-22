@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
 	"sync"
 	"testing"
@@ -26,31 +27,30 @@ import (
 )
 
 var (
-	ctx           = context.Background()
-	testBuildTime = "BuildTime"
-	testGitCommit = "GitCommit"
-	testVersion   = "Version"
-	errServer     = errors.New("HTTP Server error")
-)
-
-var (
+	ctx              = context.Background()
+	testBuildTime    = "BuildTime"
+	testGitCommit    = "GitCommit"
+	testVersion      = "Version"
+	errServer        = errors.New("HTTP Server error")
 	errMongoDB       = errors.New("mongoDB error")
 	errKafkaProducer = errors.New("kafkaProducer error")
 	errHealthcheck   = errors.New("healthCheck error")
 	errS3            = errors.New("s3 error")
+
+	noopGen            = func(string) string { return "" }
+	funcDoGetGenerator = func() (models.Generator, models.Generator, models.Generator) {
+		return noopGen, noopGen, noopGen
+	}
+	funcDoGetMongoDbErr = func(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
+		return nil, errMongoDB
+	}
+	funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
+		return nil, errHealthcheck
+	}
+	funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
+		return nil
+	}
 )
-
-var funcDoGetMongoDbErr = func(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
-	return nil, errMongoDB
-}
-
-var funcDoGetHealthcheckErr = func(cfg *config.Config, buildTime string, gitCommit string, version string) (service.HealthChecker, error) {
-	return nil, errHealthcheck
-}
-
-var funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
-	return nil
-}
 
 func TestRun(t *testing.T) {
 
@@ -149,6 +149,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -171,6 +172,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -193,6 +195,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetS3ClientFunc:                funcDoGetS3Err,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -216,6 +219,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -248,6 +252,7 @@ func TestRun(t *testing.T) {
 				},
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -276,6 +281,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -314,6 +320,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
+				DoGetGeneratorsFunc:              funcDoGetGenerator,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -412,6 +419,7 @@ func TestClose(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
+				DoGetGeneratorsFunc: funcDoGetGenerator,
 			}
 
 			svcErrors := make(chan error, 1)
@@ -448,6 +456,7 @@ func TestClose(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
+				DoGetGeneratorsFunc: funcDoGetGenerator,
 			}
 
 			svcErrors := make(chan error, 1)

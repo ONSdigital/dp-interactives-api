@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -28,11 +29,14 @@ const (
 )
 
 type API struct {
-	Router   *mux.Router
-	mongoDB  MongoServer
-	auth     authorisation.Middleware
-	producer *event.AvroProducer
-	s3       upload.S3Interface
+	Router        *mux.Router
+	mongoDB       MongoServer
+	auth          authorisation.Middleware
+	producer      *event.AvroProducer
+	s3            upload.S3Interface
+	newUUID       models.Generator
+	newResourceID models.Generator
+	newSlug       models.Generator
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
@@ -42,7 +46,10 @@ func Setup(ctx context.Context,
 	auth authorisation.Middleware,
 	mongoDB MongoServer,
 	kafkaProducer kafka.IProducer,
-	s3 upload.S3Interface) *API {
+	s3 upload.S3Interface,
+	newUUID models.Generator,
+	newResourceID models.Generator,
+	newSlug models.Generator) *API {
 
 	var kProducer *event.AvroProducer
 	if kafkaProducer != nil {
@@ -52,11 +59,14 @@ func Setup(ctx context.Context,
 	}
 
 	api := &API{
-		Router:   r,
-		mongoDB:  mongoDB,
-		auth:     auth,
-		s3:       s3,
-		producer: kProducer,
+		Router:        r,
+		mongoDB:       mongoDB,
+		auth:          auth,
+		s3:            s3,
+		producer:      kProducer,
+		newUUID:       newUUID,
+		newSlug:       newSlug,
+		newResourceID: newResourceID,
 	}
 
 	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)

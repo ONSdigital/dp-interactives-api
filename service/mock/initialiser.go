@@ -9,6 +9,7 @@ import (
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/service"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
@@ -28,6 +29,9 @@ var _ service.Initialiser = &InitialiserMock{}
 // 		mockedInitialiser := &InitialiserMock{
 // 			DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 // 				panic("mock out the DoGetAuthorisationMiddleware method")
+// 			},
+// 			DoGetGeneratorsFunc: func() (models.Generator, models.Generator, models.Generator) {
+// 				panic("mock out the DoGetGenerators method")
 // 			},
 // 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
 // 				panic("mock out the DoGetHTTPServer method")
@@ -57,6 +61,9 @@ type InitialiserMock struct {
 	// DoGetAuthorisationMiddlewareFunc mocks the DoGetAuthorisationMiddleware method.
 	DoGetAuthorisationMiddlewareFunc func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
 
+	// DoGetGeneratorsFunc mocks the DoGetGenerators method.
+	DoGetGeneratorsFunc func() (models.Generator, models.Generator, models.Generator)
+
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
 
@@ -83,6 +90,9 @@ type InitialiserMock struct {
 			Ctx context.Context
 			// AuthorisationConfig is the authorisationConfig argument value.
 			AuthorisationConfig *authorisation.Config
+		}
+		// DoGetGenerators holds details about calls to the DoGetGenerators method.
+		DoGetGenerators []struct {
 		}
 		// DoGetHTTPServer holds details about calls to the DoGetHTTPServer method.
 		DoGetHTTPServer []struct {
@@ -132,6 +142,7 @@ type InitialiserMock struct {
 		}
 	}
 	lockDoGetAuthorisationMiddleware sync.RWMutex
+	lockDoGetGenerators              sync.RWMutex
 	lockDoGetHTTPServer              sync.RWMutex
 	lockDoGetHealthCheck             sync.RWMutex
 	lockDoGetHealthClient            sync.RWMutex
@@ -172,6 +183,32 @@ func (mock *InitialiserMock) DoGetAuthorisationMiddlewareCalls() []struct {
 	mock.lockDoGetAuthorisationMiddleware.RLock()
 	calls = mock.calls.DoGetAuthorisationMiddleware
 	mock.lockDoGetAuthorisationMiddleware.RUnlock()
+	return calls
+}
+
+// DoGetGenerators calls DoGetGeneratorsFunc.
+func (mock *InitialiserMock) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
+	if mock.DoGetGeneratorsFunc == nil {
+		panic("InitialiserMock.DoGetGeneratorsFunc: method is nil but Initialiser.DoGetGenerators was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockDoGetGenerators.Lock()
+	mock.calls.DoGetGenerators = append(mock.calls.DoGetGenerators, callInfo)
+	mock.lockDoGetGenerators.Unlock()
+	return mock.DoGetGeneratorsFunc()
+}
+
+// DoGetGeneratorsCalls gets all the calls that were made to DoGetGenerators.
+// Check the length with:
+//     len(mockedInitialiser.DoGetGeneratorsCalls())
+func (mock *InitialiserMock) DoGetGeneratorsCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockDoGetGenerators.RLock()
+	calls = mock.calls.DoGetGenerators
+	mock.lockDoGetGenerators.RUnlock()
 	return calls
 }
 

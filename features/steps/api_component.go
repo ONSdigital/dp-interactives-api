@@ -2,6 +2,8 @@ package steps
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-interactives-api/models"
+	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"strings"
 
@@ -194,6 +196,13 @@ func (f *InteractivesApiComponent) DoGetAuthorisationMiddleware(ctx context.Cont
 	return middleware, nil
 }
 
+func (f *InteractivesApiComponent) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
+	emptyUUID := func(string) string { return uuid.Nil.String() }
+	fakeResourceID := func(string) string { return "AbcdE123" }
+	noopSlug := func(in string) string { return in }
+	return emptyUUID, fakeResourceID, noopSlug
+}
+
 func (c *InteractivesApiComponent) setInitialiserMock() {
 	c.initialiser = &serviceMock.InitialiserMock{
 		DoGetMongoDBFunc:                 c.DoGetMongoDB,
@@ -202,5 +211,6 @@ func (c *InteractivesApiComponent) setInitialiserMock() {
 		DoGetHTTPServerFunc:              c.DoGetHTTPServer,
 		DoGetS3ClientFunc:                c.DoS3Client,
 		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
+		DoGetGeneratorsFunc:              c.DoGetGenerators,
 	}
 }

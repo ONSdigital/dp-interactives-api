@@ -11,18 +11,12 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
-	uuid "github.com/satori/go.uuid"
 )
 
 var (
-	ErrEmptyBody      = errors.New("empty request body")
+	enabled, disabled = true, false
 	ErrInvalidBody    = errors.New("body has invalid format")
-	ErrNoMetadata     = errors.New("no metadata specified")
 	ErrCantUpdateSlug = errors.New("cannot update readable slug for a published interactive")
-
-	NewID = func() string {
-		return uuid.NewV4().String()
-	}
 )
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Request) {
@@ -70,16 +64,18 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// 5. Write to DB
-	id := NewID()
-	var activeFlag, pubFlag = true, false
+	id := api.newUUID("")
+	update.Metadata.ResourceID = api.newResourceID("")
+	update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.Title)
+
 	interact := &models.Interactive{
 		ID:        id,
 		SHA:       formDataRequest.Sha,
 		Metadata:  update.Metadata,
-		Active:    &activeFlag,
-		Published: &pubFlag,
+		Active:    &enabled,
+		Published: &disabled,
 		State:     models.ArchiveUploaded.String(),
-		Archive:   &models.Archive{Name: formDataRequest.FileName},
+		Archive:   &models.Archive{Name: uri},
 	}
 	err = api.mongoDB.UpsertInteractive(ctx, id, interact)
 	if err != nil {
@@ -284,9 +280,8 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// set to inactive
-	activeFlag := false
 	err = api.mongoDB.UpsertInteractive(ctx, id, &models.Interactive{
-		Active: &activeFlag,
+		Active: &disabled,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

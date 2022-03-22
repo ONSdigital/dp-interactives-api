@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -96,6 +97,11 @@ func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, au
 	return e.Init.DoGetAuthorisationMiddleware(ctx, authorisationConfig)
 }
 
+// GetGenerators returns all the attribute generators necessary - i.e. uuid, resourceId and slug
+func (e *ExternalServiceList) GetGenerators() (models.Generator, models.Generator, models.Generator) {
+	return e.Init.DoGetGenerators()
+}
+
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
@@ -184,4 +190,9 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 // DoGetAuthorisationMiddleware creates authorisation middleware for the given config
 func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig)
+}
+
+// DoGetGenerators creates authorisation middleware for the given config
+func (e *Init) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
+	return models.GenerateUUID(), models.GenerateResourceId(), models.GenerateHumanReadableSlug()
 }

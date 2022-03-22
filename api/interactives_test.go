@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/api"
 	authorisation "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
+	"github.com/ONSdigital/dp-interactives-api/api"
 	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
@@ -24,6 +24,7 @@ import (
 
 var (
 	t, f               = true, false
+	noopGen            = func(string) string { return "" }
 	getInteractiveFunc = func(ctx context.Context, id string) (*models.Interactive, error) {
 		if id != "" {
 			b := &t
@@ -174,7 +175,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3)
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, noopGen, noopGen, noopGen)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -249,7 +250,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil)
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, noopGen, noopGen, noopGen)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)

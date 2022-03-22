@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
@@ -26,6 +27,7 @@ type Initialiser interface {
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
 	DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)
 	DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
+	DoGetGenerators() (models.Generator, models.Generator, models.Generator)
 }
 
 // HTTPServer defines the required methods from the HTTP server
