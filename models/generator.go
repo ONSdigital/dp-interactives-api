@@ -32,7 +32,7 @@ func GenerateHumanReadableSlug() func(string) string {
 		for _, c := range title {
 			if unicode.IsLetter(c) || unicode.IsDigit(c) {
 				stripped = append(stripped, unicode.ToLower(c))
-			} else if unicode.IsSpace(c) {
+			} else if unicode.IsSpace(c) || c == '-' {
 				stripped = append(stripped, ' ')
 			}
 		}

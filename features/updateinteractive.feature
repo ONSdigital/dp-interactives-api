@@ -55,7 +55,6 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "import_successful": true,
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum",
@@ -117,7 +116,6 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
             """
                 {
-                    "import_successful": true,
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum",
@@ -177,7 +175,6 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "import_successful": true,
                     "interactive": {
                         "archive": {
                             "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
@@ -244,6 +241,7 @@ Feature: Interactives API (Update interactive)
                         "active": true,
                         "metadata": {
                             "title": "ad fugiat cillum",
+                            "slug": "human readable slug",
                             "primary_topic": "",
                             "topics": [
                             "topic1"
@@ -268,7 +266,6 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT no file with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "import_successful": true,
                     "interactive": {
                         "metadata": {
                             "title": "ad fugiat cillum [should not get updated]",

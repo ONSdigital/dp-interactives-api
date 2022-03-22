@@ -30,6 +30,10 @@ func TestGenerateHumanReadableSlug(t *testing.T) {
 		{"    An Simple Title    With    An Article or\n\n\t\nTwo And    Some Of The    Whitespace   \n\r\t\n", "simple-title-with-article-or-two-some-of-whitespace"},
 		{"A An The", ""},
 		{"", ""},
+		//the slug can be updated before publishing - we will rerun it before saving
+		{"simple-title-with-article-or-two", "simple-title-with-article-or-two"},
+		{"simple-title-with- an-article-or-two", "simple-title-with-article-or-two"},
+		{"simple-title-with- an-the-article-or-two", "simple-title-with-article-or-two"},
 	}
 	for _, tc := range tests {
 		Convey("When we GenerateHumanReadableSlug with title["+tc.title+"]", t, func() {

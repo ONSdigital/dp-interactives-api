@@ -228,10 +228,10 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		//todo needs a merge here - currently overwrites most with empty/falsey data
 		if update.Metadata != nil {
 			updatedModel.Metadata = update.Metadata
+			update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.HumanReadableSlug)
 			// dont update title (is the primary key)
 			updatedModel.Metadata.Title = existing.Metadata.Title
 			updatedModel.Metadata.Uri = existing.Metadata.Uri
-			updatedModel.Metadata.HumanReadableSlug = existing.Metadata.HumanReadableSlug
 			updatedModel.Metadata.ResourceID = existing.Metadata.ResourceID
 		}
 	}
