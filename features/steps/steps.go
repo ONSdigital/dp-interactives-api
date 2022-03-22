@@ -4,15 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"time"
 
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
@@ -23,13 +20,8 @@ import (
 )
 
 var (
-	WellKnownTestTime time.Time
-	resourceIdRegex   = regexp.MustCompile("^[a-zA-Z0-9]{8}$")
-)
-
-func init() {
 	WellKnownTestTime, _ = time.Parse("2006-01-02T15:04:05Z", "2021-01-01T00:00:00Z")
-}
+)
 
 func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I have these interactives:$`, c.iHaveTheseInteractives)
@@ -185,21 +177,6 @@ func (c *InteractivesApiComponent) IShouldReceiveTheFollowingModelResponse(expec
 	err = json.Unmarshal(body, &actual)
 	if err != nil {
 		return err
-	}
-
-	if expected.ID == "uuid" {
-		_, err := uuid.FromString(actual.ID)
-		if err != nil {
-			return err
-		}
-		expected.ID, actual.ID = "", ""
-	}
-
-	if expected.Metadata.ResourceID == "rid" {
-		if m := resourceIdRegex.MatchString(actual.Metadata.ResourceID); !m {
-			return fmt.Errorf("resource id does not match %s", actual.Metadata.ResourceID)
-		}
-		expected.Metadata.ResourceID, actual.Metadata.ResourceID = "", ""
 	}
 
 	assert.Equal(c, expected, actual)
