@@ -26,6 +26,7 @@ func TestGenerateHumanReadableSlug(t *testing.T) {
 	}
 	tests := []test{
 		{"A Simple Title With An Article or Two", "simple-title-with-article-or-two"},
+		{"A An And Simple Title With An The Article or Two", "simple-title-with-article-or-two"},
 		{"    An Simple Title    With    An Article or\n\n\t\nTwo And    Some Of The    Whitespace   \n\r\t\n", "simple-title-with-article-or-two-some-of-whitespace"},
 		{"A An The", ""},
 		{"", ""},

@@ -17,8 +17,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 )
 
@@ -175,7 +177,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, noopGen, noopGen, noopGen)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -198,6 +200,79 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				require.Equal(t, testReq.responseCode, resp.Result().StatusCode)
 			}
 		})
+	}
+}
+
+func TestUploadInteractivesHandlers(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	formFile := "resources/interactives.zip"
+	s3 := &s3Mock.S3InterfaceMock{
+		ValidateBucketFunc: func() error { return nil },
+		UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
+			return nil, nil
+		},
+	}
+	kafkaProducer := &kMock.IProducerMock{
+		ChannelsFunc: func() *kafka.ProducerChannels { return &kafka.ProducerChannels{Output: nil} },
+	}
+	mongoServer := &mongoMock.MongoServerMock{
+		GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
+		GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
+		UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
+			if id, _ := strconv.Atoi(vis.Metadata.ResourceID); id > 15 {
+				return nil
+			} else {
+				return mongo.WriteException{
+					WriteErrors: []mongo.WriteError{
+						{
+							Index:   1,
+							Code:    11000,
+							Message: "duplicate key error",
+						},
+					},
+				}
+			}
+		},
+		GetInteractiveFunc: getInteractiveFunc,
+	}
+
+	type test struct {
+		uri                 string
+		method              string
+		responseCode        int
+		startId             int
+		resourceIdFuncCalls int
+	}
+	tests := []test{
+		{"/v1/interactives", http.MethodPost, http.StatusInternalServerError, 0, api.MaxCollisions},
+		{"/v1/interactives", http.MethodPost, http.StatusAccepted, 10, 16},
+	}
+	for _, testReq := range tests {
+		callCount := testReq.startId
+		resourceIdGen := func(string) string {
+			callCount++
+			return strconv.Itoa(callCount)
+		}
+
+		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, noopGen, resourceIdGen, noopGen)
+
+		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
+			Interactive: models.Interactive{
+				Metadata: &models.InteractiveMetadata{
+					Title: "value1",
+					Uri:   "value2",
+				},
+			},
+		})
+
+		resp := httptest.NewRecorder()
+
+		a.Router.ServeHTTP(resp, req)
+		require.Equal(t, testReq.responseCode, resp.Result().StatusCode)
+		require.Equal(t, testReq.resourceIdFuncCalls, callCount)
 	}
 }
 

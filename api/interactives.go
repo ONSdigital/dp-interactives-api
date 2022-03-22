@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
+	mongoDriver "go.mongodb.org/mongo-driver/mongo"
+	"net/http"
+)
+
+const (
+	MaxCollisions = 10
 )
 
 var (
@@ -37,17 +41,19 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	// 2. Check if duplicate exists
-	existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-	if existing != nil {
-		err = fmt.Errorf("archive already exists id (%s) with sha (%s)", existing.ID, existing.SHA)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "archive with sha already exists", err)
-		return
+	if api.validateSha {
+		// 2. Check if duplicate exists
+		existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
+		if existing != nil {
+			err = fmt.Errorf("archive already exists id (%s) with sha (%s)", existing.ID, existing.SHA)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			log.Error(ctx, "archive with sha already exists", err)
+			return
+		}
 	}
 
 	// 3. Check "title is unique"
-	existing, _ = api.mongoDB.GetActiveInteractiveGivenTitle(ctx, update.Metadata.Title)
+	existing, _ := api.mongoDB.GetActiveInteractiveGivenTitle(ctx, update.Metadata.Title)
 	if existing != nil {
 		err = fmt.Errorf("archive already exists id (%s) with title (%s)", existing.ID, existing.Metadata.Title)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -65,23 +71,38 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 
 	// 5. Write to DB
 	id := api.newUUID("")
-	update.Metadata.ResourceID = api.newResourceID("")
-	update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.Title)
-
 	interact := &models.Interactive{
 		ID:        id,
 		SHA:       formDataRequest.Sha,
-		Metadata:  update.Metadata,
 		Active:    &enabled,
 		Published: &disabled,
 		State:     models.ArchiveUploaded.String(),
 		Archive:   &models.Archive{Name: uri},
 	}
-	err = api.mongoDB.UpsertInteractive(ctx, id, interact)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "Unable to write to DB", err)
-		return
+	collisions := 0
+	for {
+		update.Metadata.ResourceID = api.newResourceID("")
+		update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.Title)
+		interact.Metadata = update.Metadata
+
+		err = api.mongoDB.UpsertInteractive(ctx, id, interact)
+		if err == nil {
+			break
+		}
+
+		if mongoDriver.IsDuplicateKeyError(err) {
+			collisions++
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Error(ctx, "Unable to write to DB", err)
+			return
+		}
+
+		if collisions == MaxCollisions {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Error(ctx, "Unable to write to DB - max collisions", err)
+			return
+		}
 	}
 
 	// 5. send kafka message to importer
@@ -131,13 +152,15 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 	// 2. Upload file if requested
 	if formDataRequest.FileData != nil {
-		// Check if duplicate SHA exists
-		i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-		if i != nil {
-			err = fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			log.Error(ctx, "archive with sha already exists", err)
-			return
+		if api.validateSha {
+			// Check if duplicate SHA exists
+			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
+			if i != nil {
+				err = fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log.Error(ctx, "archive with sha already exists", err)
+				return
+			}
 		}
 
 		// Process form data (S3)
@@ -176,32 +199,40 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	updatedModel := &models.Interactive{
 		ID:            id,
 		Published:     update.Published,
-		State:         models.ImportFailure.String(),
+		State:         existing.State,
 		ImportMessage: &formDataRequest.Update.ImportMessage,
 	}
 
-	if formDataRequest.Update.ImportSuccessful != nil && *formDataRequest.Update.ImportSuccessful {
-		updatedModel.State = models.ImportSuccess.String()
-	}
-
-	if update.Metadata != nil {
-		updatedModel.Metadata = update.Metadata
-		// dont update title (is the primary key)
-		updatedModel.Metadata.Title = existing.Metadata.Title
-		updatedModel.Metadata.Uri = existing.Metadata.Uri
-	}
-
-	if update.Archive != nil {
-		updatedModel.Archive = &models.Archive{
-			Name: update.Archive.Name,
-			Size: update.Archive.Size,
+	if formDataRequest.Update.ImportSuccessful != nil {
+		//importer updates dont update metadata
+		if *formDataRequest.Update.ImportSuccessful {
+			updatedModel.State = models.ImportSuccess.String()
+		} else {
+			updatedModel.State = models.ImportFailure.String()
 		}
-		for _, f := range update.Archive.Files {
-			updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
-				Name:     f.Name,
-				Mimetype: f.Mimetype,
-				Size:     f.Size,
-			})
+		if update.Archive != nil {
+			updatedModel.Archive = &models.Archive{
+				Name: update.Archive.Name,
+				Size: update.Archive.Size,
+			}
+			for _, f := range update.Archive.Files {
+				updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
+					Name:     f.Name,
+					Mimetype: f.Mimetype,
+					Size:     f.Size,
+				})
+			}
+		}
+	} else {
+		//todo this is never nil because downstream metadata model has mandatory attribs
+		//todo needs a merge here - currently overwrites most with empty/falsey data
+		if update.Metadata != nil {
+			updatedModel.Metadata = update.Metadata
+			// dont update title (is the primary key)
+			updatedModel.Metadata.Title = existing.Metadata.Title
+			updatedModel.Metadata.Uri = existing.Metadata.Uri
+			updatedModel.Metadata.HumanReadableSlug = existing.Metadata.HumanReadableSlug
+			updatedModel.Metadata.ResourceID = existing.Metadata.ResourceID
 		}
 	}
 

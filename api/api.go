@@ -37,6 +37,7 @@ type API struct {
 	newUUID       models.Generator
 	newResourceID models.Generator
 	newSlug       models.Generator
+	validateSha   bool
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
@@ -67,6 +68,7 @@ func Setup(ctx context.Context,
 		newUUID:       newUUID,
 		newSlug:       newSlug,
 		newResourceID: newResourceID,
+		validateSha:   cfg.ValidateSHAEnabled,
 	}
 
 	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)

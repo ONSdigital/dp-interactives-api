@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -194,5 +196,12 @@ func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationCo
 
 // DoGetGenerators creates authorisation middleware for the given config
 func (e *Init) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
-	return models.GenerateUUID(), models.GenerateResourceId(), models.GenerateHumanReadableSlug()
+	//models.GenerateResourceId()
+	dupResourceId := func(x string) string {
+		if i, _ := strconv.Atoi(x); i > 6 {
+			return fmt.Sprintf("sameid0%d", i)
+		}
+		return "sameid00"
+	}
+	return models.GenerateUUID(), dupResourceId, models.GenerateHumanReadableSlug()
 }
