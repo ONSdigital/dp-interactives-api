@@ -99,7 +99,7 @@ func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) erro
 	if update.Interactive.Metadata == nil {
 		update.Interactive.Metadata = &models.InteractiveMetadata{}
 	}
-	update.Interactive.Metadata.Title = strings.TrimSpace(update.Interactive.Metadata.Title)
+	update.Interactive.Metadata.Label = strings.TrimSpace(update.Interactive.Metadata.Label)
 
 	hasher := sha1.New()
 	hasher.Write(data)

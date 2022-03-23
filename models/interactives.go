@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type InteractiveState int
 
 const (
@@ -39,21 +37,11 @@ type InteractiveUpdate struct {
 
 // Mongo/HTTP models
 
-type InteractiveMetadata struct { // TODO : Geography
-	Title             string    `bson:"title"                      json:"title"`
-	PrimaryTopic      string    `bson:"primary_topic"              json:"primary_topic"`
-	Topics            []string  `bson:"topics"                     json:"topics"`
-	Surveys           []string  `bson:"surveys"                    json:"surveys"`
-	ReleaseDate       time.Time `bson:"release_date"               json:"release_date"`
-	Uri               string    `bson:"uri"                        json:"uri"`
-	HumanReadableSlug string    `bson:"slug"                       json:"slug"`
-	ResourceID        string    `bson:"resource_id,omitempty"      json:"resource_id,omitempty"`
-	CollectionID      string    `bson:"collection_id,omitempty"    json:"collection_id,omitempty"`
-	Edition           string    `bson:"edition,omitempty"          json:"edition,omitempty"`
-	Keywords          []string  `bson:"keywords,omitempty"         json:"keywords,omitempty"`
-	MetaDescription   string    `bson:"meta_description,omitempty" json:"meta_description,omitempty"`
-	Source            string    `bson:"source,omitempty"           json:"source,omitempty"`
-	Summary           string    `bson:"summary,omitempty"          json:"summary,omitempty"`
+type InteractiveMetadata struct {
+	Label             string `bson:"label"                 json:"label"`
+	InternalID        string `bson:"internal_id"           json:"internal_id"`
+	HumanReadableSlug string `bson:"slug,omitempty"        json:"slug,omitempty"`
+	ResourceID        string `bson:"resource_id,omitempty" json:"resource_id,omitempty"`
 }
 
 type Interactive struct {

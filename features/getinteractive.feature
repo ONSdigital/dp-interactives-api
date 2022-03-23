@@ -14,24 +14,8 @@ Feature: Interactives API (Get interactive)
                     },
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
-                        "title": "ad fugiat cillum",
-                        "primary_topic": "",
-                        "slug": "human readable slug",
-                        "topics": [
-                        "topic1"
-                        ],
-                        "surveys": [
-                        "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                        "keywd1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "label": "ad fugiat cillum",
+                        "internal_id": "123"
                     },
                     "sha": "rhyCq4GCknxx0nzeqx2LE077Ruo=",
                     "state": "ArchiveUploaded"
@@ -48,24 +32,8 @@ Feature: Interactives API (Get interactive)
                         "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
-                        "title": "ad fugiat cillum",
-                        "slug": "human readable slug",
-                        "primary_topic": "",
-                        "topics": [
-                            "topic1"
-                        ],
-                        "surveys": [
-                            "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                            "keywd1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "label": "ad fugiat cillum",
+                        "internal_id": "123"
                     }
                 }
             """
@@ -79,24 +47,8 @@ Feature: Interactives API (Get interactive)
                     "active": true,
                     "published": false,
                     "metadata": {
-                        "title": "ad fugiat cillum",
-                        "slug": "human readable slug",
-                        "primary_topic": "",
-                        "topics": [
-                        "topic1"
-                        ],
-                        "surveys": [
-                        "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                        "keywd1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "label": "ad fugiat cillum",
+                        "internal_id": "123"
                     },
                     "state": "ArchiveUploaded"
                 }
@@ -118,24 +70,8 @@ Feature: Interactives API (Get interactive)
                     },
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
-                        "title": "ad fugiat cillum",
-                        "primary_topic": "",
-                        "slug": "human readable slug",
-                        "topics": [
-                        "topic1"
-                        ],
-                        "surveys": [
-                        "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                        "keywd1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "label": "ad fugiat cillum",
+                        "internal_id": "123"
                     },
                     "sha": "rhyCq4GCknxx0nzeqx2LE077Ruo=",
                     "state": "ArchiveUploaded"
