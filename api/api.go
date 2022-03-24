@@ -74,11 +74,16 @@ func Setup(ctx context.Context,
 	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
 
 	if r != nil {
-		r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, api.UploadInteractivesHandler)).Methods(http.MethodPost)
-		r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
-		r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, api.GetInteractiveMetadataHandler)).Methods(http.MethodGet)
-		r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
-		r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
+		if cfg.PublishingEnabled {
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, api.UploadInteractivesHandler)).Methods(http.MethodPost)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, api.GetInteractiveMetadataHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
+		} else {
+			r.HandleFunc("/v1/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
+		}
 	} else {
 		log.Error(ctx, "api setup error - no router", nil)
 	}

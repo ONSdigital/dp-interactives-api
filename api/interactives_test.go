@@ -177,7 +177,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, noopGen, noopGen, noopGen)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -257,7 +257,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			return strconv.Itoa(callCount)
 		}
 
-		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, noopGen, resourceIdGen, noopGen)
+		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, noopGen, resourceIdGen, noopGen)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
 			Interactive: models.Interactive{
