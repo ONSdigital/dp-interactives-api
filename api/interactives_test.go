@@ -40,7 +40,7 @@ var (
 				Active:    b,
 				Published: &f,
 				Metadata: &models.InteractiveMetadata{
-					Title: "title",
+					Label: "title",
 				},
 			}, nil
 		}
@@ -185,8 +185,8 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.InteractiveUpdate{
 						Interactive: models.Interactive{
 							Metadata: &models.InteractiveMetadata{
-								Title: "value1",
-								Uri:   "value2",
+								Label: "value1",
+								InternalID: "idValue",
 							},
 						},
 					})
@@ -262,8 +262,8 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
 			Interactive: models.Interactive{
 				Metadata: &models.InteractiveMetadata{
-					Title: "value1",
-					Uri:   "value2",
+					Label: "value1",
+					InternalID: "idValue",
 				},
 			},
 		})

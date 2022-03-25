@@ -14,23 +14,10 @@ Feature: Interactives API (Get interactive)
                 {
                     "interactive": {
                         "metadata": {
-                            "title": "ad fugiat cillum",
-                            "primary_topic": "primary topic",
-                            "topics": [
-                                "topic1"
-                            ],
-                            "surveys": [
-                                "survey1"
-                            ],
-                            "release_date": "2022-03-01T22:04:06.311Z",
-                            "uri": "id occaecat do",
-                            "edition": "in quis cupidatat tempor",
-                            "keywords": [
-                                "keyword1"
-                            ],
-                            "meta_description": "cillum Excepteur",
-                            "source": "reprehenderit do",
-                            "summary": "aliqua Ut amet laboris exercitation"
+                            "label": "Title123",
+                            "slug": "Title123",
+                            "resource_id": "AbcdE123",
+                            "internal_id": "123"
                         }
                     }
                 }
@@ -44,25 +31,10 @@ Feature: Interactives API (Get interactive)
                         "name":"rhyCq4GCknxx0nzeqx2LE077Ruo=/interactives.zip"
                     },
                     "metadata": {
+                        "label": "Title123",
+                        "slug": "Title123",
                         "resource_id": "AbcdE123",
-                        "title": "ad fugiat cillum",
-                        "primary_topic": "primary topic",
-                        "slug": "ad fugiat cillum",
-                        "topics": [
-                            "topic1"
-                        ],
-                        "surveys": [
-                            "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                            "keyword1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "internal_id": "123"
                     }
                 }
             """

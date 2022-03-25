@@ -10,24 +10,8 @@ Feature: Interactives API (List interactives)
                     "active": false,
                     "published" : false,
                     "metadata": {
-                        "title": "ad fugiat cillum",
-                        "primary_topic": "",
-                        "slug": "human readable slug",
-                        "topics": [
-                        "topic1"
-                        ],
-                        "surveys": [
-                        "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                        "keywd1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "label": "ad fugiat cillum",
+                        "internal_id": "123"
                     },
                     "state": "ImportSuccess"
                 },
@@ -37,24 +21,8 @@ Feature: Interactives API (List interactives)
                     "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
                     "published" : false,
                     "metadata": {
-                        "title": "ad fugiat cillum",
-                        "primary_topic": "",
-                        "slug": "human readable slug",
-                        "topics": [
-                        "topic1"
-                        ],
-                        "surveys": [
-                        "survey1"
-                        ],
-                        "release_date": "2022-03-01T22:04:06.311Z",
-                        "uri": "id occaecat do",
-                        "edition": "in quis cupidatat tempor",
-                        "keywords": [
-                        "keywd1"
-                        ],
-                        "meta_description": "cillum Excepteur",
-                        "source": "reprehenderit do",
-                        "summary": "aliqua Ut amet laboris exercitation"
+                        "label": "ad fugiat cillum",
+                        "internal_id": "123"
                     },
                     "state": "ImportSuccess"
                 }
@@ -72,24 +40,8 @@ Feature: Interactives API (List interactives)
                                "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "metadata": {
-                                "title": "ad fugiat cillum",
-                                "primary_topic": "",
-                                "slug": "human readable slug",
-                                "topics": [
-                                "topic1"
-                                ],
-                                "surveys": [
-                                "survey1"
-                                ],
-                                "release_date": "2022-03-01T22:04:06.311Z",
-                                "uri": "id occaecat do",
-                                "edition": "in quis cupidatat tempor",
-                                "keywords": [
-                                "keywd1"
-                                ],
-                                "meta_description": "cillum Excepteur",
-                                "source": "reprehenderit do",
-                                "summary": "aliqua Ut amet laboris exercitation"
+                                "label": "ad fugiat cillum",
+                                "internal_id": "123"
                             },
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"

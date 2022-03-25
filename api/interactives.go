@@ -34,10 +34,16 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	update := formDataRequest.Update.Interactive
-	if len(update.Metadata.Title) == 0 {
-		err = errors.New("title must be non empty")
+	if len(update.Metadata.Label) == 0 {
+		err = errors.New("label must be non empty")
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "title must be non empty", err)
+		log.Error(ctx, "label must be non empty", err)
+		return
+	}
+	if len(update.Metadata.InternalID) == 0 {
+		err = errors.New("internal id must be non empty")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(ctx, "internal id must be non empty", err)
 		return
 	}
 
@@ -52,12 +58,12 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		}
 	}
 
-	// 3. Check "title is unique"
-	existing, _ := api.mongoDB.GetActiveInteractiveGivenTitle(ctx, update.Metadata.Title)
+	// 3. Check "label is unique"
+	existing, _ := api.mongoDB.GetActiveInteractiveGivenTitle(ctx, update.Metadata.Label)
 	if existing != nil {
-		err = fmt.Errorf("archive already exists id (%s) with title (%s)", existing.ID, existing.Metadata.Title)
+		err = fmt.Errorf("archive already exists id (%s) with label (%s)", existing.ID, existing.Metadata.Label)
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "archive with title already exists", err)
+		log.Error(ctx, "archive with label already exists", err)
 		return
 	}
 
@@ -82,7 +88,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	collisions := 0
 	for {
 		update.Metadata.ResourceID = api.newResourceID("")
-		update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.Title)
+		update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.Label)
 		interact.Metadata = update.Metadata
 
 		err = api.mongoDB.UpsertInteractive(ctx, id, interact)
@@ -230,8 +236,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 			updatedModel.Metadata = update.Metadata
 			update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.HumanReadableSlug)
 			// dont update title (is the primary key)
-			updatedModel.Metadata.Title = existing.Metadata.Title
-			updatedModel.Metadata.Uri = existing.Metadata.Uri
+			updatedModel.Metadata.Label = existing.Metadata.Label
 			updatedModel.Metadata.ResourceID = existing.Metadata.ResourceID
 		}
 	}

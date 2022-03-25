@@ -50,10 +50,10 @@ paths:
             format: int64
         - name: filter
           in: query
-          description: '{"title":"Interactive title","keywords": ["kwd1", "kwd2"]}'
+          description: '{"label":"Interactive label"}'
           required: false
           schema:
-            $ref: "#/components/schemas/InteractiveMetadata"
+            $ref: "#/components/schemas/InteractiveMetadataResponse"
       responses:
         "200":
           description: Success
@@ -182,30 +182,20 @@ components:
     InteractiveMetadata:
       type: object
       properties:
-        title:
+        label:
           type: string
-        collection_id:
+        internal_id:
+          type: string
+    InteractiveMetadataResponse:
+      type: object
+      properties:
+        label:
+          type: string
+        internal_id:
+          type: string
+        slug:
           type: string
         resource_id:
-          type: string
-        edition:
-          type: string
-        keywords:
-          type: array
-          items: {}
-        meta_description:
-          type: string
-        topics:
-          type: array
-          items: {}
-        surveys:
-          type: array
-          items: {}
-        release_date:
-          type: string
-        uri:
-          type: string
-        primary_topic:
           type: string
     InteractiveUpdate:
       type: object
@@ -244,6 +234,6 @@ components:
                   name:
                     type: string
         metadata:
-          $ref: "#/components/schemas/InteractiveMetadata"
+          $ref: "#/components/schemas/InteractiveMetadataResponse"
       xml:
         name: Interactive
