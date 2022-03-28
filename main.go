@@ -46,6 +46,8 @@ func run(ctx context.Context) error {
 		return errors.Wrap(err, "unable to retrieve service configuration")
 	}
 
+	log.Info(ctx, "config on startup", log.Data{"config": cfg, "build_time": BuildTime, "git-commit": GitCommit})
+
 	svc, err := service.Run(ctx, cfg, svcList, BuildTime, GitCommit, Version, svcErrors)
 	if err != nil {
 		return errors.Wrap(err, "running service failed")

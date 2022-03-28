@@ -10,6 +10,7 @@ Feature: Interactives API (List interactives)
                     "active": false,
                     "published" : false,
                     "metadata": {
+                        "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     },
@@ -21,6 +22,7 @@ Feature: Interactives API (List interactives)
                     "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
                     "published" : false,
                     "metadata": {
+                        "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     },
@@ -40,6 +42,7 @@ Feature: Interactives API (List interactives)
                                "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "metadata": {
+                                "title": "title123",
                                 "label": "ad fugiat cillum",
                                 "internal_id": "123"
                             },

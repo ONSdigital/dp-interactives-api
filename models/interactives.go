@@ -38,10 +38,32 @@ type InteractiveUpdate struct {
 // Mongo/HTTP models
 
 type InteractiveMetadata struct {
-	Label             string `bson:"label"                 json:"label"`
-	InternalID        string `bson:"internal_id"           json:"internal_id"`
-	HumanReadableSlug string `bson:"slug,omitempty"        json:"slug,omitempty"`
-	ResourceID        string `bson:"resource_id,omitempty" json:"resource_id,omitempty"`
+	Title             string `bson:"title"                    json:"title"`
+	Label             string `bson:"label"                    json:"label"`
+	InternalID        string `bson:"internal_id"              json:"internal_id"`
+	CollectionID      string `bson:"collection_id,omitempty"  json:"collection_id,omitempty"`
+	HumanReadableSlug string `bson:"slug,omitempty"           json:"slug,omitempty"`
+	ResourceID        string `bson:"resource_id,omitempty"    json:"resource_id,omitempty"`
+}
+
+func (i *InteractiveMetadata) Update(update *InteractiveMetadata, slugGen Generator) *InteractiveMetadata {
+	if update == nil {
+		return i
+	}
+	if update.Label != "" {
+		i.Label = update.Label
+		i.HumanReadableSlug = slugGen(update.Label)
+	}
+	if update.Title != "" {
+		i.Title = update.Title
+	}
+	if update.InternalID != "" {
+		i.InternalID = update.InternalID
+	}
+	if update.CollectionID != "" {
+		i.CollectionID = update.CollectionID
+	}
+	return i
 }
 
 type Interactive struct {

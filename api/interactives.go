@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
-	"net/http"
 )
 
 const (
@@ -18,9 +19,10 @@ const (
 )
 
 var (
-	enabled, disabled = true, false
-	ErrInvalidBody    = errors.New("body has invalid format")
-	ErrCantUpdateSlug = errors.New("cannot update readable slug for a published interactive")
+	enabled, disabled        = true, false
+	ErrInvalidBody           = errors.New("body has invalid format")
+	ErrCantUpdateSlug        = errors.New("cannot update readable slug for a published interactive")
+	ErrCantDeletePublishedIn = errors.New("cannot delete a published interactive")
 )
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Request) {
@@ -34,16 +36,10 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	update := formDataRequest.Update.Interactive
-	if len(update.Metadata.Label) == 0 {
-		err = errors.New("label must be non empty")
+	if len(update.Metadata.Label) == 0 || len(update.Metadata.InternalID) == 0 || len(update.Metadata.Title) == 0 {
+		err = fmt.Errorf("label (%s) title (%s) internal_id (%s) are mandatory", update.Metadata.Label, update.Metadata.Title, update.Metadata.InternalID)
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "label must be non empty", err)
-		return
-	}
-	if len(update.Metadata.InternalID) == 0 {
-		err = errors.New("internal id must be non empty")
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "internal id must be non empty", err)
+		log.Error(ctx, err.Error(), err)
 		return
 	}
 
@@ -58,12 +54,19 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		}
 	}
 
-	// 3. Check "label is unique"
-	existing, _ := api.mongoDB.GetActiveInteractiveGivenTitle(ctx, update.Metadata.Label)
+	// 3. Check "label + title are unique"
+	existing, _ := api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.label", update.Metadata.Label)
 	if existing != nil {
-		err = fmt.Errorf("archive already exists id (%s) with label (%s)", existing.ID, existing.Metadata.Label)
+		err = fmt.Errorf("archive with label (%s) already exists id (%s)", existing.Metadata.Label, existing.ID)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "archive with label already exists", err)
+		return
+	}
+	existing, _ = api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.title", update.Metadata.Title)
+	if existing != nil {
+		err = fmt.Errorf("archive with title (%s) already exists id (%s)", existing.Metadata.Title, existing.ID)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(ctx, "archive with title already exists", err)
 		return
 	}
 
@@ -207,38 +210,37 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		Published:     update.Published,
 		State:         existing.State,
 		ImportMessage: &formDataRequest.Update.ImportMessage,
+		Metadata:      existing.Metadata,
 	}
 
+	// update rules
+	// if published - allow only file data
+	// if unpub - allow both file + metadata
+	if update.Archive != nil {
+		updatedModel.Archive = &models.Archive{
+			Name: update.Archive.Name,
+			Size: update.Archive.Size,
+		}
+		for _, f := range update.Archive.Files {
+			updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
+				Name:     f.Name,
+				Mimetype: f.Mimetype,
+				Size:     f.Size,
+			})
+		}
+	}
 	if formDataRequest.Update.ImportSuccessful != nil {
-		//importer updates dont update metadata
+		//importer updates OR if already published dont update metadata
 		if *formDataRequest.Update.ImportSuccessful {
 			updatedModel.State = models.ImportSuccess.String()
 		} else {
 			updatedModel.State = models.ImportFailure.String()
 		}
-		if update.Archive != nil {
-			updatedModel.Archive = &models.Archive{
-				Name: update.Archive.Name,
-				Size: update.Archive.Size,
-			}
-			for _, f := range update.Archive.Files {
-				updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
-					Name:     f.Name,
-					Mimetype: f.Mimetype,
-					Size:     f.Size,
-				})
-			}
-		}
-	} else {
-		//todo this is never nil because downstream metadata model has mandatory attribs
-		//todo needs a merge here - currently overwrites most with empty/falsey data
-		if update.Metadata != nil {
-			updatedModel.Metadata = update.Metadata
-			update.Metadata.HumanReadableSlug = api.newSlug(update.Metadata.HumanReadableSlug)
-			// dont update title (is the primary key)
-			updatedModel.Metadata.Label = existing.Metadata.Label
-			updatedModel.Metadata.ResourceID = existing.Metadata.ResourceID
-		}
+	}
+	// only label/title/internalid/collectionid
+	// slug is generated from label
+	if !*existing.Published && update.Metadata != nil {
+		updatedModel.Metadata.Update(update.Metadata, api.newSlug)
 	}
 
 	// 6. write to DB
@@ -312,6 +314,13 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
+		return
+	}
+
+	// must not delete published interactives
+	if *vis.Published {
+		http.Error(w, ErrCantDeletePublishedIn.Error(), http.StatusForbidden)
+		log.Error(ctx, ErrCantDeletePublishedIn.Error(), ErrCantDeletePublishedIn)
 		return
 	}
 

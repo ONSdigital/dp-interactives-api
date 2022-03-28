@@ -93,12 +93,12 @@ func (m *Mongo) GetActiveInteractiveGivenSha(ctx context.Context, sha string) (*
 	return &vis, nil
 }
 
-// GetActiveInteractiveFromTitle retrieves an active interactive by its title
-func (m *Mongo) GetActiveInteractiveGivenTitle(ctx context.Context, title string) (*models.Interactive, error) {
-	log.Info(ctx, "getting interactive by Title", log.Data{"title": title})
+// GetActiveInteractiveGivenField retrieves an active interactive by its field
+func (m *Mongo) GetActiveInteractiveGivenField(ctx context.Context, fieldName, fieldValue string) (*models.Interactive, error) {
+	log.Info(ctx, "getting interactive by field", log.Data{fieldName: fieldValue})
 
 	var vis models.Interactive
-	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"metadata.title": title, "active": true}, &vis)
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{fieldName: fieldValue, "active": true}, &vis)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
 			return nil, ErrNoRecordFound

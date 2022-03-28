@@ -182,16 +182,24 @@ components:
     InteractiveMetadata:
       type: object
       properties:
+        title:
+          type: string
         label:
           type: string
         internal_id:
+          type: string
+        collection_id:
           type: string
     InteractiveMetadataResponse:
       type: object
       properties:
+        title:
+          type: string
         label:
           type: string
         internal_id:
+          type: string
+        collection_id:
           type: string
         slug:
           type: string
@@ -200,12 +208,8 @@ components:
     InteractiveUpdate:
       type: object
       properties:
-        import_successful:
-          type: boolean
-        import_message:
-          type: string
         interactive:
-          $ref: "#/components/schemas/Interactive"
+          $ref: "#/components/schemas/InteractiveUpdateRequest"
       xml:
         name: InteractiveUpdate
     Interactive:
@@ -235,5 +239,34 @@ components:
                     type: string
         metadata:
           $ref: "#/components/schemas/InteractiveMetadataResponse"
+      xml:
+        name: Interactive
+    InteractiveUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        published:
+          type: boolean
+        archive:
+          type: object
+          properties:
+            name:
+              type: string
+            size_in_bytes:
+              type: integer
+            files:
+              type: array
+              items:
+                type: object
+                properties:
+                  mimetype:
+                    type: string
+                  size_in_bytes:
+                    type: integer
+                  name:
+                    type: string
+        metadata:
+          $ref: "#/components/schemas/InteractiveMetadata"
       xml:
         name: Interactive

@@ -16,6 +16,7 @@ Feature: Interactives API (Get interactive)
                         "metadata": {
                             "label": "Title123",
                             "slug": "Title123",
+                            "title": "Title123",
                             "resource_id": "AbcdE123",
                             "internal_id": "123"
                         }
@@ -33,6 +34,7 @@ Feature: Interactives API (Get interactive)
                     "metadata": {
                         "label": "Title123",
                         "slug": "Title123",
+                        "title": "Title123",
                         "resource_id": "AbcdE123",
                         "internal_id": "123"
                     }

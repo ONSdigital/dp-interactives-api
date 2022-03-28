@@ -99,7 +99,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return errors.New("s3 error") },
@@ -114,7 +114,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
@@ -132,7 +132,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return errors.New("db upsert error")
 				},
@@ -155,7 +155,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
+				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return nil
 				},
@@ -185,8 +185,9 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.InteractiveUpdate{
 						Interactive: models.Interactive{
 							Metadata: &models.InteractiveMetadata{
-								Label: "value1",
+								Label: "label1",
 								InternalID: "idValue",
+								Title: "title1",
 							},
 						},
 					})
@@ -220,7 +221,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 	}
 	mongoServer := &mongoMock.MongoServerMock{
 		GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-		GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) { return nil, nil },
+		GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 		UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 			if id, _ := strconv.Atoi(vis.Metadata.ResourceID); id > 15 {
 				return nil
@@ -262,8 +263,9 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
 			Interactive: models.Interactive{
 				Metadata: &models.InteractiveMetadata{
-					Label: "value1",
+					Label: "label1",
 					InternalID: "idValue",
+					Title: "title1",
 				},
 			},
 		})

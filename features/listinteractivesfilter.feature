@@ -9,6 +9,7 @@ Feature: Interactives API (List interactives)
                     "active": true,
                     "published" : false,
                     "metadata": {
+                        "title": "title123",
                         "label": "Title123",
                         "internal_id": "123"
                     },
@@ -20,6 +21,7 @@ Feature: Interactives API (List interactives)
                     "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
                     "published" : false,
                     "metadata": {
+                        "title": "title123",
                         "label": "Title321",
                         "internal_id": "123"
                     },
@@ -39,6 +41,7 @@ Feature: Interactives API (List interactives)
                                "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "metadata": {
+                                "title": "title123",
                                 "label": "Title321",
                                 "internal_id": "123"
                             },
@@ -63,6 +66,7 @@ Feature: Interactives API (List interactives)
                     "active": true,
                     "published" : false,
                     "metadata": {
+                        "title": "title123",
                         "label": "Title123",
                         "resource_id": "resid123",
                         "internal_id": "123"
@@ -75,6 +79,7 @@ Feature: Interactives API (List interactives)
                     "file_name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip",
                     "published" : false,
                     "metadata": {
+                        "title": "title123",
                         "label": "Title123",
                         "resource_id": "resid321",
                         "internal_id": "123"
@@ -95,6 +100,7 @@ Feature: Interactives API (List interactives)
                                "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "metadata": {
+                                "title": "title123",
                                 "label": "Title123",
                                 "resource_id": "resid321",
                                 "internal_id": "123"

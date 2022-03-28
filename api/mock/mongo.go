@@ -27,11 +27,11 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			CloseFunc: func(ctx context.Context) error {
 // 				panic("mock out the Close method")
 // 			},
+// 			GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, fieldName string, fieldValue string) (*models.Interactive, error) {
+// 				panic("mock out the GetActiveInteractiveGivenField method")
+// 			},
 // 			GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) {
 // 				panic("mock out the GetActiveInteractiveGivenSha method")
-// 			},
-// 			GetActiveInteractiveGivenTitleFunc: func(ctx context.Context, title string) (*models.Interactive, error) {
-// 				panic("mock out the GetActiveInteractiveGivenTitle method")
 // 			},
 // 			GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 // 				panic("mock out the GetInteractive method")
@@ -55,11 +55,11 @@ type MongoServerMock struct {
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
 
+	// GetActiveInteractiveGivenFieldFunc mocks the GetActiveInteractiveGivenField method.
+	GetActiveInteractiveGivenFieldFunc func(ctx context.Context, fieldName string, fieldValue string) (*models.Interactive, error)
+
 	// GetActiveInteractiveGivenShaFunc mocks the GetActiveInteractiveGivenSha method.
 	GetActiveInteractiveGivenShaFunc func(ctx context.Context, sha string) (*models.Interactive, error)
-
-	// GetActiveInteractiveGivenTitleFunc mocks the GetActiveInteractiveGivenTitle method.
-	GetActiveInteractiveGivenTitleFunc func(ctx context.Context, title string) (*models.Interactive, error)
 
 	// GetInteractiveFunc mocks the GetInteractive method.
 	GetInteractiveFunc func(ctx context.Context, id string) (*models.Interactive, error)
@@ -84,19 +84,21 @@ type MongoServerMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 		}
+		// GetActiveInteractiveGivenField holds details about calls to the GetActiveInteractiveGivenField method.
+		GetActiveInteractiveGivenField []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// FieldName is the fieldName argument value.
+			FieldName string
+			// FieldValue is the fieldValue argument value.
+			FieldValue string
+		}
 		// GetActiveInteractiveGivenSha holds details about calls to the GetActiveInteractiveGivenSha method.
 		GetActiveInteractiveGivenSha []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Sha is the sha argument value.
 			Sha string
-		}
-		// GetActiveInteractiveGivenTitle holds details about calls to the GetActiveInteractiveGivenTitle method.
-		GetActiveInteractiveGivenTitle []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Title is the title argument value.
-			Title string
 		}
 		// GetInteractive holds details about calls to the GetInteractive method.
 		GetInteractive []struct {
@@ -128,8 +130,8 @@ type MongoServerMock struct {
 	}
 	lockChecker                        sync.RWMutex
 	lockClose                          sync.RWMutex
+	lockGetActiveInteractiveGivenField sync.RWMutex
 	lockGetActiveInteractiveGivenSha   sync.RWMutex
-	lockGetActiveInteractiveGivenTitle sync.RWMutex
 	lockGetInteractive                 sync.RWMutex
 	lockListInteractives               sync.RWMutex
 	lockUpsertInteractive              sync.RWMutex
@@ -201,6 +203,45 @@ func (mock *MongoServerMock) CloseCalls() []struct {
 	return calls
 }
 
+// GetActiveInteractiveGivenField calls GetActiveInteractiveGivenFieldFunc.
+func (mock *MongoServerMock) GetActiveInteractiveGivenField(ctx context.Context, fieldName string, fieldValue string) (*models.Interactive, error) {
+	if mock.GetActiveInteractiveGivenFieldFunc == nil {
+		panic("MongoServerMock.GetActiveInteractiveGivenFieldFunc: method is nil but MongoServer.GetActiveInteractiveGivenField was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		FieldName  string
+		FieldValue string
+	}{
+		Ctx:        ctx,
+		FieldName:  fieldName,
+		FieldValue: fieldValue,
+	}
+	mock.lockGetActiveInteractiveGivenField.Lock()
+	mock.calls.GetActiveInteractiveGivenField = append(mock.calls.GetActiveInteractiveGivenField, callInfo)
+	mock.lockGetActiveInteractiveGivenField.Unlock()
+	return mock.GetActiveInteractiveGivenFieldFunc(ctx, fieldName, fieldValue)
+}
+
+// GetActiveInteractiveGivenFieldCalls gets all the calls that were made to GetActiveInteractiveGivenField.
+// Check the length with:
+//     len(mockedMongoServer.GetActiveInteractiveGivenFieldCalls())
+func (mock *MongoServerMock) GetActiveInteractiveGivenFieldCalls() []struct {
+	Ctx        context.Context
+	FieldName  string
+	FieldValue string
+} {
+	var calls []struct {
+		Ctx        context.Context
+		FieldName  string
+		FieldValue string
+	}
+	mock.lockGetActiveInteractiveGivenField.RLock()
+	calls = mock.calls.GetActiveInteractiveGivenField
+	mock.lockGetActiveInteractiveGivenField.RUnlock()
+	return calls
+}
+
 // GetActiveInteractiveGivenSha calls GetActiveInteractiveGivenShaFunc.
 func (mock *MongoServerMock) GetActiveInteractiveGivenSha(ctx context.Context, sha string) (*models.Interactive, error) {
 	if mock.GetActiveInteractiveGivenShaFunc == nil {
@@ -233,41 +274,6 @@ func (mock *MongoServerMock) GetActiveInteractiveGivenShaCalls() []struct {
 	mock.lockGetActiveInteractiveGivenSha.RLock()
 	calls = mock.calls.GetActiveInteractiveGivenSha
 	mock.lockGetActiveInteractiveGivenSha.RUnlock()
-	return calls
-}
-
-// GetActiveInteractiveGivenTitle calls GetActiveInteractiveGivenTitleFunc.
-func (mock *MongoServerMock) GetActiveInteractiveGivenTitle(ctx context.Context, title string) (*models.Interactive, error) {
-	if mock.GetActiveInteractiveGivenTitleFunc == nil {
-		panic("MongoServerMock.GetActiveInteractiveGivenTitleFunc: method is nil but MongoServer.GetActiveInteractiveGivenTitle was just called")
-	}
-	callInfo := struct {
-		Ctx   context.Context
-		Title string
-	}{
-		Ctx:   ctx,
-		Title: title,
-	}
-	mock.lockGetActiveInteractiveGivenTitle.Lock()
-	mock.calls.GetActiveInteractiveGivenTitle = append(mock.calls.GetActiveInteractiveGivenTitle, callInfo)
-	mock.lockGetActiveInteractiveGivenTitle.Unlock()
-	return mock.GetActiveInteractiveGivenTitleFunc(ctx, title)
-}
-
-// GetActiveInteractiveGivenTitleCalls gets all the calls that were made to GetActiveInteractiveGivenTitle.
-// Check the length with:
-//     len(mockedMongoServer.GetActiveInteractiveGivenTitleCalls())
-func (mock *MongoServerMock) GetActiveInteractiveGivenTitleCalls() []struct {
-	Ctx   context.Context
-	Title string
-} {
-	var calls []struct {
-		Ctx   context.Context
-		Title string
-	}
-	mock.lockGetActiveInteractiveGivenTitle.RLock()
-	calls = mock.calls.GetActiveInteractiveGivenTitle
-	mock.lockGetActiveInteractiveGivenTitle.RUnlock()
 	return calls
 }
 

@@ -14,6 +14,7 @@ Feature: Interactives API (Get interactive)
                     },
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
+                        "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     },
@@ -32,6 +33,7 @@ Feature: Interactives API (Get interactive)
                         "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
+                        "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     }
@@ -47,6 +49,7 @@ Feature: Interactives API (Get interactive)
                     "active": true,
                     "published": false,
                     "metadata": {
+                        "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     },
@@ -70,6 +73,7 @@ Feature: Interactives API (Get interactive)
                     },
                     "last_updated": "2022-03-02T16:44:32.443Z",
                     "metadata": {
+                        "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     },

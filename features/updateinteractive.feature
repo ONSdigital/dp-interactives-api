@@ -31,6 +31,7 @@ Feature: Interactives API (Update interactive)
                         "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                         "metadata": {
                             "label": "Title123",
+                            "title": "Title123",
                             "resource_id": "resid321",
                             "internal_id": "123"
                         },
@@ -44,6 +45,7 @@ Feature: Interactives API (Update interactive)
                     "interactive": {
                         "metadata": {
                             "label": "Title12345",
+                            "title": "Title123",
                             "resource_id": "resid321",
                             "internal_id": "1234"
                         }
@@ -62,7 +64,8 @@ Feature: Interactives API (Update interactive)
                         "published": true,
                         "metadata": {
                             "label": "Title123",
-                            "slug": "human readable slug",
+                            "title": "Title123",
+                            "slug": "Title123",
                             "resource_id": "resid321",
                             "internal_id": "123"
                         },
@@ -76,7 +79,8 @@ Feature: Interactives API (Update interactive)
                     "interactive": {
                         "metadata": {
                             "label": "Title123",
-                            "slug": "new human readable slug",
+                            "title": "Title123",
+                            "slug": "Title321-update",
                             "resource_id": "resid321",
                             "internal_id": "123"
                         }
@@ -92,8 +96,9 @@ Feature: Interactives API (Update interactive)
                     {
                         "active": true,
                         "metadata": {
+                            "title": "Title123",
                             "label": "Title123",
-                            "slug": "human readable slug",
+                            "slug": "Title123",
                             "resource_id": "resid321",
                             "internal_id": "123"
                         },
@@ -109,8 +114,9 @@ Feature: Interactives API (Update interactive)
                             "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                         },
                         "metadata": {
+                            "title": "Title123",
                             "label": "Title123",
-                            "slug": "human readable slug",
+                            "slug": "Title123",
                             "resource_id": "resid321",
                             "internal_id": "123"
                         }
@@ -126,8 +132,9 @@ Feature: Interactives API (Update interactive)
                         "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
+                        "title": "Title123",
                         "label": "Title123",
-                        "slug": "human readable slug",
+                        "slug": "Title123",
                         "resource_id": "resid321",
                         "internal_id": "123"
                     }
@@ -142,6 +149,7 @@ Feature: Interactives API (Update interactive)
                         "active": true,
                         "metadata": {
                             "label": "Title123",
+                            "title": "Title123",
                             "slug": "human readable slug",
                             "resource_id": "resid321",
                             "internal_id": "123"
@@ -155,8 +163,9 @@ Feature: Interactives API (Update interactive)
                 {
                     "interactive": {
                         "metadata": {
-                            "label": "Title123",
-                            "slug": "human readable slug",
+                            "label": "Title321",
+                            "title": "Title123",
+                            "slug": "Title321",
                             "resource_id": "resid321",
                             "internal_id": "123"
                         }
@@ -172,8 +181,9 @@ Feature: Interactives API (Update interactive)
                         "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
-                        "label": "Title123",
-                        "slug": "human readable slug",
+                        "label": "Title321",
+                        "slug": "Title321",
+                        "title": "Title123",
                         "resource_id": "resid321",
                         "internal_id": "123"
                     }
