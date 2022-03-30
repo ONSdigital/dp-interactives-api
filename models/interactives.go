@@ -67,15 +67,15 @@ func (i *InteractiveMetadata) Update(update *InteractiveMetadata, slugGen Genera
 }
 
 type Interactive struct {
-	ID            string               `bson:"_id,omitempty"               json:"id,omitempty"`
-	Archive       *Archive             `bson:"archive,omitempty"           json:"archive,omitempty"`
-	Metadata      *InteractiveMetadata `bson:"metadata,omitempty"          json:"metadata,omitempty"`
-	Published     *bool                `bson:"published,omitempty"         json:"published,omitempty"`
-	State         string               `bson:"state,omitempty"             json:"state,omitempty"`
-	ImportMessage *string              `bson:"import_message,omitempty"    json:"import_message,omitempty"`
+	ID        string               `bson:"_id,omitempty"               json:"id,omitempty"`
+	Archive   *Archive             `bson:"archive,omitempty"           json:"archive,omitempty"`
+	Metadata  *InteractiveMetadata `bson:"metadata,omitempty"          json:"metadata,omitempty"`
+	Published *bool                `bson:"published,omitempty"         json:"published,omitempty"`
+	State     string               `bson:"state,omitempty"             json:"state,omitempty"`
 	//Mongo only
-	Active *bool  `bson:"active,omitempty"            json:"-"`
-	SHA    string `bson:"sha,omitempty"               json:"-"`
+	Active        *bool   `bson:"active,omitempty"            json:"-"`
+	SHA           string  `bson:"sha,omitempty"               json:"-"`
+	ImportMessage *string `bson:"import_message,omitempty"    json:"-"`
 }
 
 type Archive struct {
