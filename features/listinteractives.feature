@@ -46,6 +46,7 @@ Feature: Interactives API (List interactives)
                                 "label": "ad fugiat cillum",
                                 "internal_id": "123"
                             },
+                            "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             }

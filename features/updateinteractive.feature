@@ -137,7 +137,9 @@ Feature: Interactives API (Update interactive)
                         "slug": "Title123",
                         "resource_id": "resid321",
                         "internal_id": "123"
-                    }
+                    },
+                    "state": "ArchiveUploaded",
+                    "import_message":""
                 }
             """
 
@@ -186,6 +188,8 @@ Feature: Interactives API (Update interactive)
                         "title": "Title123",
                         "resource_id": "resid321",
                         "internal_id": "123"
-                    }
+                    },
+                    "state": "ArchiveUploaded",
+                    "import_message":""
                 }
             """

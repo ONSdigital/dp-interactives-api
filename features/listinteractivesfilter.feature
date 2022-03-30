@@ -45,6 +45,7 @@ Feature: Interactives API (List interactives)
                                 "label": "Title321",
                                 "internal_id": "123"
                             },
+                            "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             }
@@ -105,6 +106,7 @@ Feature: Interactives API (List interactives)
                                 "resource_id": "resid321",
                                 "internal_id": "123"
                             },
+                            "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             }

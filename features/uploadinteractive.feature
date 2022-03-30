@@ -37,6 +37,7 @@ Feature: Interactives API (Get interactive)
                         "title": "Title123",
                         "resource_id": "AbcdE123",
                         "internal_id": "123"
-                    }
+                    },
+                    "state": "ArchiveUploaded"
                 }
             """

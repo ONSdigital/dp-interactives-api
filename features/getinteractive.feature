@@ -36,7 +36,8 @@ Feature: Interactives API (Get interactive)
                         "title": "title123",
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
-                    }
+                    },
+                    "state": "ArchiveUploaded"
                 }
             """
 
