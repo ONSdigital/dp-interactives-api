@@ -88,6 +88,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			formFile: "resources/interactives.zip",
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
+				GetInteractiveFunc: getInteractiveFunc,
 			},
 		},
 		{
@@ -100,6 +101,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
+				GetInteractiveFunc: getInteractiveFunc,
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return errors.New("s3 error") },
@@ -115,6 +117,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			mongoServer: &mongoMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
+				GetInteractiveFunc: getInteractiveFunc,
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },

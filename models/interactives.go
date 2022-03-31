@@ -66,6 +66,13 @@ func (i *InteractiveMetadata) Update(update *InteractiveMetadata, slugGen Genera
 	return i
 }
 
+func (i *InteractiveMetadata) HasData() bool {
+	if i.Title == "" && i.Label == "" && i.CollectionID == "" && i.InternalID == "" {
+		return false
+	}
+	return true
+}
+
 type Interactive struct {
 	ID        string               `bson:"_id,omitempty"               json:"id,omitempty"`
 	Archive   *Archive             `bson:"archive,omitempty"           json:"archive,omitempty"`

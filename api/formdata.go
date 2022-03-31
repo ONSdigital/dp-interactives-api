@@ -4,13 +4,15 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/models"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/ONSdigital/dp-interactives-api/models"
 )
 
 const (
@@ -18,35 +20,45 @@ const (
 	maxUploadFileSizeMb = 50
 )
 
-type AttachmentValidator func(numOfAttachments int) bool
+type FormDataValidator func(numOfAttachments int, update string) error
 
 var (
-	WantOnlyOneAttachment = func(numOfAttachments int) bool {
-		return numOfAttachments == 1
+	WantOnlyOneAttachmentWithMetadata = func(numOfAttachments int, update string) error {
+		if numOfAttachments == 1 && update != "" {
+			return nil
+		} else {
+			return errors.New("expecting one attachment with metadata")
+		}
 	}
-	WantMaxOneAttachment = func(numOfAttachments int) bool {
-		return numOfAttachments <= 1
+	WantAtleastMaxOneAttachmentAndOrMetadata = func(numOfAttachments int, update string) error {
+		if numOfAttachments == 1 || update != "" {
+			return nil
+		} else {
+			return errors.New("no attachment (max one) or metadata present")
+		}
 	}
 )
 
 type FormDataRequest struct {
-	req      *http.Request
-	api      *API
-	FileData []byte
-	Sha      string
-	FileName string
-	Update   *models.InteractiveUpdate
+	req                 *http.Request
+	api                 *API
+	FileData            []byte
+	Sha                 string
+	FileName            string
+	Update              *models.InteractiveUpdate
+	isMetadataMandatory bool
 }
 
-func newFormDataRequest(req *http.Request, api *API, attachmentValidator AttachmentValidator) (*FormDataRequest, error) {
+func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDataValidator, metadataMandatory bool) (*FormDataRequest, error) {
 	f := &FormDataRequest{
-		req: req,
-		api: api,
+		req:                 req,
+		api:                 api,
+		isMetadataMandatory: metadataMandatory,
 	}
 	return f, f.validate(attachmentValidator)
 }
 
-func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) error {
+func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error {
 	var data []byte
 	var vErr error
 	var filename string
@@ -57,8 +69,12 @@ func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) erro
 		return fmt.Errorf("parsing form data (%s)", vErr.Error())
 	}
 	numOfAttach := len(f.req.MultipartForm.File)
-	if !attachmentValidator(numOfAttach) {
-		return fmt.Errorf("attachment validation, not expecting (%d) attachments", numOfAttach)
+	updateModelJson := f.req.FormValue(UpdateFieldKey)
+	if vErr := attachmentValidator(numOfAttach, updateModelJson); vErr != nil {
+		return vErr
+	}
+	if updateModelJson == "" && f.isMetadataMandatory {
+		return fmt.Errorf("missing mandatory (%s) key in form data", UpdateFieldKey)
 	}
 	if numOfAttach > 0 {
 		var fileHeader *multipart.FileHeader
@@ -91,15 +107,17 @@ func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) erro
 	}
 
 	// 2. Unmarshal the update field from JSON
-	updateModelJson := f.req.FormValue(UpdateFieldKey)
-	update := &models.InteractiveUpdate{}
-	if vErr = json.Unmarshal([]byte(updateModelJson), update); vErr != nil {
-		return fmt.Errorf("cannot unmarshal update json %w", vErr)
+	var update *models.InteractiveUpdate
+	if updateModelJson != "" {
+		update = &models.InteractiveUpdate{}
+		if vErr = json.Unmarshal([]byte(updateModelJson), update); vErr != nil {
+			return fmt.Errorf("cannot unmarshal update json %w", vErr)
+		}
+		if update.Interactive.Metadata == nil {
+			update.Interactive.Metadata = &models.InteractiveMetadata{}
+		}
+		update.Interactive.Metadata.Label = strings.TrimSpace(update.Interactive.Metadata.Label)
 	}
-	if update.Interactive.Metadata == nil {
-		update.Interactive.Metadata = &models.InteractiveMetadata{}
-	}
-	update.Interactive.Metadata.Label = strings.TrimSpace(update.Interactive.Metadata.Label)
 
 	hasher := sha1.New()
 	hasher.Write(data)
@@ -111,4 +129,11 @@ func (f *FormDataRequest) validate(attachmentValidator AttachmentValidator) erro
 	f.Sha = sha
 
 	return nil
+}
+
+func (f *FormDataRequest) hasMetadata() bool {
+	if f.Update == nil || f.Update.Interactive.Metadata == nil {
+		return false
+	}
+	return f.Update.Interactive.Metadata.HasData()
 }

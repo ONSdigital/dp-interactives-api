@@ -191,3 +191,38 @@ Feature: Interactives API (Update interactive)
                     "state": "ArchiveUploaded"
                 }
             """
+
+    Scenario: Metadata update for a published interactive must fail
+        Given I have these interactives:
+                """
+                [
+                    {
+                        "active": true,
+                        "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
+                        "published": true,
+                        "metadata": {
+                            "label": "Title123",
+                            "title": "Title123",
+                            "slug": "human readable slug",
+                            "resource_id": "resid321",
+                            "internal_id": "123"
+                        },
+                        "state": "ArchiveUploaded"
+                    }
+                ]
+                """
+        When As an interactives user I PUT no file with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+            """
+                {
+                    "interactive": {
+                        "metadata": {
+                            "label": "Title321",
+                            "title": "Title123",
+                            "slug": "Title321",
+                            "resource_id": "resid321",
+                            "internal_id": "123"
+                        }
+                    }
+                }
+            """
+        Then the HTTP status code should be "403"

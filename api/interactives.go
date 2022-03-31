@@ -21,7 +21,7 @@ const (
 var (
 	enabled, disabled        = true, false
 	ErrInvalidBody           = errors.New("body has invalid format")
-	ErrCantUpdateSlug        = errors.New("cannot update readable slug for a published interactive")
+	ErrCantUpdateMeta        = errors.New("cannot update metadata for a published interactive")
 	ErrCantDeletePublishedIn = errors.New("cannot delete a published interactive")
 )
 
@@ -29,7 +29,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	ctx := req.Context()
 
 	// 1. Validate request
-	formDataRequest, err := newFormDataRequest(req, api, WantOnlyOneAttachment)
+	formDataRequest, err := newFormDataRequest(req, api, WantOnlyOneAttachmentWithMetadata, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "http request validation failed", err)
@@ -70,7 +70,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	// 4. Process form data (S3)
+	// 4. upload to S3
 	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -147,38 +147,18 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 	WriteJSONBody(*vis, w, http.StatusOK)
 }
 
+// update rules
+// if published - allow only file updates
+// if unpublished - allow both file + metadata
 func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
 	// 1. Validate request
-	formDataRequest, err := newFormDataRequest(req, api, WantMaxOneAttachment)
+	formDataRequest, err := newFormDataRequest(req, api, WantAtleastMaxOneAttachmentAndOrMetadata, false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(ctx, "http request validation failed", err)
 		return
-	}
-	update := formDataRequest.Update.Interactive
-
-	// 2. Upload file if requested
-	if formDataRequest.FileData != nil {
-		if api.validateSha {
-			// Check if duplicate SHA exists
-			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-			if i != nil {
-				err = fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				log.Error(ctx, "archive with sha already exists", err)
-				return
-			}
-		}
-
-		// Process form data (S3)
-		_, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Error(ctx, "processing form data", err)
-			return
-		}
 	}
 
 	// 3. Check that id exists and is not deleted
@@ -196,26 +176,49 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	// 4. fail if attempting to update the slug for a published model
-	if *existing.Published && update.Metadata != nil && existing.Metadata.HumanReadableSlug != update.Metadata.HumanReadableSlug {
-		http.Error(w, ErrCantUpdateSlug.Error(), http.StatusForbidden)
-		logMsg := fmt.Sprintf("attempting to update slug for a published model existing (%s), update (%s)", existing.Metadata.HumanReadableSlug, update.Metadata.HumanReadableSlug)
-		log.Error(ctx, logMsg, ErrCantUpdateSlug)
+	// fail if attempting to update metadata for a published model
+	if *existing.Published && formDataRequest.hasMetadata() {
+		http.Error(w, ErrCantUpdateMeta.Error(), http.StatusForbidden)
+		log.Error(ctx, ErrCantUpdateMeta.Error(), ErrCantUpdateMeta)
 		return
 	}
 
+	// -- ALL GOOD ABOVE
+
 	// 5. prepare updated model
 	updatedModel := &models.Interactive{
-		ID:            id,
-		Published:     update.Published,
-		State:         existing.State,
-		ImportMessage: &formDataRequest.Update.ImportMessage,
-		Metadata:      existing.Metadata,
+		ID:        id,
+		Published: existing.Published,
+		State:     existing.State,
+		Metadata:  existing.Metadata,
 	}
 
-	// update rules
-	// if published - allow only file data
-	// if unpub - allow both file + metadata
+	var update models.Interactive
+	if formDataRequest.Update == nil { // no metada update
+		update.Metadata = existing.Metadata
+		update.Published = existing.Published
+	} else {
+		update = formDataRequest.Update.Interactive
+
+		if update.Metadata != nil {
+			updatedModel.Metadata.Update(update.Metadata, api.newSlug)
+		}
+		if update.Published != nil {
+			updatedModel.Published = update.Published
+		}
+	}
+
+	if formDataRequest.Update != nil {
+		if formDataRequest.Update.ImportSuccessful != nil { // importer updates
+			if *formDataRequest.Update.ImportSuccessful {
+				updatedModel.State = models.ImportSuccess.String()
+			} else {
+				updatedModel.State = models.ImportFailure.String()
+			}
+			updatedModel.ImportMessage = &formDataRequest.Update.ImportMessage
+		}
+	}
+
 	if update.Archive != nil {
 		updatedModel.Archive = &models.Archive{
 			Name: update.Archive.Name,
@@ -229,18 +232,31 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 			})
 		}
 	}
-	if formDataRequest.Update.ImportSuccessful != nil {
-		//importer updates OR if already published dont update metadata
-		if *formDataRequest.Update.ImportSuccessful {
-			updatedModel.State = models.ImportSuccess.String()
-		} else {
-			updatedModel.State = models.ImportFailure.String()
+
+	// Finally check if file to be uploaded
+	uri := ""
+	if formDataRequest.FileData != nil {
+		if api.validateSha {
+			// Check if duplicate SHA exists
+			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
+			if i != nil {
+				err = fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				log.Error(ctx, "archive with sha already exists", err)
+				return
+			}
 		}
-	}
-	// only label/title/internalid/collectionid
-	// slug is generated from label
-	if !*existing.Published && update.Metadata != nil {
-		updatedModel.Metadata.Update(update.Metadata, api.newSlug)
+
+		// Process form data (S3)
+		uri, err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Error(ctx, "processing form data", err)
+			return
+		}
+
+		updatedModel.State = models.ArchiveUploaded.String()
+		updatedModel.SHA = formDataRequest.Sha
 	}
 
 	// 6. write to DB
@@ -257,6 +273,16 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
 		return
+	}
+
+	// send kafka message to importer (if file uploaded)
+	if uri != "" {
+		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: uri})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Error(ctx, "Unable to notify importer", err)
+			return
+		}
 	}
 
 	WriteJSONBody(i, w, http.StatusOK)
