@@ -115,7 +115,11 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	// 5. send kafka message to importer
-	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: uri})
+	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
+		ID:       id,
+		FilePath: uri,
+		Title:    interact.Metadata.Title,
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to notify importer", err)
@@ -277,7 +281,16 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 	// send kafka message to importer (if file uploaded)
 	if uri != "" {
-		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{ID: id, FilePath: uri})
+		var currentFiles []string
+		for _, f := range existing.Archive.Files {
+			currentFiles = append(currentFiles, f.Name)
+		}
+		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
+			ID:           id,
+			FilePath:     uri,
+			Title:        updatedModel.Metadata.Title,
+			CurrentFiles: currentFiles,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			log.Error(ctx, "Unable to notify importer", err)
