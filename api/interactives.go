@@ -282,8 +282,10 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	// send kafka message to importer (if file uploaded)
 	if uri != "" {
 		var currentFiles []string
-		for _, f := range existing.Archive.Files {
-			currentFiles = append(currentFiles, f.Name)
+		if existing.Archive != nil {
+			for _, f := range existing.Archive.Files {
+				currentFiles = append(currentFiles, f.Name)
+			}
 		}
 		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
 			ID:           id,
