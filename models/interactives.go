@@ -50,6 +50,9 @@ func (i *InteractiveMetadata) Update(update *InteractiveMetadata, slugGen Genera
 	if update == nil {
 		return i
 	}
+	if i == nil {
+		i = &InteractiveMetadata{ResourceID: update.ResourceID, HumanReadableSlug: update.HumanReadableSlug}
+	}
 	if update.Label != "" {
 		i.Label = update.Label
 		i.HumanReadableSlug = slugGen(update.Label)

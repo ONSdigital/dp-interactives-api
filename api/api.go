@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
+
+	"github.com/ONSdigital/dp-interactives-api/models"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
@@ -31,6 +32,7 @@ const (
 type API struct {
 	Router        *mux.Router
 	mongoDB       MongoServer
+	filesService  FilesService
 	auth          authorisation.Middleware
 	producer      *event.AvroProducer
 	s3            upload.S3Interface
@@ -48,6 +50,7 @@ func Setup(ctx context.Context,
 	mongoDB MongoServer,
 	kafkaProducer kafka.IProducer,
 	s3 upload.S3Interface,
+	filesService FilesService,
 	newUUID models.Generator,
 	newResourceID models.Generator,
 	newSlug models.Generator) *API {
@@ -64,6 +67,7 @@ func Setup(ctx context.Context,
 		mongoDB:       mongoDB,
 		auth:          auth,
 		s3:            s3,
+		filesService:  filesService,
 		producer:      kProducer,
 		newUUID:       newUUID,
 		newSlug:       newSlug,

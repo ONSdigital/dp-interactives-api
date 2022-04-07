@@ -4,9 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"testing"
+
 	authorisation "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 	"github.com/ONSdigital/dp-interactives-api/api"
-	mongoMock "github.com/ONSdigital/dp-interactives-api/api/mock"
+	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -18,10 +23,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
-	"net/http"
-	"net/http/httptest"
-	"strconv"
-	"testing"
 )
 
 var (
@@ -62,6 +63,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		formFile      string
 		mongoServer   api.MongoServer
 		s3            upload.S3Interface
+		fs            api.FilesService
 		kafkaProducer kafka.IProducer
 	}{
 		{
@@ -86,9 +88,9 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			},
 			title:    "WhenFileIsZipButAlreadyExists_ThenStatusBadRequest",
 			formFile: "resources/interactives.zip",
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
-				GetInteractiveFunc: getInteractiveFunc,
+				GetInteractiveFunc:               getInteractiveFunc,
 			},
 		},
 		{
@@ -98,10 +100,10 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			},
 			title:    "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
 			formFile: "resources/interactives.zip",
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
-				GetInteractiveFunc: getInteractiveFunc,
+				GetInteractiveFunc:                 getInteractiveFunc,
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return errors.New("s3 error") },
@@ -114,10 +116,10 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			},
 			title:    "WhenUploadError_ThenInternalServerError",
 			formFile: "resources/interactives.zip",
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
-				GetInteractiveFunc: getInteractiveFunc,
+				GetInteractiveFunc:                 getInteractiveFunc,
 			},
 			s3: &s3Mock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
@@ -133,7 +135,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			},
 			title:    "WhenDbError_ThenInternalServerError",
 			formFile: "resources/interactives.zip",
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
@@ -156,7 +158,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			},
 			title:    "WhenAllSuccess_ThenStatus20x",
 			formFile: "resources/interactives.zip",
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
@@ -180,7 +182,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, noopGen, noopGen, noopGen)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -188,9 +190,9 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.InteractiveUpdate{
 						Interactive: models.Interactive{
 							Metadata: &models.InteractiveMetadata{
-								Label: "label1",
+								Label:      "label1",
 								InternalID: "idValue",
-								Title: "title1",
+								Title:      "title1",
 							},
 						},
 					})
@@ -222,7 +224,9 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 	kafkaProducer := &kMock.IProducerMock{
 		ChannelsFunc: func() *kafka.ProducerChannels { return &kafka.ProducerChannels{Output: nil} },
 	}
-	mongoServer := &mongoMock.MongoServerMock{
+	fs := &apiMock.FilesServiceMock{}
+
+	mongoServer := &apiMock.MongoServerMock{
 		GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 		GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 		UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
@@ -261,14 +265,14 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			return strconv.Itoa(callCount)
 		}
 
-		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, noopGen, resourceIdGen, noopGen)
+		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, noopGen, resourceIdGen, noopGen)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
 			Interactive: models.Interactive{
 				Metadata: &models.InteractiveMetadata{
-					Label: "label1",
+					Label:      "label1",
 					InternalID: "idValue",
-					Title: "title1",
+					Title:      "title1",
 				},
 			},
 		})
@@ -294,14 +298,14 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 		{
 			title:        "WhenMissingInDatabase_ThenStatusNotFound",
 			responseCode: http.StatusNotFound,
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) { return nil, nil },
 			},
 		},
 		{
 			title:        "WhenInteractiveIsDeleted_ThenStatusNotFound",
 			responseCode: http.StatusNotFound,
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 					return &models.Interactive{Active: &inactiveFlag}, nil
 				},
@@ -310,7 +314,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 		{
 			title:        "WhenAnyOtherDBError_ThenInternalError",
 			responseCode: http.StatusInternalServerError,
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 					return &models.Interactive{Active: &activeFlag}, errors.New("db-error")
 				},
@@ -319,7 +323,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 		{
 			title:        "WhenAllGood_ThenStatusOK",
 			responseCode: http.StatusOK,
-			mongoServer: &mongoMock.MongoServerMock{
+			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 					return &models.Interactive{Active: &activeFlag, Metadata: &models.InteractiveMetadata{}}, nil
 				},
@@ -330,7 +334,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, nil, noopGen, noopGen, noopGen)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)

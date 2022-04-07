@@ -27,6 +27,7 @@ type Service struct {
 	mongoDB                   api.MongoServer
 	interactivesKafkaProducer kafka.IProducer
 	authorisationMiddleware   authorisation.Middleware
+	filesService              api.FilesService
 }
 
 func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceList, buildTime, gitCommit, version string, svcErrors chan error) (*Service, error) {
@@ -49,6 +50,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 
 	var s3Client upload.S3Interface
 	var producer kafka.IProducer
+	var filesService api.FilesService
 	if cfg.PublishingEnabled {
 		// Get S3Uploaded client
 		s3Client, err = serviceList.GetS3Client(ctx, cfg)
@@ -63,11 +65,17 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 			log.Fatal(ctx, "failed to initialise kafka producer", err)
 			return nil, err
 		}
+
+		filesService, err = serviceList.GetFilesService(ctx, cfg)
+		if err != nil {
+			log.Fatal(ctx, "failed to initialise files service", err)
+			return nil, err
+		}
 	}
 
 	uuidGen, resourceIdGen, slugGen := serviceList.GetGenerators()
 
-	a := api.Setup(ctx, cfg, r, authorisationMiddleware, mongoDB, producer, s3Client, uuidGen, resourceIdGen, slugGen)
+	a := api.Setup(ctx, cfg, r, authorisationMiddleware, mongoDB, producer, s3Client, filesService, uuidGen, resourceIdGen, slugGen)
 
 	//heathcheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
@@ -75,7 +83,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client, authorisationMiddleware); err != nil {
+	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client, authorisationMiddleware, filesService); err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 
@@ -99,6 +107,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		mongoDB:                   mongoDB,
 		interactivesKafkaProducer: producer,
 		authorisationMiddleware:   authorisationMiddleware,
+		filesService:              filesService,
 	}, nil
 }
 
@@ -176,7 +185,8 @@ func registerCheckers(ctx context.Context,
 	mongoDB api.MongoServer,
 	producer kafka.IProducer,
 	s3 upload.S3Interface,
-	authorisationMiddleware authorisation.Middleware) (err error) {
+	authorisationMiddleware authorisation.Middleware,
+	filesService api.FilesService) (err error) {
 
 	hasErrors := false
 
@@ -194,6 +204,11 @@ func registerCheckers(ctx context.Context,
 		if err = hc.AddCheck("S3 checker", s3.Checker); err != nil {
 			hasErrors = true
 			log.Error(ctx, "error adding check for s3", err)
+		}
+
+		if err = hc.AddCheck("FilesService checker", filesService.Checker); err != nil {
+			hasErrors = true
+			log.Error(ctx, "error adding check for filesService", err)
 		}
 	}
 

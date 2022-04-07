@@ -2,10 +2,11 @@ package steps
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-interactives-api/models"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"strings"
+
+	"github.com/ONSdigital/dp-interactives-api/models"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
@@ -15,6 +16,7 @@ import (
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
+	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/dp-interactives-api/service"
@@ -34,6 +36,7 @@ type InteractivesApiComponent struct {
 	MongoClient    *mongo.Mongo
 	Config         *config.Config
 	HTTPServer     *http.Server
+	filesService   api.FilesService
 	ServiceRunning bool
 	initialiser    service.Initialiser
 }
@@ -109,6 +112,11 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 	c.MongoClient = mongodb
 
 	cfg.AuthorisationConfig.PermissionsAPIURL = setupFakePermissionsAPI().URL()
+
+	c.filesService = &apiMock.FilesServiceMock{
+		PublishCollectionFunc: func(ctx context.Context, collectionID string) error { return nil },
+		SetCollectionIDFunc:   func(ctx context.Context, file string, collectionID string) error { return nil },
+	}
 
 	return c, nil
 }
@@ -203,6 +211,10 @@ func (f *InteractivesApiComponent) DoGetGenerators() (models.Generator, models.G
 	return emptyUUID, fakeResourceID, noopSlug
 }
 
+func (f *InteractivesApiComponent) DoGetFSClient(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
+	return f.filesService, nil
+}
+
 func (c *InteractivesApiComponent) setInitialiserMock() {
 	c.initialiser = &serviceMock.InitialiserMock{
 		DoGetMongoDBFunc:                 c.DoGetMongoDB,
@@ -212,5 +224,6 @@ func (c *InteractivesApiComponent) setInitialiserMock() {
 		DoGetS3ClientFunc:                c.DoS3Client,
 		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
 		DoGetGeneratorsFunc:              c.DoGetGenerators,
+		DoGetFilesServiceFunc:            c.DoGetFSClient,
 	}
 }

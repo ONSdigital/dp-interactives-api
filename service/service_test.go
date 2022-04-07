@@ -3,10 +3,11 @@ package service_test
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/models"
 	"net/http"
 	"sync"
 	"testing"
+
+	"github.com/ONSdigital/dp-interactives-api/models"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
@@ -98,6 +99,10 @@ func TestRun(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
+		fsMock := &apiMock.FilesServiceMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		}
+
 		funcDoGetMongoDbOk := func(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
 			return mongoDbMock, nil
 		}
@@ -132,6 +137,10 @@ func TestRun(t *testing.T) {
 
 		funcDoGetS3Err := func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
 			return nil, errS3
+		}
+
+		funcDoGetFilesServiceOk := func(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
+			return fsMock, nil
 		}
 
 		funcDoGetHealthClientOk := func(name string, url string) *health.Client {
@@ -220,6 +229,7 @@ func TestRun(t *testing.T) {
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -253,6 +263,7 @@ func TestRun(t *testing.T) {
 				DoGetHealthClientFunc:            funcDoGetHealthClientOk,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -263,11 +274,12 @@ func TestRun(t *testing.T) {
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddheckFail.Error()))
 				So(svcList.MongoDB, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
-				So(hcMockAddFail.AddCheckCalls(), ShouldHaveLength, 4)
+				So(hcMockAddFail.AddCheckCalls(), ShouldHaveLength, 5)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 				So(hcMockAddFail.AddCheckCalls()[1].Name, ShouldResemble, "Uploaded Kafka Producer")
 				So(hcMockAddFail.AddCheckCalls()[2].Name, ShouldResemble, "S3 checker")
-				So(hcMockAddFail.AddCheckCalls()[3].Name, ShouldResemble, "permissions cache health check")
+				So(hcMockAddFail.AddCheckCalls()[3].Name, ShouldResemble, "FilesService checker")
+				So(hcMockAddFail.AddCheckCalls()[4].Name, ShouldResemble, "permissions cache health check")
 			})
 		})
 
@@ -282,6 +294,7 @@ func TestRun(t *testing.T) {
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -297,11 +310,12 @@ func TestRun(t *testing.T) {
 			})
 
 			Convey("The checkers are registered and the healthcheck and http server started", func() {
-				So(hcMock.AddCheckCalls(), ShouldHaveLength, 4)
+				So(hcMock.AddCheckCalls(), ShouldHaveLength, 5)
 				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 				So(hcMock.AddCheckCalls()[1].Name, ShouldResemble, "Uploaded Kafka Producer")
 				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "S3 checker")
-				So(hcMock.AddCheckCalls()[3].Name, ShouldResemble, "permissions cache health check")
+				So(hcMock.AddCheckCalls()[3].Name, ShouldResemble, "FilesService checker")
+				So(hcMock.AddCheckCalls()[4].Name, ShouldResemble, "permissions cache health check")
 				So(initMock.DoGetHTTPServerCalls(), ShouldHaveLength, 1)
 				So(initMock.DoGetHTTPServerCalls()[0].BindAddr, ShouldEqual, ":27500")
 				So(hcMock.StartCalls(), ShouldHaveLength, 1)
@@ -321,6 +335,7 @@ func TestRun(t *testing.T) {
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -393,6 +408,10 @@ func TestClose(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
+		fsMock := &apiMock.FilesServiceMock{
+			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
+		}
+
 		// kafkaProducerMock will fail if healthcheck, http server and mongo are not already closed
 		kafkaProducerMock := &kafkatest.IProducerMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
@@ -419,7 +438,8 @@ func TestClose(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
-				DoGetGeneratorsFunc: funcDoGetGenerator,
+				DoGetGeneratorsFunc:   funcDoGetGenerator,
+				DoGetFilesServiceFunc: func(ctx context.Context, cfg *config.Config) (api.FilesService, error) { return fsMock, nil },
 			}
 
 			svcErrors := make(chan error, 1)
@@ -457,6 +477,7 @@ func TestClose(t *testing.T) {
 					return authorisationMiddleware, nil
 				},
 				DoGetGeneratorsFunc: funcDoGetGenerator,
+				DoGetFilesServiceFunc: func(ctx context.Context, cfg *config.Config) (api.FilesService, error) { return fsMock, nil },
 			}
 
 			svcErrors := make(chan error, 1)

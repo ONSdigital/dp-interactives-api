@@ -2,13 +2,15 @@ package service
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
+	"github.com/ONSdigital/dp-api-clients-go/v2/files"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
@@ -25,6 +27,7 @@ type ExternalServiceList struct {
 	HealthCheck   bool
 	KafkaProducer bool
 	S3Client      bool
+	FilesService  bool
 	Init          Initialiser
 }
 
@@ -99,6 +102,22 @@ func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, au
 // GetGenerators returns all the attribute generators necessary - i.e. uuid, resourceId and slug
 func (e *ExternalServiceList) GetGenerators() (models.Generator, models.Generator, models.Generator) {
 	return e.Init.DoGetGenerators()
+}
+
+// GetFilesService creates files service  and sets the FilesService flag to true
+func (e *ExternalServiceList) GetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
+	client, err := e.Init.DoGetFilesService(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.FilesService = true
+	return client, nil
+}
+
+// DoGetFilesService returns a files service backend
+func (e *Init) DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
+	apiClient := files.NewAPIClient(cfg.FilesAPIURL)
+	return apiClient, nil
 }
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router

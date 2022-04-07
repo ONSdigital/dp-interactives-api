@@ -28,6 +28,7 @@ type Initialiser interface {
 	DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)
 	DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
 	DoGetGenerators() (models.Generator, models.Generator, models.Generator)
+	DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

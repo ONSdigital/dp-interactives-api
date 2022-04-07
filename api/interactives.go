@@ -23,6 +23,7 @@ var (
 	ErrInvalidBody           = errors.New("body has invalid format")
 	ErrCantUpdateMeta        = errors.New("cannot update metadata for a published interactive")
 	ErrCantDeletePublishedIn = errors.New("cannot delete a published interactive")
+	ErrPubErrNoCollectionID  = errors.New("cannot publish interactive, no collection ID")
 )
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Request) {
@@ -195,18 +196,18 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		ID:        id,
 		Published: existing.Published,
 		State:     existing.State,
-		Metadata:  existing.Metadata,
 	}
+	updatedModel.Metadata = updatedModel.Metadata.Update(existing.Metadata, api.newSlug)
 
 	var update models.Interactive
 	if formDataRequest.Update == nil { // no metada update
-		update.Metadata = existing.Metadata
+		update.Metadata = update.Metadata.Update(existing.Metadata, api.newSlug)
 		update.Published = existing.Published
 	} else {
 		update = formDataRequest.Update.Interactive
 
 		if update.Metadata != nil {
-			updatedModel.Metadata.Update(update.Metadata, api.newSlug)
+			updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
 		}
 		if update.Published != nil {
 			updatedModel.Published = update.Published
@@ -262,6 +263,53 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 		updatedModel.State = models.ArchiveUploaded.String()
 		updatedModel.SHA = formDataRequest.Sha
+	}
+
+	// link with collection-id
+	// a collectionID is present in the update message
+	if update.Metadata != nil && update.Metadata.CollectionID != "" {
+		colID := update.Metadata.CollectionID
+		// update if empty OR different
+		if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
+			// files/archive can be in the udpdate or existing - check update first
+			arch := update.Archive
+			if arch == nil || len(arch.Files) == 0 {
+				arch = existing.Archive
+			}
+			if arch != nil && len(arch.Files) > 0 {
+				for _, file := range arch.Files {
+					cErr := api.filesService.SetCollectionID(ctx, file.Name, colID)
+					if cErr != nil {
+						http.Error(w, cErr.Error(), http.StatusInternalServerError)
+						log.Error(ctx, "error setting collectionID", cErr)
+						return
+					}
+				}
+				updatedModel.Metadata.CollectionID = colID
+			}
+		}
+	}
+
+	// publish (if not already)
+	if existing.Published != nil && !*(existing.Published) &&
+		update.Published != nil && *(update.Published) {
+		collID := update.Metadata.CollectionID
+		if collID == "" {
+			collID = existing.Metadata.CollectionID
+		}
+
+		if collID != "" {
+			cErr := api.filesService.PublishCollection(ctx, existing.Metadata.CollectionID)
+			if cErr != nil {
+				http.Error(w, cErr.Error(), http.StatusInternalServerError)
+				log.Error(ctx, "error setting collectionID", cErr)
+				return
+			}
+			pub := true
+			updatedModel.Published = &pub
+		} else {
+			log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
+		}
 	}
 
 	// 6. write to DB

@@ -11,6 +11,7 @@ import (
 
 //go:generate moq -out mock/mongo.go -pkg mock . MongoServer
 //go:generate moq -out mock/auth.go -pkg mock . AuthHandler
+//go:generate moq -out mock/filesservice.go -pkg mock . FilesService
 
 type MongoServer interface {
 	Close(ctx context.Context) error
@@ -25,4 +26,10 @@ type MongoServer interface {
 // AuthHandler interface for adding auth to endpoints
 type AuthHandler interface {
 	Require(required dpauth.Permissions, handler http.HandlerFunc) http.HandlerFunc
+}
+
+type FilesService interface {
+	SetCollectionID(ctx context.Context, file, collectionID string) error
+	PublishCollection(ctx context.Context, collectionID string) error
+	Checker(ctx context.Context, state *healthcheck.CheckState) error
 }
