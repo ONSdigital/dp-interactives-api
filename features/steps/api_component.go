@@ -128,7 +128,6 @@ func (c *InteractivesApiComponent) Reset() error {
 	if err := c.MongoClient.Init(ctx, false, true); err != nil {
 		log.Warn(ctx, "error initialising MongoClient during Reset", log.Data{"err": err.Error()})
 	}
-
 	c.setInitialiserMock()
 	return nil
 }

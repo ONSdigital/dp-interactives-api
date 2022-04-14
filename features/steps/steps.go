@@ -30,7 +30,7 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdata)
 	ctx.Step(`^I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdata)
 	ctx.Step(`^I should receive the following model response with status "([^"]*)":$`, c.IShouldReceiveTheFollowingModelResponse)
-	ctx.Step(`^I am an interactives user$`, c.adminJWTToken)
+	ctx.Step(`^I am an interactives user`, c.adminJWTToken)
 	ctx.Step(`^As an interactives user I POST file "([^"]*)" with form-data "([^"]*)"$`, c.IPostToWithFormDataAsAdmin)
 	ctx.Step(`^As an interactives user I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdataAsAdmin)
 	ctx.Step(`^As an interactives user I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdataAsAdmin)

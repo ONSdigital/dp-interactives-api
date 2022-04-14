@@ -26,20 +26,20 @@ import (
 )
 
 var (
-	t, f               = true, false
+	on, off            = true, false
 	noopGen            = func(string) string { return "" }
 	getInteractiveFunc = func(ctx context.Context, id string) (*models.Interactive, error) {
 		if id != "" {
-			b := &t
+			b := &on
 			if id == "inactive-id" {
-				b = &f
+				b = &off
 			}
 			return &models.Interactive{
 				ID:        id,
 				SHA:       "sha",
 				State:     models.ImportSuccess.String(),
 				Active:    b,
-				Published: &f,
+				Published: &off,
 				Metadata: &models.InteractiveMetadata{
 					Label: "title",
 				},
@@ -287,13 +287,12 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 
 func TestGetInteractiveMetadataHandler(t *testing.T) {
 	t.Parallel()
-	activeFlag := true
-	inactiveFlag := false
 	interactiveID := "11-22-33-44"
 	tests := []struct {
-		title        string
-		responseCode int
-		mongoServer  api.MongoServer
+		title             string
+		responseCode      int
+		mongoServer       api.MongoServer
+		publishingEnabled bool
 	}{
 		{
 			title:        "WhenMissingInDatabase_ThenStatusNotFound",
@@ -307,7 +306,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusNotFound,
 			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &inactiveFlag}, nil
+					return &models.Interactive{Active: &off}, nil
 				},
 			},
 		},
@@ -316,7 +315,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusInternalServerError,
 			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &activeFlag}, errors.New("db-error")
+					return nil, errors.New("db-error")
 				},
 			},
 		},
@@ -325,16 +324,27 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &activeFlag, Metadata: &models.InteractiveMetadata{}}, nil
+					return &models.Interactive{Active: &on, Published: &on, Metadata: &models.InteractiveMetadata{}}, nil
 				},
 			},
+			publishingEnabled: true,
+		},
+		{
+			title:        "WhenWebAndUnpublished_ThenStatusNotFound",
+			responseCode: http.StatusNotFound,
+			mongoServer: &apiMock.MongoServerMock{
+				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
+					return &models.Interactive{Active: &on, Published: &off, Metadata: &models.InteractiveMetadata{}}, nil
+				},
+			},
+			publishingEnabled: false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, nil, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{PublishingEnabled: tc.publishingEnabled}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, nil, noopGen, noopGen, noopGen)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)

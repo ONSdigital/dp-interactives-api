@@ -44,7 +44,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	if api.validateSha {
+	if api.cfg.ValidateSHAEnabled {
 		// 2. Check if duplicate exists
 		existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
 		if existing != nil {
@@ -138,19 +138,21 @@ func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.R
 	id := vars["id"]
 
 	// fetch info from DB
-	vis, err := api.mongoDB.GetInteractive(ctx, id)
-	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound || (vis != nil && !*vis.Active) {
-		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
-		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
-		return
-	}
-	if err != nil {
+	i, err := api.mongoDB.GetInteractive(ctx, id)
+	if err != nil && err != mongo.ErrNoRecordFound {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
 		return
 	}
 
-	WriteJSONBody(*vis, w, http.StatusOK)
+	//if mongo.ErrNoRecordFound then will blockAccess(i==nil)
+	if api.blockAccess(i) {
+		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
+		log.Warn(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id))
+		return
+	}
+
+	WriteJSONBody(*i, w, http.StatusOK)
 }
 
 // update rules
@@ -242,7 +244,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	// Finally check if file to be uploaded
 	uri := ""
 	if formDataRequest.FileData != nil {
-		if api.validateSha {
+		if api.cfg.ValidateSHAEnabled {
 			// Check if duplicate SHA exists
 			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
 			if i != nil {
@@ -356,10 +358,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 }
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
-	// fetches all/filtered visulatisations
 	ctx := req.Context()
 	var filter *models.InteractiveMetadata
-	// get an optional metadata filter
+
 	filterJson := req.URL.Query().Get("filter")
 	if filterJson != "" {
 		defer req.Body.Close()
@@ -371,24 +372,22 @@ func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request
 			return nil, 0, err
 		}
 	}
-	db, totalCount, err := api.mongoDB.ListInteractives(ctx, offset, limit, filter)
+
+	db, _, err := api.mongoDB.ListInteractives(ctx, offset, limit, filter)
 	if err != nil {
 		log.Error(ctx, "api endpoint getDatasets datastore.GetDatasets returned an error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return nil, 0, err
 	}
+
 	response := make([]*models.Interactive, 0)
-	for _, interactive := range db {
-		i, err := models.Map(interactive)
-		if err != nil {
-			log.Error(ctx, "cannot map db to http response", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return nil, 0, err
+	for _, i := range db {
+		if !api.blockAccess(i) {
+			response = append(response, i)
 		}
-		response = append(response, i)
 	}
 
-	return response, totalCount, nil
+	return response, len(response), nil
 }
 
 func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Request) {

@@ -30,6 +30,7 @@ const (
 )
 
 type API struct {
+	cfg           *config.Config
 	Router        *mux.Router
 	mongoDB       MongoServer
 	filesService  FilesService
@@ -39,7 +40,6 @@ type API struct {
 	newUUID       models.Generator
 	newResourceID models.Generator
 	newSlug       models.Generator
-	validateSha   bool
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
@@ -63,6 +63,7 @@ func Setup(ctx context.Context,
 	}
 
 	api := &API{
+		cfg:           cfg,
 		Router:        r,
 		mongoDB:       mongoDB,
 		auth:          auth,
@@ -72,7 +73,6 @@ func Setup(ctx context.Context,
 		newUUID:       newUUID,
 		newSlug:       newSlug,
 		newResourceID: newResourceID,
-		validateSha:   cfg.ValidateSHAEnabled,
 	}
 
 	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
@@ -114,6 +114,22 @@ func (api *API) uploadFile(sha, filename string, data []byte) (string, error) {
 	}
 
 	return fileWithPath, nil
+}
+
+func (api *API) blockAccess(i *models.Interactive) bool {
+	if i == nil {
+		return true
+	}
+
+	if i.Active == nil || !*i.Active {
+		//block all access to deleted interactives
+		return true
+	}
+
+	//all in publishing mode or only published interactives in web
+	viewable := api.cfg.PublishingEnabled || *i.Published
+
+	return !viewable
 }
 
 func WriteJSONBody(v interface{}, w http.ResponseWriter, httpStatus int) error {

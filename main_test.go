@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	componenttest "github.com/ONSdigital/dp-component-test"
@@ -29,7 +31,7 @@ func (c *componenttestSuite) InitializeScenario(ctx *godog.ScenarioContext) {
 	apiFeature := componenttest.NewAPIFeature(interactivesFtr.InitialiseService)
 	interactivesFtr.ApiFeature = apiFeature
 
-	ctx.BeforeScenario(func(*godog.Scenario) {
+	ctx.BeforeScenario(func(s *godog.Scenario) {
 		apiFeature.Reset()
 		if err := interactivesFtr.Reset(); err != nil {
 			panic(err)
@@ -37,9 +39,14 @@ func (c *componenttestSuite) InitializeScenario(ctx *godog.ScenarioContext) {
 		if err := c.MongoFeature.Reset(); err != nil {
 			log.Error(context.Background(), "failed to reset mongo feature", err)
 		}
+		if strings.HasPrefix(filepath.Base(s.Uri), "web-") {
+			interactivesFtr.Config.PublishingEnabled = false
+		} else {
+			interactivesFtr.Config.PublishingEnabled = true
+		}
 	})
 
-	ctx.AfterScenario(func(*godog.Scenario, error) {
+	ctx.AfterScenario(func(s *godog.Scenario, err error) {
 		interactivesFtr.Close()
 	})
 
