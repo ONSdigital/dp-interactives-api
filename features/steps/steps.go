@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -177,6 +178,17 @@ func (c *InteractivesApiComponent) IShouldReceiveTheFollowingModelResponse(expec
 	err = json.Unmarshal(body, &actual)
 	if err != nil {
 		return err
+	}
+
+	if expected.LastUpdated == nil {
+		//expect a date today
+		now := time.Now()
+		a, b, c := now.Date()
+		x, y, z := actual.LastUpdated.Date()
+		if a != x && b != y && c != z {
+			return fmt.Errorf("last_updated  not as expected %s", actual.LastUpdated)
+		}
+		expected.LastUpdated, actual.LastUpdated = &now, &now
 	}
 
 	assert.Equal(c, expected, actual)

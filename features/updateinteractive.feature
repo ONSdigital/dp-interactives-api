@@ -102,7 +102,8 @@ Feature: Interactives API (Update interactive)
                             "resource_id": "resid321",
                             "internal_id": "123"
                         },
-                        "state": "ArchiveUploaded"
+                        "state": "ArchiveUploaded",
+                        "last_updated":"2021-01-01T00:00:00Z"
                     }
                 ]
                 """
@@ -123,7 +124,7 @@ Feature: Interactives API (Update interactive)
                     }
                 }
             """
-        Then I should receive the following JSON response with status "200":
+        Then I should receive the following model response with status "200":
             """
                 {
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
@@ -173,7 +174,7 @@ Feature: Interactives API (Update interactive)
                     }
                 }
             """
-        Then I should receive the following JSON response with status "200":
+        Then I should receive the following model response with status "200":
             """
                 {
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",

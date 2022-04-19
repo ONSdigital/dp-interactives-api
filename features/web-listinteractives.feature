@@ -57,7 +57,8 @@ Feature: Interactives API (List interactives) - from public web access
                                 "label": "ad fugiat cillum",
                                 "internal_id": "456"
                             },
-                            "state": "ImportSuccess"
+                            "state": "ImportSuccess",
+                            "last_updated":"2021-01-01T00:00:02Z"
                         }
                     ],
                     "count": 1,

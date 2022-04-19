@@ -115,11 +115,18 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		}
 	}
 
+	interactive, err := api.mongoDB.GetInteractive(ctx, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
+		return
+	}
+
 	// 5. send kafka message to importer
 	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
 		ID:           id,
 		FilePath:     uri,
-		Title:        interact.Metadata.Title,
+		Title:        interactive.Metadata.Title,
 		CurrentFiles: []string{""}, //need to send an empty val :(
 	})
 	if err != nil {
@@ -128,7 +135,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	WriteJSONBody(interact, w, http.StatusAccepted)
+	WriteJSONBody(interactive, w, http.StatusAccepted)
 }
 
 func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.Request) {
@@ -307,8 +314,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 				log.Error(ctx, "error setting collectionID", cErr)
 				return
 			}
-			pub := true
-			updatedModel.Published = &pub
+			updatedModel.Published = &enabled
 		} else {
 			log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
 		}
@@ -323,7 +329,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	}
 
 	// 7. get updated model
-	i, err := api.mongoDB.GetInteractive(ctx, id)
+	interactive, err := api.mongoDB.GetInteractive(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
@@ -336,15 +342,15 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		//https://github.com/go-avro/avro/pull/20
 		//https://github.com/go-avro/avro/issues/33 (we should update tbh)
 		currentFiles := []string{""}
-		if existing.Archive != nil {
-			for _, f := range existing.Archive.Files {
+		if interactive.Archive != nil {
+			for _, f := range interactive.Archive.Files {
 				currentFiles = append(currentFiles, f.Name)
 			}
 		}
 		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
 			ID:           id,
 			FilePath:     uri,
-			Title:        updatedModel.Metadata.Title,
+			Title:        interactive.Metadata.Title,
 			CurrentFiles: currentFiles,
 		})
 		if err != nil {
@@ -354,7 +360,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		}
 	}
 
-	WriteJSONBody(i, w, http.StatusOK)
+	WriteJSONBody(interactive, w, http.StatusOK)
 }
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {

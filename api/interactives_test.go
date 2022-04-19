@@ -26,9 +26,10 @@ import (
 )
 
 var (
-	on, off            = true, false
-	noopGen            = func(string) string { return "" }
-	getInteractiveFunc = func(ctx context.Context, id string) (*models.Interactive, error) {
+	on, off               = true, false
+	noopGen               = func(string) string { return "" }
+	validInteractiveIdGen = func(string) string { return "an-id" }
+	getInteractiveFunc    = func(ctx context.Context, id string) (*models.Interactive, error) {
 		if id != "" {
 			b := &on
 			if id == "inactive-id" {
@@ -41,7 +42,8 @@ var (
 				Active:    b,
 				Published: &off,
 				Metadata: &models.InteractiveMetadata{
-					Label: "title",
+					Title: "title",
+					Label: "label",
 				},
 			}, nil
 		}
@@ -182,7 +184,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, validInteractiveIdGen, noopGen, noopGen)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -265,7 +267,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			return strconv.Itoa(callCount)
 		}
 
-		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, noopGen, resourceIdGen, noopGen)
+		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
 			Interactive: models.Interactive{

@@ -61,6 +61,7 @@ Feature: Interactives API (Get interactive) - from public web access
                         "label": "ad fugiat cillum",
                         "internal_id": "123"
                     },
-                    "state": "ArchiveUploaded"
+                    "state": "ArchiveUploaded",
+                    "last_updated":"2021-01-01T00:00:00Z"
                 }
             """

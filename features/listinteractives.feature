@@ -49,7 +49,8 @@ Feature: Interactives API (List interactives)
                             "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
-                            }
+                            },
+                            "last_updated":"2021-01-01T00:00:01Z"
                         }
                     ],
                     "count": 1,

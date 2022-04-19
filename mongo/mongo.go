@@ -3,10 +3,6 @@ package mongo
 import (
 	"context"
 	"errors"
-	"reflect"
-	"strings"
-	"time"
-
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/v3/dplock"
@@ -14,6 +10,9 @@ import (
 	dpMongoDriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/ONSdigital/log.go/v2/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"reflect"
+	"strings"
+	"time"
 )
 
 const (
@@ -150,7 +149,7 @@ func generateFilter(model *models.InteractiveMetadata) bson.M {
 	if model == nil {
 		return filter
 	}
-	
+
 	// if there is a resource_id set, filter using that
 	if model.ResourceID != "" {
 		filter["metadata.resource_id"] = bson.M{"$eq": model.ResourceID}
@@ -205,8 +204,11 @@ func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.In
 
 	update := bson.M{
 		"$set": vis,
+		"$currentDate": bson.M{
+			"last_updated": true,
+		},
 		"$setOnInsert": bson.M{
-			"last_updated": time.Now(),
+			"created": time.Now(),
 		},
 	}
 

@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type InteractiveState int
 
 const (
@@ -76,12 +78,14 @@ func (i *InteractiveMetadata) HasData() bool {
 	return true
 }
 
+//(i think) omitempty reuqired for all fields for update to work correctly - otherwise we overwrite incorrectly
 type Interactive struct {
-	ID        string               `bson:"_id,omitempty"               json:"id,omitempty"`
-	Archive   *Archive             `bson:"archive,omitempty"           json:"archive,omitempty"`
-	Metadata  *InteractiveMetadata `bson:"metadata,omitempty"          json:"metadata,omitempty"`
-	Published *bool                `bson:"published,omitempty"         json:"published,omitempty"`
-	State     string               `bson:"state,omitempty"             json:"state,omitempty"`
+	ID          string               `bson:"_id,omitempty"               json:"id,omitempty"`
+	Archive     *Archive             `bson:"archive,omitempty"           json:"archive,omitempty"`
+	Metadata    *InteractiveMetadata `bson:"metadata,omitempty"          json:"metadata,omitempty"`
+	Published   *bool                `bson:"published,omitempty"         json:"published,omitempty"`
+	State       string               `bson:"state,omitempty"             json:"state,omitempty"`
+	LastUpdated *time.Time           `bson:"last_updated,omitempty"      json:"last_updated,omitempty"`
 	//Mongo only
 	Active        *bool   `bson:"active,omitempty"            json:"-"`
 	SHA           string  `bson:"sha,omitempty"               json:"-"`
