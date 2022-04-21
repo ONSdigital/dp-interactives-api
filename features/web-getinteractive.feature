@@ -40,7 +40,9 @@ Feature: Interactives API (Get interactive) - from public web access
                     "metadata": {
                         "title": "title123",
                         "label": "ad fugiat cillum",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "sha": "rhyCq4GCknxx0nzeqx2LE077Ruo=",
                     "state": "ArchiveUploaded"
@@ -59,9 +61,12 @@ Feature: Interactives API (Get interactive) - from public web access
                     "metadata": {
                         "title": "title123",
                         "label": "ad fugiat cillum",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "state": "ArchiveUploaded",
-                    "last_updated":"2021-01-01T00:00:00Z"
+                    "last_updated":"2021-01-01T00:00:00Z",
+                    "url": "http://localhost:27400/interactives/slug-abcde123/embed"
                 }
             """

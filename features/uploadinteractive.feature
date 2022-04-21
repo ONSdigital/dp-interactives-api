@@ -38,6 +38,7 @@ Feature: Interactives API (Get interactive)
                         "resource_id": "AbcdE123",
                         "internal_id": "123"
                     },
-                    "state": "ArchiveUploaded"
+                    "state": "ArchiveUploaded",
+                    "url": "http://localhost:27400/interactives/Title123-AbcdE123/embed"
                 }
             """

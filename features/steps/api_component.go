@@ -99,11 +99,9 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 	log.Info(context.Background(), "configuration for component test", log.Data{"config": c.Config})
 
 	cfg, _ := config.Get()
-	mongodb := &mongo.Mongo{
-		URI:        strings.Replace(mongoURI, "mongodb://", "", 1),
-		Database:   cfg.MongoConfig.Database,
-		Collection: cfg.MongoConfig.Collection,
-	}
+	cfg.MongoConfig.BindAddr = strings.Replace(mongoURI, "mongodb://", "", 1)
+	cfg.MongoConfig.Database = "interactives-api"
+	mongodb := &mongo.Mongo{Config: cfg}
 
 	if err := mongodb.Init(context.Background(), false, true); err != nil {
 		return nil, err
@@ -124,7 +122,6 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 func (c *InteractivesApiComponent) Reset() error {
 	ctx := context.Background()
 
-	c.MongoClient.Database = "interactives-api"
 	if err := c.MongoClient.Init(ctx, false, true); err != nil {
 		log.Warn(ctx, "error initialising MongoClient during Reset", log.Data{"err": err.Error()})
 	}

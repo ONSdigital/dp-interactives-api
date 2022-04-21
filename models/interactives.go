@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type InteractiveState int
 
@@ -90,6 +93,14 @@ type Interactive struct {
 	Active        *bool   `bson:"active,omitempty"            json:"-"`
 	SHA           string  `bson:"sha,omitempty"               json:"-"`
 	ImportMessage *string `bson:"import_message,omitempty"    json:"-"`
+	//JSON only
+	URL string `bson:"-" json:"url,omitempty"`
+}
+
+func (i *Interactive) SetURL(domain string) {
+	if i != nil && i.Metadata != nil {
+		i.URL = fmt.Sprintf("%s/%s/%s-%s/embed", domain, "interactives", i.Metadata.HumanReadableSlug, i.Metadata.ResourceID)
+	}
 }
 
 type Archive struct {

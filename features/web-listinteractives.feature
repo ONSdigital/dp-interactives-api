@@ -11,7 +11,9 @@ Feature: Interactives API (List interactives) - from public web access
                     "metadata": {
                         "title": "title123",
                         "label": "ad fugiat cillum",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 },
@@ -23,7 +25,9 @@ Feature: Interactives API (List interactives) - from public web access
                     "metadata": {
                         "title": "title123",
                         "label": "ad fugiat cillum",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 },
@@ -35,7 +39,9 @@ Feature: Interactives API (List interactives) - from public web access
                     "metadata": {
                         "title": "publishedTitle",
                         "label": "ad fugiat cillum",
-                        "internal_id": "456"
+                        "internal_id": "456",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 }
@@ -55,10 +61,13 @@ Feature: Interactives API (List interactives) - from public web access
                             "metadata": {
                                 "title": "publishedTitle",
                                 "label": "ad fugiat cillum",
-                                "internal_id": "456"
+                                "internal_id": "456",
+                                "resource_id": "abcde123",
+                                "slug": "slug"
                             },
                             "state": "ImportSuccess",
-                            "last_updated":"2021-01-01T00:00:02Z"
+                            "last_updated":"2021-01-01T00:00:02Z",
+                            "url": "http://localhost:27400/interactives/slug-abcde123/embed"
                         }
                     ],
                     "count": 1,

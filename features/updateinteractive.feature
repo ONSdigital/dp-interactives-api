@@ -139,7 +139,8 @@ Feature: Interactives API (Update interactive)
                         "resource_id": "resid321",
                         "internal_id": "123"
                     },
-                    "state": "ArchiveUploaded"
+                    "state": "ArchiveUploaded",
+                    "url": "http://localhost:27400/interactives/Title123-resid321/embed"
                 }
             """
 
@@ -189,7 +190,8 @@ Feature: Interactives API (Update interactive)
                         "resource_id": "resid321",
                         "internal_id": "123"
                     },
-                    "state": "ArchiveUploaded"
+                    "state": "ArchiveUploaded",
+                    "url": "http://localhost:27400/interactives/Title321-resid321/embed"
                 }
             """
 

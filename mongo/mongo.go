@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	dpMongoLock "github.com/ONSdigital/dp-mongodb/v3/dplock"
 	dpMongoHealth "github.com/ONSdigital/dp-mongodb/v3/health"
@@ -26,30 +27,33 @@ var (
 )
 
 type Mongo struct {
-	Collection   string
-	Database     string
+	Config       *config.Config
 	Connection   *dpMongoDriver.MongoConnection
-	URI          string
-	Username     string
-	Password     string
 	healthClient *dpMongoHealth.CheckMongoClient
 	lockClient   *dpMongoLock.Lock
-	IsSSL        bool
+}
+
+func (m *Mongo) Database() string {
+	return m.Config.MongoConfig.Database
+}
+
+func (m *Mongo) Collection() string {
+	return m.Config.MongoConfig.Collection
 }
 
 func (m *Mongo) getConnectionConfig(shouldEnableReadConcern, shouldEnableWriteConcern bool) *dpMongoDriver.MongoConnectionConfig {
 	return &dpMongoDriver.MongoConnectionConfig{
 		TLSConnectionConfig: dpMongoDriver.TLSConnectionConfig{
-			IsSSL: m.IsSSL,
+			IsSSL: m.Config.MongoConfig.IsSSL,
 		},
 		ConnectTimeoutInSeconds: connectTimeoutInSeconds,
 		QueryTimeoutInSeconds:   queryTimeoutInSeconds,
 
-		Username:                      m.Username,
-		Password:                      m.Password,
-		ClusterEndpoint:               m.URI,
-		Database:                      m.Database,
-		Collection:                    m.Collection,
+		Username:                      m.Config.MongoConfig.Username,
+		Password:                      m.Config.MongoConfig.Password,
+		ClusterEndpoint:               m.Config.MongoConfig.BindAddr,
+		Database:                      m.Config.MongoConfig.Database,
+		Collection:                    m.Config.MongoConfig.Collection,
 		IsWriteConcernMajorityEnabled: shouldEnableWriteConcern,
 		IsStrongReadConcernEnabled:    shouldEnableReadConcern,
 	}
@@ -67,7 +71,7 @@ func (m *Mongo) Init(ctx context.Context, shouldEnableReadConcern, shouldEnableW
 	m.Connection = mongoConnection
 
 	databaseCollectionBuilder := make(map[dpMongoHealth.Database][]dpMongoHealth.Collection)
-	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database)] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection)}
+	databaseCollectionBuilder[(dpMongoHealth.Database)(m.Database())] = []dpMongoHealth.Collection{(dpMongoHealth.Collection)(m.Collection())}
 	// Create health-client from session
 	m.healthClient = dpMongoHealth.NewClientWithCollections(m.Connection, databaseCollectionBuilder)
 
@@ -112,8 +116,8 @@ func (m *Mongo) GetActiveInteractiveGivenField(ctx context.Context, fieldName, f
 func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interactive, error) {
 	log.Info(ctx, "getting interactive by id", log.Data{"_id": id})
 
-	var vis models.Interactive
-	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"_id": id}, &vis)
+	var interactive models.Interactive
+	err := m.Connection.GetConfiguredCollection().FindOne(ctx, bson.M{"_id": id}, &interactive)
 	if err != nil {
 		if dpMongoDriver.IsErrNoDocumentFound(err) {
 			return nil, ErrNoRecordFound
@@ -121,7 +125,9 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 		return nil, err
 	}
 
-	return &vis, nil
+	interactive.SetURL(m.Config.SiteDomain)
+
+	return &interactive, nil
 }
 
 func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFilter *models.InteractiveMetadata) ([]*models.Interactive, int, error) {
@@ -134,6 +140,10 @@ func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFi
 	totalCount, err := QueryPage(ctx, f, offset, limit, &values)
 	if err != nil {
 		return values, 0, err
+	}
+
+	for _, interactive := range values {
+		interactive.SetURL(m.Config.SiteDomain)
 	}
 
 	return values, totalCount, nil

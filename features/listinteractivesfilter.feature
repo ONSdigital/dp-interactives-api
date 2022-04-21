@@ -1,6 +1,6 @@
 Feature: Interactives API (List interactives)
 
-    Scenario: GET interactives (title - string)
+    Scenario: GET interactives (filter by label)
         Given I have these interactives:
             """
             [
@@ -11,7 +11,9 @@ Feature: Interactives API (List interactives)
                     "metadata": {
                         "title": "title123",
                         "label": "Title123",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde1",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 },
@@ -23,7 +25,9 @@ Feature: Interactives API (List interactives)
                     "metadata": {
                         "title": "title123",
                         "label": "Title321",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde2",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 }
@@ -43,13 +47,16 @@ Feature: Interactives API (List interactives)
                             "metadata": {
                                 "title": "title123",
                                 "label": "Title321",
-                                "internal_id": "123"
+                                "internal_id": "123",
+                                "resource_id": "abcde2",
+                                "slug": "slug"
                             },
                             "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
-                            "last_updated":"2021-01-01T00:00:01Z"
+                            "last_updated":"2021-01-01T00:00:01Z",
+                            "url": "http://localhost:27400/interactives/slug-abcde2/embed"
                         }
                     ],
                     "count": 1,
@@ -59,7 +66,7 @@ Feature: Interactives API (List interactives)
                 }
             """
 
-        Scenario: GET interactives (given a resource_id)
+        Scenario: GET interactives (fliter by resource_id)
         Given I have these interactives:
             """
             [
@@ -70,7 +77,7 @@ Feature: Interactives API (List interactives)
                     "metadata": {
                         "title": "title123",
                         "label": "Title123",
-                        "resource_id": "resid123",
+                        "resource_id": "resid1",
                         "internal_id": "123"
                     },
                     "state": "ImportSuccess"
@@ -83,14 +90,15 @@ Feature: Interactives API (List interactives)
                     "metadata": {
                         "title": "title123",
                         "label": "Title123",
-                        "resource_id": "resid321",
-                        "internal_id": "123"
+                        "resource_id": "resid2",
+                        "internal_id": "123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 }
             ]
             """
-        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%22resource_id%22%3A%20%20%22resid321%22%7D'
+        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%22resource_id%22%3A%20%20%22resid2%22%7D'
         Then I should receive the following JSON response with status "200":
             """
                 {
@@ -104,14 +112,16 @@ Feature: Interactives API (List interactives)
                             "metadata": {
                                 "title": "title123",
                                 "label": "Title123",
-                                "resource_id": "resid321",
-                                "internal_id": "123"
+                                "resource_id": "resid2",
+                                "internal_id": "123",
+                                "slug": "slug"
                             },
                             "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
-                            "last_updated":"2021-01-01T00:00:01Z"
+                            "last_updated":"2021-01-01T00:00:01Z",
+                            "url": "http://localhost:27400/interactives/slug-resid2/embed"
                         }
                     ],
                     "count": 1,

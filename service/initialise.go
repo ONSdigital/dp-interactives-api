@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-api-clients-go/v2/files"
+	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
@@ -129,14 +129,7 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 
 // DoGetMongoDB returns a MongoDB
 func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
-	mongodb := &mongo.Mongo{
-		Collection: cfg.MongoConfig.Collection,
-		Database:   cfg.MongoConfig.Database,
-		URI:        cfg.MongoConfig.BindAddr,
-		Username:   cfg.MongoConfig.Username,
-		Password:   cfg.MongoConfig.Password,
-		IsSSL:      cfg.MongoConfig.IsSSL,
-	}
+	mongodb := &mongo.Mongo{Config: cfg}
 	if err := mongodb.Init(ctx, false, true); err != nil {
 		return nil, err
 	}

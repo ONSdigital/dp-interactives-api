@@ -12,7 +12,9 @@ Feature: Interactives API (List interactives)
                     "metadata": {
                         "title": "title123",
                         "label": "ad fugiat cillum",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 },
@@ -24,7 +26,9 @@ Feature: Interactives API (List interactives)
                     "metadata": {
                         "title": "title123",
                         "label": "ad fugiat cillum",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "resource_id": "abcde123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 }
@@ -44,13 +48,16 @@ Feature: Interactives API (List interactives)
                             "metadata": {
                                 "title": "title123",
                                 "label": "ad fugiat cillum",
-                                "internal_id": "123"
+                                "internal_id": "123",
+                                "resource_id": "abcde123",
+                                "slug": "slug"
                             },
                             "state": "ImportSuccess",
                             "archive": {
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
-                            "last_updated":"2021-01-01T00:00:01Z"
+                            "last_updated":"2021-01-01T00:00:01Z",
+                            "url": "http://localhost:27400/interactives/slug-abcde123/embed"
                         }
                     ],
                     "count": 1,
