@@ -125,7 +125,7 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 		return nil, err
 	}
 
-	interactive.SetURL(m.Config.SiteDomain)
+	interactive.SetURL(m.Config.PreviewRootURL)
 
 	return &interactive, nil
 }
@@ -143,7 +143,7 @@ func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFi
 	}
 
 	for _, interactive := range values {
-		interactive.SetURL(m.Config.SiteDomain)
+		interactive.SetURL(m.Config.PreviewRootURL)
 	}
 
 	return values, totalCount, nil
