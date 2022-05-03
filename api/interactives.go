@@ -365,12 +365,12 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
 	ctx := req.Context()
-	var filter *models.InteractiveMetadata
+	var filter *models.InteractiveFilter
 
 	filterJson := req.URL.Query().Get("filter")
 	if filterJson != "" {
 		defer req.Body.Close()
-		filter = &models.InteractiveMetadata{}
+		filter = &models.InteractiveFilter{}
 
 		if err := json.Unmarshal([]byte(filterJson), &filter); err != nil {
 			http.Error(w, "Error unmarshalling body", http.StatusBadRequest)

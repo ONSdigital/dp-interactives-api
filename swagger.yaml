@@ -50,10 +50,10 @@ paths:
             format: int64
         - name: filter
           in: query
-          description: '{"label":"Interactive label"}'
+          description: '{"filter_by_assoc_collection": true/false, "metadata" : {"title": "Interactive Title"}}'
           required: false
           schema:
-            $ref: "#/components/schemas/InteractiveMetadataResponse"
+            $ref: "#/components/schemas/InteractiveFilter"
       responses:
         "200":
           description: Success
@@ -190,6 +190,13 @@ components:
           type: string
         collection_id:
           type: string
+    InteractiveFilter:
+      type: object
+      properties:
+        filter_by_assoc_collection:
+          type: boolean
+        metadata:
+          $ref: "#/components/schemas/InteractiveMetadataResponse"
     InteractiveMetadataResponse:
       type: object
       properties:

@@ -40,6 +40,15 @@ type InteractiveUpdate struct {
 	Interactive      Interactive `json:"interactive,omitempty"`
 }
 
+// If getlinkedtocollection is true, i.e visit index page through a collection
+//    disregard other metadata fields and pick only collectionid
+// else
+//    usual filter behaviour
+type InteractiveFilter struct {
+	FilterByAssocCollection bool                 `json:"filter_by_assoc_collection,omitempty"`
+	Metadata                *InteractiveMetadata `json:"metadata,omitempty"`
+}
+
 // Mongo/HTTP models
 
 type InteractiveMetadata struct {

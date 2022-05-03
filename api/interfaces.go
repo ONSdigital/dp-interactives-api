@@ -20,7 +20,7 @@ type MongoServer interface {
 	GetActiveInteractiveGivenSha(ctx context.Context, sha string) (*models.Interactive, error)
 	GetActiveInteractiveGivenField(ctx context.Context, fieldName, fieldValue string) (*models.Interactive, error)
 	GetInteractive(ctx context.Context, id string) (*models.Interactive, error)
-	ListInteractives(ctx context.Context, offset, limit int, filter *models.InteractiveMetadata) ([]*models.Interactive, int, error)
+	ListInteractives(ctx context.Context, offset, limit int, filter *models.InteractiveFilter) ([]*models.Interactive, int, error)
 }
 
 // AuthHandler interface for adding auth to endpoints
