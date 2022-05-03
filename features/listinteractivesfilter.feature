@@ -33,7 +33,7 @@ Feature: Interactives API (List interactives)
                 }
             ]
             """
-        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22filter_by_assoc_collection%22%3A%20false%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22label%22%3A%20%22Title321%22%0A%20%20%7D%0A%7D'
+        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20false%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22label%22%3A%20%22Title321%22%0A%20%20%7D%0A%7D'
         Then I should receive the following JSON response with status "200":
             """
                 {
@@ -98,7 +98,7 @@ Feature: Interactives API (List interactives)
                 }
             ]
             """
-        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22filter_by_assoc_collection%22%3A%20false%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22resource_id%22%3A%20%22resid2%22%0A%20%20%7D%0A%7D'
+        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20false%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22resource_id%22%3A%20%22resid2%22%0A%20%20%7D%0A%7D'
         Then I should receive the following JSON response with status "200":
             """
                 {
@@ -165,7 +165,7 @@ Feature: Interactives API (List interactives)
                 }
             ]
             """
-        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22filter_by_assoc_collection%22%3A%20true%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22collection_id%22%3A%20%2254321%22%0A%20%20%7D%0A%7D'
+        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20true%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22collection_id%22%3A%20%2254321%22%0A%20%20%7D%0A%7D'
         Then I should receive the following JSON response with status "200":
             """
                 {
@@ -232,7 +232,7 @@ Feature: Interactives API (List interactives)
                 }
             ]
             """
-        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22filter_by_assoc_collection%22%3A%20true%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22collection_id%22%3A%20%2254321%22%0A%20%20%7D%0A%7D'
+        When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20true%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22collection_id%22%3A%20%2254321%22%0A%20%20%7D%0A%7D'
         Then I should receive the following JSON response with status "200":
             """
                 {

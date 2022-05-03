@@ -50,7 +50,7 @@ paths:
             format: int64
         - name: filter
           in: query
-          description: '{"filter_by_assoc_collection": true/false, "metadata" : {"title": "Interactive Title"}}'
+          description: '{"associate_collection": true/false, "metadata" : {"title": "Interactive Title"}}'
           required: false
           schema:
             $ref: "#/components/schemas/InteractiveFilter"
@@ -193,7 +193,7 @@ components:
     InteractiveFilter:
       type: object
       properties:
-        filter_by_assoc_collection:
+        associate_collection:
           type: boolean
         metadata:
           $ref: "#/components/schemas/InteractiveMetadataResponse"

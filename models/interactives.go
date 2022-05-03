@@ -45,8 +45,8 @@ type InteractiveUpdate struct {
 // else
 //    usual filter behaviour
 type InteractiveFilter struct {
-	FilterByAssocCollection bool                 `json:"filter_by_assoc_collection,omitempty"`
-	Metadata                *InteractiveMetadata `json:"metadata,omitempty"`
+	AssociateCollection bool                 `json:"associate_collection,omitempty"`
+	Metadata            *InteractiveMetadata `json:"metadata,omitempty"`
 }
 
 // Mongo/HTTP models

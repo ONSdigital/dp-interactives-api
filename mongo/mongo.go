@@ -162,7 +162,7 @@ func generateFilter(model *models.InteractiveFilter) bson.M {
 	}
 
 	// if filter by collection-id
-	if model.FilterByAssocCollection {
+	if model.AssociateCollection {
 		// collection_id == given
 		// OR
 		// no collection_id AND not published
