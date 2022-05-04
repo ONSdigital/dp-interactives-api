@@ -43,9 +43,9 @@ type InteractiveUpdate struct {
 // Mongo/HTTP models
 
 type InteractiveMetadata struct {
-	Title             string `bson:"title"                    json:"title"`
-	Label             string `bson:"label"                    json:"label"`
-	InternalID        string `bson:"internal_id"              json:"internal_id"`
+	Title             string `bson:"title"                    json:"title"                      validate:"required"`
+	Label             string `bson:"label"                    json:"label"                      validate:"required,alphanumspaces"`
+	InternalID        string `bson:"internal_id"              json:"internal_id"                validate:"required,alphanumspaces"`
 	CollectionID      string `bson:"collection_id,omitempty"  json:"collection_id,omitempty"`
 	HumanReadableSlug string `bson:"slug,omitempty"           json:"slug,omitempty"`
 	ResourceID        string `bson:"resource_id,omitempty"    json:"resource_id,omitempty"`

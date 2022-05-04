@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -23,6 +25,8 @@ const (
 type FormDataValidator func(numOfAttachments int, update string) error
 
 var (
+	v                                 = validator.New()
+	alphaNumWithSpacesRegEx           = regexp.MustCompile("^[a-zA-Z0-9\\s]+$")
 	WantOnlyOneAttachmentWithMetadata = func(numOfAttachments int, update string) error {
 		if numOfAttachments == 1 && update != "" {
 			return nil
@@ -38,6 +42,19 @@ var (
 		}
 	}
 )
+
+func init() {
+	err := v.RegisterValidation("alphanumspaces", ValidateAlphaNumWithSpaces)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ValidateAlphaNumWithSpaces implements validator.Func
+func ValidateAlphaNumWithSpaces(fl validator.FieldLevel) bool {
+	re := alphaNumWithSpacesRegEx.FindStringSubmatch(fl.Field().String())
+	return re != nil
+}
 
 type FormDataRequest struct {
 	req                 *http.Request
@@ -63,7 +80,7 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error 
 	var vErr error
 	var filename string
 
-	// 1. Expecting 1 file attachment - only zip
+	// Expecting 1 file attachment - only zip
 	vErr = f.req.ParseMultipartForm(maxUploadFileSizeMb << 20)
 	if vErr != nil {
 		return fmt.Errorf("parsing form data (%s)", vErr.Error())
@@ -106,7 +123,7 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error 
 		filename = fileHeader.Filename
 	}
 
-	// 2. Unmarshal the update field from JSON
+	// Unmarshal the update field from JSON
 	var update *models.InteractiveUpdate
 	if updateModelJson != "" {
 		update = &models.InteractiveUpdate{}
@@ -117,6 +134,10 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error 
 			update.Interactive.Metadata = &models.InteractiveMetadata{}
 		}
 		update.Interactive.Metadata.Label = strings.TrimSpace(update.Interactive.Metadata.Label)
+	}
+
+	if err := v.Struct(update); err != nil {
+		return err
 	}
 
 	hasher := sha1.New()

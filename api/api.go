@@ -7,18 +7,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ONSdigital/dp-interactives-api/models"
-
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/event"
-	"github.com/ONSdigital/dp-interactives-api/pagination"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/schema"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/log.go/v2/log"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 )
 
@@ -40,6 +37,20 @@ type API struct {
 	newUUID       models.Generator
 	newResourceID models.Generator
 	newSlug       models.Generator
+}
+
+type baseHandler func(ctx context.Context, w http.ResponseWriter, r *http.Request) (*models.SuccessResponse, *models.ErrorResponse)
+
+func contextAndErrors(h baseHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		response, err := h(ctx, w, req)
+		if err != nil {
+			writeErrorResponse(ctx, w, err)
+			return
+		}
+		writeSuccessResponse(ctx, w, response)
+	}
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
@@ -75,18 +86,18 @@ func Setup(ctx context.Context,
 		newResourceID: newResourceID,
 	}
 
-	paginator := pagination.NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
 
 	if r != nil {
 		if cfg.PublishingEnabled {
-			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, api.UploadInteractivesHandler)).Methods(http.MethodPost)
-			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
-			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, api.GetInteractiveMetadataHandler)).Methods(http.MethodGet)
-			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
-			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, contextAndErrors(api.UploadInteractivesHandler))).Methods(http.MethodPost)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, contextAndErrors(paginator.Paginate(api.ListInteractivesHandler)))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, contextAndErrors(api.GetInteractiveMetadataHandler))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, contextAndErrors(api.UpdateInteractiveHandler))).Methods(http.MethodPut)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, contextAndErrors(api.DeleteInteractivesHandler))).Methods(http.MethodDelete)
 		} else {
-			r.HandleFunc("/v1/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
-			r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveMetadataHandler).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives", contextAndErrors(paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", contextAndErrors(api.GetInteractiveMetadataHandler)).Methods(http.MethodGet)
 		}
 	} else {
 		log.Error(ctx, "api setup error - no router", nil)
@@ -132,21 +143,42 @@ func (api *API) blockAccess(i *models.Interactive) bool {
 	return !viewable
 }
 
-func WriteJSONBody(v interface{}, w http.ResponseWriter, httpStatus int) error {
-
-	// Set headers
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(httpStatus)
-
+func JSONify(v interface{}) ([]byte, error) {
 	// Marshal provided model
-	payload, err := json.Marshal(v)
+	json, err := json.Marshal(v)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	return json, nil
+}
+
+func writeErrorResponse(ctx context.Context, w http.ResponseWriter, errorResponse *models.ErrorResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(errorResponse.Status)
+
+	jsonResponse, err := json.Marshal(errorResponse)
+	if err != nil {
+		responseErr := models.NewError(ctx, err, "JSONMarshalError", "failed to write http response")
+		http.Error(w, responseErr.Description, http.StatusInternalServerError)
+		return
 	}
 
-	// Write payload to body
-	if _, err := w.Write(payload); err != nil {
-		return err
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		responseErr := models.NewError(ctx, err, "WriteResponseError", "failed to write http response")
+		http.Error(w, responseErr.Description, http.StatusInternalServerError)
+		return
 	}
-	return nil
+}
+
+func writeSuccessResponse(ctx context.Context, w http.ResponseWriter, successResponse *models.SuccessResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(successResponse.Status)
+
+	_, err := w.Write(successResponse.Body)
+	if err != nil {
+		responseErr := models.NewError(ctx, err, "WriteResponseError", "failed to write http response")
+		http.Error(w, responseErr.Description, http.StatusInternalServerError)
+		return
+	}
 }

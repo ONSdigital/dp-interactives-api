@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +16,13 @@ import (
 )
 
 const (
-	MaxCollisions = 10
+	MaxCollisions          = 10
+	MarshallingErrorCode   = "ErrMarshalling"
+	EventPublishErrorCode  = "ErrPublishingEvent"
+	DbErrorCode            = "ErrDB"
+	UploadErrorCode        = "ErrUpload"
+	RequestErrorCode       = "ErrRequest"
+	DownstreamAPIErrorCode = "ErrDownstreamAPI"
 )
 
 var (
@@ -26,22 +33,12 @@ var (
 	ErrPubErrNoCollectionID  = errors.New("cannot publish interactive, no collection ID")
 )
 
-func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
+func (api *API) UploadInteractivesHandler(ctx context.Context, _ http.ResponseWriter, req *http.Request) (*models.SuccessResponse, *models.ErrorResponse) {
 	// 1. Validate request
 	formDataRequest, err := newFormDataRequest(req, api, WantOnlyOneAttachmentWithMetadata, true)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "http request validation failed", err)
-		return
-	}
-	update := formDataRequest.Update.Interactive
-	if len(update.Metadata.Label) == 0 || len(update.Metadata.InternalID) == 0 || len(update.Metadata.Title) == 0 {
-		err = fmt.Errorf("label (%s) title (%s) internal_id (%s) are mandatory", update.Metadata.Label, update.Metadata.Title, update.Metadata.InternalID)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, err.Error(), err)
-		return
+		responseErr := models.NewError(ctx, err, RequestErrorCode, fmt.Errorf("request validation failed %w", err).Error())
+		return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
 	}
 
 	if api.cfg.ValidateSHAEnabled {
@@ -49,34 +46,31 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
 		if existing != nil {
 			err = fmt.Errorf("archive already exists id (%s) with sha (%s)", existing.ID, existing.SHA)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			log.Error(ctx, "archive with sha already exists", err)
-			return
+			responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
+			return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
 		}
 	}
 
 	// 3. Check "label + title are unique"
+	update := formDataRequest.Update.Interactive
 	existing, _ := api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.label", update.Metadata.Label)
 	if existing != nil {
 		err = fmt.Errorf("archive with label (%s) already exists id (%s)", existing.Metadata.Label, existing.ID)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "archive with label already exists", err)
-		return
+		responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
 	}
 	existing, _ = api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.title", update.Metadata.Title)
 	if existing != nil {
 		err = fmt.Errorf("archive with title (%s) already exists id (%s)", existing.Metadata.Title, existing.ID)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "archive with title already exists", err)
-		return
+		responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
 	}
 
 	// 4. upload to S3
 	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "processing form data", err)
-		return
+		responseErr := models.NewError(ctx, err, UploadErrorCode, fmt.Errorf("unable to upload %w", err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
 	// 5. Write to DB
@@ -103,23 +97,20 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		if mongoDriver.IsDuplicateKeyError(err) {
 			collisions++
 		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Error(ctx, "Unable to write to DB", err)
-			return
+			responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("unable to write to DB %w", err).Error())
+			return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 		}
 
 		if collisions == MaxCollisions {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Error(ctx, "Unable to write to DB - max collisions", err)
-			return
+			responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("unable to write to DB - max collisions %w", err).Error())
+			return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 		}
 	}
 
 	interactive, err := api.mongoDB.GetInteractive(ctx, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("error fetching interactive %s %w", id, err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
 	// 5. send kafka message to importer
@@ -130,77 +121,85 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		CurrentFiles: []string{""}, //need to send an empty val :(
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "Unable to notify importer", err)
-		return
+		responseErr := models.NewError(ctx, err, EventPublishErrorCode, fmt.Errorf("unable to notify importer %w", err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
-	WriteJSONBody(interactive, w, http.StatusAccepted)
+	jsonB, err := JSONify(interactive)
+	if err != nil {
+		responseErr := models.NewError(ctx, err, MarshallingErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
+	}
+
+	return models.NewSuccessResponse(jsonB, http.StatusAccepted), nil
 }
 
-func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) GetInteractiveMetadataHandler(ctx context.Context, _ http.ResponseWriter, req *http.Request) (*models.SuccessResponse, *models.ErrorResponse) {
 	// get id
-	ctx := req.Context()
 	vars := mux.Vars(req)
 	id := vars["id"]
 
 	// fetch info from DB
 	i, err := api.mongoDB.GetInteractive(ctx, id)
 	if err != nil && err != mongo.ErrNoRecordFound {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("error fetching interactive %s %w", id, err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
 	//if mongo.ErrNoRecordFound then will blockAccess(i==nil)
 	if api.blockAccess(i) {
-		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
-		log.Warn(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id))
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("interactive-id (%s) is either deleted or does not exist", id).Error())
+		return nil, models.NewErrorResponse(http.StatusNotFound, nil, responseErr)
 	}
 
-	WriteJSONBody(*i, w, http.StatusOK)
+	jsonB, err := JSONify(i)
+	if err != nil {
+		responseErr := models.NewError(ctx, err, MarshallingErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
+	}
+
+	return models.NewSuccessResponse(jsonB, http.StatusOK), nil
 }
 
 // update rules
 // if published - allow only file updates
 // if unpublished - allow both file + metadata
-func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	// 1. Validate request
+func (api *API) UpdateInteractiveHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) (*models.SuccessResponse, *models.ErrorResponse) {
+	// Validate request
 	formDataRequest, err := newFormDataRequest(req, api, WantAtleastMaxOneAttachmentAndOrMetadata, false)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		log.Error(ctx, "http request validation failed", err)
-		return
+		//if validationErrs, ok := err.(validator.ValidationErrors); ok {
+		//	writeError(w, buildValidationErrors(validationErrs), http.StatusBadRequest)
+		//	return
+		//}
+
+		responseErr := models.NewError(ctx, err, RequestErrorCode, fmt.Errorf("request validation failed %w", err).Error())
+		return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
 	}
 
-	// 3. Check that id exists and is not deleted
+	// Check that id exists and is not deleted
 	vars := mux.Vars(req)
 	id := vars["id"]
 	existing, err := api.mongoDB.GetInteractive(ctx, id)
 	if (existing == nil && err == nil) || err == mongo.ErrNoRecordFound || (existing != nil && !*existing.Active) {
-		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
-		log.Error(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), err)
-		return
+		err = fmt.Errorf("interactive-id (%s) is either deleted or does not exist", id)
+		responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusNotFound, nil, responseErr)
 	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("error fetching interactive %s %w", id, err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
 	// fail if attempting to update metadata for a published model
 	if *existing.Published && formDataRequest.hasMetadata() {
-		http.Error(w, ErrCantUpdateMeta.Error(), http.StatusForbidden)
-		log.Error(ctx, ErrCantUpdateMeta.Error(), ErrCantUpdateMeta)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, ErrCantUpdateMeta.Error())
+		return nil, models.NewErrorResponse(http.StatusForbidden, nil, responseErr)
 	}
 
 	// -- ALL GOOD ABOVE
 
-	// 5. prepare updated model
+	// prepare updated model
 	updatedModel := &models.Interactive{
 		ID:        id,
 		Published: existing.Published,
@@ -256,18 +255,16 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
 			if i != nil {
 				err = fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				log.Error(ctx, "archive with sha already exists", err)
-				return
+				responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
+				return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
 			}
 		}
 
 		// Process form data (S3)
 		uri, err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Error(ctx, "processing form data", err)
-			return
+			responseErr := models.NewError(ctx, err, UploadErrorCode, fmt.Errorf("unable to upload %w", err).Error())
+			return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 		}
 
 		updatedModel.State = models.ArchiveUploaded.String()
@@ -280,18 +277,16 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		colID := update.Metadata.CollectionID
 		// update if empty OR different
 		if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
-			// files/archive can be in the udpdate or existing - check update first
+			// files/archive can be in the update or existing - check update first
 			arch := update.Archive
 			if arch == nil || len(arch.Files) == 0 {
 				arch = existing.Archive
 			}
 			if arch != nil && len(arch.Files) > 0 {
 				for _, file := range arch.Files {
-					cErr := api.filesService.SetCollectionID(ctx, file.Name, colID)
-					if cErr != nil {
-						http.Error(w, cErr.Error(), http.StatusInternalServerError)
-						log.Error(ctx, "error setting collectionID", cErr)
-						return
+					if err := api.filesService.SetCollectionID(ctx, file.Name, colID); err != nil {
+						responseErr := models.NewError(ctx, err, DownstreamAPIErrorCode, fmt.Errorf("error setting collectionID %s %s %w", id, colID, err).Error())
+						return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 					}
 				}
 				updatedModel.Metadata.CollectionID = colID
@@ -308,11 +303,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		}
 
 		if collID != "" {
-			cErr := api.filesService.PublishCollection(ctx, existing.Metadata.CollectionID)
-			if cErr != nil {
-				http.Error(w, cErr.Error(), http.StatusInternalServerError)
-				log.Error(ctx, "error setting collectionID", cErr)
-				return
+			if err := api.filesService.PublishCollection(ctx, collID); err != nil {
+				responseErr := models.NewError(ctx, err, DownstreamAPIErrorCode, fmt.Errorf("error publishing collectionID %s %s %w", id, collID, err).Error())
+				return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 			}
 			updatedModel.Published = &enabled
 		} else {
@@ -320,20 +313,18 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		}
 	}
 
-	// 6. write to DB
+	// write to DB
 	err = api.mongoDB.UpsertInteractive(ctx, id, updatedModel)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "Unable to write to DB", err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("unable to write to DB %w", err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
-	// 7. get updated model
+	// get updated model
 	interactive, err := api.mongoDB.GetInteractive(ctx, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("error fetching interactive %s %w", id, err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
 	// send kafka message to importer (if file uploaded)
@@ -354,16 +345,21 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 			CurrentFiles: currentFiles,
 		})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Error(ctx, "Unable to notify importer", err)
-			return
+			responseErr := models.NewError(ctx, err, EventPublishErrorCode, fmt.Errorf("unable to notify importer %w", err).Error())
+			return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 		}
 	}
 
-	WriteJSONBody(interactive, w, http.StatusOK)
+	jsonB, err := JSONify(interactive)
+	if err != nil {
+		responseErr := models.NewError(ctx, err, MarshallingErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
+	}
+
+	return models.NewSuccessResponse(jsonB, http.StatusOK), nil
 }
 
-func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
+func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int) (interface{}, int, error) {
 	ctx := req.Context()
 	var filter *models.InteractiveMetadata
 
@@ -373,17 +369,13 @@ func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request
 		filter = &models.InteractiveMetadata{}
 
 		if err := json.Unmarshal([]byte(filterJson), &filter); err != nil {
-			http.Error(w, "Error unmarshalling body", http.StatusBadRequest)
-			log.Error(ctx, "Error unmarshalling body", ErrInvalidBody)
-			return nil, 0, err
+			return nil, 0, fmt.Errorf("error unmarshalling body %w", ErrInvalidBody)
 		}
 	}
 
 	db, _, err := api.mongoDB.ListInteractives(ctx, offset, limit, filter)
 	if err != nil {
-		log.Error(ctx, "api endpoint getDatasets datastore.GetDatasets returned an error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("api endpoint getDatasets datastore.GetDatasets returned an error %w", err)
 	}
 
 	response := make([]*models.Interactive, 0)
@@ -396,30 +388,27 @@ func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request
 	return response, len(response), nil
 }
 
-func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Request) {
+func (api *API) DeleteInteractivesHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) (*models.SuccessResponse, *models.ErrorResponse) {
 	// get id
-	ctx := req.Context()
 	vars := mux.Vars(req)
 	id := vars["id"]
 
 	// error if it doesnt exist
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
 	if (vis == nil && err == nil) || err == mongo.ErrNoRecordFound {
-		http.Error(w, fmt.Sprintf("interactive-id (%s) does not exist", id), http.StatusNotFound)
-		log.Error(ctx, fmt.Sprintf("interactive-id (%s) does not exist", id), err)
-		return
+		err = fmt.Errorf("interactive-id (%s) does not exist", id)
+		responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
+		return nil, models.NewErrorResponse(http.StatusNotFound, nil, responseErr)
 	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("error fetching interactive %s %w", id, err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
 	// must not delete published interactives
 	if *vis.Published {
-		http.Error(w, ErrCantDeletePublishedIn.Error(), http.StatusForbidden)
-		log.Error(ctx, ErrCantDeletePublishedIn.Error(), ErrCantDeletePublishedIn)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, ErrCantDeletePublishedIn.Error())
+		return nil, models.NewErrorResponse(http.StatusForbidden, nil, responseErr)
 	}
 
 	// set to inactive
@@ -427,10 +416,9 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		Active: &disabled,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, "Unable to unset active flag", err)
-		return
+		responseErr := models.NewError(ctx, err, DbErrorCode, fmt.Errorf("unable to unset active flag %s %w", id, err).Error())
+		return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	return models.NewSuccessResponse([]byte{}, http.StatusOK), nil
 }

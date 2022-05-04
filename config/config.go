@@ -64,7 +64,7 @@ func Get() (*Config, error) {
 	cfg = &Config{
 		BindAddr:                   ":27500",
 		PublishingEnabled:          true,
-		PreviewRootURL:             "http://localhost:27400",
+		PreviewRootURL:             "http://localhost:27300",
 		ValidateSHAEnabled:         true,
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
