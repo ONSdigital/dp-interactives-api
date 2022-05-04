@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	UpdateFieldKey      = "update"
+	UpdateFieldKey      = "interactive"
 	maxUploadFileSizeMb = 50
 )
 
@@ -45,7 +45,7 @@ type FormDataRequest struct {
 	FileData            []byte
 	Sha                 string
 	FileName            string
-	Update              *models.InteractiveUpdate
+	Interactive         *models.Interactive
 	isMetadataMandatory bool
 }
 
@@ -107,16 +107,15 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error 
 	}
 
 	// 2. Unmarshal the update field from JSON
-	var update *models.InteractiveUpdate
+	var interactive *models.Interactive
 	if updateModelJson != "" {
-		update = &models.InteractiveUpdate{}
-		if vErr = json.Unmarshal([]byte(updateModelJson), update); vErr != nil {
-			return fmt.Errorf("cannot unmarshal update json %w", vErr)
+		if err := json.Unmarshal([]byte(updateModelJson), &interactive); err != nil {
+			return fmt.Errorf("cannot unmarshal update json %w", err)
 		}
-		if update.Interactive.Metadata == nil {
-			update.Interactive.Metadata = &models.InteractiveMetadata{}
+		if interactive.Metadata == nil {
+			interactive.Metadata = &models.InteractiveMetadata{}
 		}
-		update.Interactive.Metadata.Label = strings.TrimSpace(update.Interactive.Metadata.Label)
+		interactive.Metadata.Label = strings.TrimSpace(interactive.Metadata.Label)
 	}
 
 	hasher := sha1.New()
@@ -125,15 +124,15 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error 
 
 	f.FileData = data
 	f.FileName = filename
-	f.Update = update
+	f.Interactive = interactive
 	f.Sha = sha
 
 	return nil
 }
 
 func (f *FormDataRequest) hasMetadata() bool {
-	if f.Update == nil || f.Update.Interactive.Metadata == nil {
+	if f.Interactive == nil || f.Interactive.Metadata == nil {
 		return false
 	}
-	return f.Update.Interactive.Metadata.HasData()
+	return f.Interactive.Metadata.HasData()
 }

@@ -34,10 +34,11 @@ func (s InteractiveState) String() string {
 
 // HTTP request
 
-type InteractiveUpdate struct {
-	ImportSuccessful *bool       `json:"import_successful,omitempty"`
-	ImportMessage    string      `json:"import_message,omitempty"`
-	Interactive      Interactive `json:"interactive,omitempty"`
+type PatchUpdate struct {
+	PatchAction string      `json:"action,omitempty"`
+	Successful  bool        `json:"successful,omitempty"`
+	Message     string      `json:"message,omitempty"`
+	Interactive Interactive `json:"interactive,omitempty"`
 }
 
 // If getlinkedtocollection is true, i.e visit index page through a collection

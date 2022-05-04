@@ -8,6 +8,7 @@ import (
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/models"
+	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"sync"
 )
 
@@ -39,6 +40,9 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			ListInteractivesFunc: func(ctx context.Context, offset int, limit int, filter *models.InteractiveFilter) ([]*models.Interactive, int, error) {
 // 				panic("mock out the ListInteractives method")
 // 			},
+// 			PatchInteractiveFunc: func(contextMoqParam context.Context, patchAction mongo.PatchAction, interactive *models.Interactive) error {
+// 				panic("mock out the PatchInteractive method")
+// 			},
 // 			UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 // 				panic("mock out the UpsertInteractive method")
 // 			},
@@ -66,6 +70,9 @@ type MongoServerMock struct {
 
 	// ListInteractivesFunc mocks the ListInteractives method.
 	ListInteractivesFunc func(ctx context.Context, offset int, limit int, filter *models.InteractiveFilter) ([]*models.Interactive, int, error)
+
+	// PatchInteractiveFunc mocks the PatchInteractive method.
+	PatchInteractiveFunc func(contextMoqParam context.Context, patchAction mongo.PatchAction, interactive *models.Interactive) error
 
 	// UpsertInteractiveFunc mocks the UpsertInteractive method.
 	UpsertInteractiveFunc func(ctx context.Context, id string, vis *models.Interactive) error
@@ -118,6 +125,15 @@ type MongoServerMock struct {
 			// Filter is the filter argument value.
 			Filter *models.InteractiveFilter
 		}
+		// PatchInteractive holds details about calls to the PatchInteractive method.
+		PatchInteractive []struct {
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
+			// PatchAction is the patchAction argument value.
+			PatchAction mongo.PatchAction
+			// Interactive is the interactive argument value.
+			Interactive *models.Interactive
+		}
 		// UpsertInteractive holds details about calls to the UpsertInteractive method.
 		UpsertInteractive []struct {
 			// Ctx is the ctx argument value.
@@ -134,6 +150,7 @@ type MongoServerMock struct {
 	lockGetActiveInteractiveGivenSha   sync.RWMutex
 	lockGetInteractive                 sync.RWMutex
 	lockListInteractives               sync.RWMutex
+	lockPatchInteractive               sync.RWMutex
 	lockUpsertInteractive              sync.RWMutex
 }
 
@@ -352,6 +369,45 @@ func (mock *MongoServerMock) ListInteractivesCalls() []struct {
 	mock.lockListInteractives.RLock()
 	calls = mock.calls.ListInteractives
 	mock.lockListInteractives.RUnlock()
+	return calls
+}
+
+// PatchInteractive calls PatchInteractiveFunc.
+func (mock *MongoServerMock) PatchInteractive(contextMoqParam context.Context, patchAction mongo.PatchAction, interactive *models.Interactive) error {
+	if mock.PatchInteractiveFunc == nil {
+		panic("MongoServerMock.PatchInteractiveFunc: method is nil but MongoServer.PatchInteractive was just called")
+	}
+	callInfo := struct {
+		ContextMoqParam context.Context
+		PatchAction     mongo.PatchAction
+		Interactive     *models.Interactive
+	}{
+		ContextMoqParam: contextMoqParam,
+		PatchAction:     patchAction,
+		Interactive:     interactive,
+	}
+	mock.lockPatchInteractive.Lock()
+	mock.calls.PatchInteractive = append(mock.calls.PatchInteractive, callInfo)
+	mock.lockPatchInteractive.Unlock()
+	return mock.PatchInteractiveFunc(contextMoqParam, patchAction, interactive)
+}
+
+// PatchInteractiveCalls gets all the calls that were made to PatchInteractive.
+// Check the length with:
+//     len(mockedMongoServer.PatchInteractiveCalls())
+func (mock *MongoServerMock) PatchInteractiveCalls() []struct {
+	ContextMoqParam context.Context
+	PatchAction     mongo.PatchAction
+	Interactive     *models.Interactive
+} {
+	var calls []struct {
+		ContextMoqParam context.Context
+		PatchAction     mongo.PatchAction
+		Interactive     *models.Interactive
+	}
+	mock.lockPatchInteractive.RLock()
+	calls = mock.calls.PatchInteractive
+	mock.lockPatchInteractive.RUnlock()
 	return calls
 }
 

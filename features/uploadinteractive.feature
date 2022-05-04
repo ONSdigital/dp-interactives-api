@@ -12,14 +12,12 @@ Feature: Interactives API (Get interactive)
         When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
             """
                 {
-                    "interactive": {
-                        "metadata": {
-                            "label": "Title123",
-                            "slug": "Title123",
-                            "title": "Title123",
-                            "resource_id": "AbcdE123",
-                            "internal_id": "123"
-                        }
+                    "metadata": {
+                        "label": "Title123",
+                        "slug": "Title123",
+                        "title": "Title123",
+                        "resource_id": "AbcdE123",
+                        "internal_id": "123"
                     }
                 }
             """

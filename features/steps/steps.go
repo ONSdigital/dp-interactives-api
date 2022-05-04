@@ -136,14 +136,14 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	}
 
 	var req *http.Request
-	var update *models.InteractiveUpdate
+	var i *models.Interactive
 	if data != nil {
-		err = json.Unmarshal(data, &update)
+		err = json.Unmarshal(data, &i)
 		if err != nil {
 			return err
 		}
 
-		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, update)
+		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, i)
 	} else {
 		req = httptest.NewRequest(method, "http://foo"+path, bytes.NewReader(data))
 	}

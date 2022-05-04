@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -21,11 +22,23 @@ const (
 	connectTimeoutInSeconds = 5
 	queryTimeoutInSeconds   = 15
 	interactivesCol         = "interactives"
+
+	ImportArchive PatchAction = iota
 )
 
 var (
 	ErrNoRecordFound = errors.New("no record exists")
 )
+
+type PatchAction int64
+
+func (a PatchAction) String() string {
+	switch a {
+	case ImportArchive:
+		return "ImportArchive"
+	}
+	return "unknown"
+}
 
 type Mongo struct {
 	Config       *config.Config
@@ -231,6 +244,28 @@ func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.In
 
 	_, err = m.Connection.GetConfiguredCollection().UpsertById(ctx, id, update)
 	return
+}
+
+// PatchInteractive patches an existing interactive
+func (m *Mongo) PatchInteractive(ctx context.Context, a PatchAction, i *models.Interactive) error {
+	log.Info(ctx, "patching interactive", log.Data{"id": i.ID})
+
+	var patch bson.M
+	switch a {
+	case ImportArchive:
+		patch = bson.M{"archive": i.Archive, "import_message": i.ImportMessage, "state": i.State}
+	default:
+		return fmt.Errorf("unsupported patch action %s", a)
+	}
+
+	update := bson.M{
+		"$set": patch,
+		"$currentDate": bson.M{
+			"last_updated": true,
+		},
+	}
+	_, err := m.Connection.GetConfiguredCollection().UpdateById(ctx, i.ID, update)
+	return err
 }
 
 // Close closes the mongo session and returns any error

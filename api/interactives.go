@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/ONSdigital/dp-interactives-api/event"
@@ -36,7 +37,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 		log.Error(ctx, "http request validation failed", err)
 		return
 	}
-	update := formDataRequest.Update.Interactive
+	update := formDataRequest.Interactive
 	if len(update.Metadata.Label) == 0 || len(update.Metadata.InternalID) == 0 || len(update.Metadata.Title) == 0 {
 		err = fmt.Errorf("label (%s) title (%s) internal_id (%s) are mandatory", update.Metadata.Label, update.Metadata.Title, update.Metadata.InternalID)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -139,27 +140,13 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, req *http.Reque
 }
 
 func (api *API) GetInteractiveMetadataHandler(w http.ResponseWriter, req *http.Request) {
-	// get id
-	ctx := req.Context()
-	vars := mux.Vars(req)
-	id := vars["id"]
-
-	// fetch info from DB
-	i, err := api.mongoDB.GetInteractive(ctx, id)
-	if err != nil && err != mongo.ErrNoRecordFound {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", id), err)
+	i, status, err := api.GetInteractive(req)
+	if err != nil {
+		http.Error(w, err.Error(), status)
+		log.Error(req.Context(), err.Error(), err)
 		return
 	}
-
-	//if mongo.ErrNoRecordFound then will blockAccess(i==nil)
-	if api.blockAccess(i) {
-		http.Error(w, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id), http.StatusNotFound)
-		log.Warn(ctx, fmt.Sprintf("interactive-id (%s) is either deleted or does not exist", id))
-		return
-	}
-
-	WriteJSONBody(*i, w, http.StatusOK)
+	WriteJSONBody(*i, w, status)
 }
 
 // update rules
@@ -202,50 +189,19 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 	// 5. prepare updated model
 	updatedModel := &models.Interactive{
-		ID:        id,
-		Published: existing.Published,
-		State:     existing.State,
-	}
-	updatedModel.Metadata = updatedModel.Metadata.Update(existing.Metadata, api.newSlug)
-
-	var update models.Interactive
-	if formDataRequest.Update == nil { // no metada update
-		update.Metadata = update.Metadata.Update(existing.Metadata, api.newSlug)
-		update.Published = existing.Published
-	} else {
-		update = formDataRequest.Update.Interactive
-
-		if update.Metadata != nil {
-			updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
-		}
-		if update.Published != nil {
-			updatedModel.Published = update.Published
-		}
+		ID:            id,
+		Published:     existing.Published,
+		State:         existing.State,
+		Archive:       existing.Archive,
+		ImportMessage: existing.ImportMessage,
 	}
 
-	if formDataRequest.Update != nil {
-		if formDataRequest.Update.ImportSuccessful != nil { // importer updates
-			if *formDataRequest.Update.ImportSuccessful {
-				updatedModel.State = models.ImportSuccess.String()
-			} else {
-				updatedModel.State = models.ImportFailure.String()
-			}
-			updatedModel.ImportMessage = &formDataRequest.Update.ImportMessage
-		}
+	update := formDataRequest.Interactive
+	if update.Metadata != nil {
+		updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
 	}
-
-	if update.Archive != nil {
-		updatedModel.Archive = &models.Archive{
-			Name: update.Archive.Name,
-			Size: update.Archive.Size,
-		}
-		for _, f := range update.Archive.Files {
-			updatedModel.Archive.Files = append(updatedModel.Archive.Files, &models.File{
-				Name:     f.Name,
-				Mimetype: f.Mimetype,
-				Size:     f.Size,
-			})
-		}
+	if update.Published != nil {
+		updatedModel.Published = update.Published
 	}
 
 	// Finally check if file to be uploaded
@@ -363,6 +319,76 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 	WriteJSONBody(interactive, w, http.StatusOK)
 }
 
+func (api *API) PatchInteractiveHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	i, status, err := api.GetInteractive(req)
+	if err != nil {
+		http.Error(w, err.Error(), status)
+		log.Error(req.Context(), err.Error(), err)
+		return
+	}
+
+	bytes, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(req.Context(), err.Error(), err)
+		return
+	}
+
+	var update models.PatchUpdate
+	if err := json.Unmarshal(bytes, &update); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(req.Context(), err.Error(), err)
+		return
+	}
+
+	var patchAction mongo.PatchAction
+	switch update.PatchAction {
+	case "ImportArchive":
+		patchAction = mongo.ImportArchive
+		i.State = models.ImportFailure.String()
+		if update.Successful {
+			i.State = models.ImportSuccess.String()
+		}
+		i.ImportMessage = &update.Message
+		if update.Interactive.Archive != nil {
+			i.Archive = &models.Archive{
+				Name: update.Interactive.Archive.Name,
+				Size: update.Interactive.Archive.Size,
+			}
+			for _, f := range update.Interactive.Archive.Files {
+				i.Archive.Files = append(i.Archive.Files, &models.File{
+					Name:     f.Name,
+					Mimetype: f.Mimetype,
+					Size:     f.Size,
+				})
+			}
+		}
+	default:
+		err := fmt.Errorf("invalid action %s", update.PatchAction)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Error(req.Context(), err.Error(), err)
+		return
+	}
+
+	err = api.mongoDB.PatchInteractive(ctx, patchAction, i)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, "Unable to write to DB", err)
+		return
+	}
+
+	interactive, err := api.mongoDB.GetInteractive(ctx, i.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(ctx, fmt.Sprintf("error fetching interactive id (%s)", i.ID), err)
+		return
+	}
+
+	WriteJSONBody(interactive, w, http.StatusOK)
+}
+
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request, limit int, offset int) (interface{}, int, error) {
 	ctx := req.Context()
 	var filter *models.InteractiveFilter
@@ -433,4 +459,23 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (api *API) GetInteractive(req *http.Request) (*models.Interactive, int, error) {
+	ctx := req.Context()
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	// fetch info from DB
+	i, err := api.mongoDB.GetInteractive(ctx, id)
+	if err != nil && err != mongo.ErrNoRecordFound {
+		return nil, http.StatusInternalServerError, fmt.Errorf("error fetching interactive %s %w", id, err)
+	}
+
+	//if mongo.ErrNoRecordFound then will blockAccess(i==nil)
+	if api.blockAccess(i) {
+		return nil, http.StatusNotFound, fmt.Errorf("interactive either deleted or does not exist %s %w", id, err)
+	}
+
+	return i, http.StatusOK, nil
 }

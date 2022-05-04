@@ -17,7 +17,7 @@ var (
 )
 
 // Creates a new file upload http request with optional extra params
-func NewFileUploadRequest(method, uri, paramName, path string, update *models.InteractiveUpdate) *http.Request {
+func NewFileUploadRequest(method, uri, paramName, path string, i *models.Interactive) *http.Request {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
@@ -31,7 +31,7 @@ func NewFileUploadRequest(method, uri, paramName, path string, update *models.In
 		part.Write(fileContents)
 	}
 
-	jsonB, _ := json.Marshal(update)
+	jsonB, _ := json.Marshal(i)
 	_ = writer.WriteField(api.UpdateFieldKey, string(jsonB))
 
 	request, _ := http.NewRequest(method, uri, body)

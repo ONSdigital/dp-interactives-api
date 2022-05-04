@@ -189,13 +189,11 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			for _, testReq := range tc.requests {
 				var req *http.Request
 				if tc.formFile != "" {
-					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.InteractiveUpdate{
-						Interactive: models.Interactive{
-							Metadata: &models.InteractiveMetadata{
-								Label:      "label1",
-								InternalID: "idValue",
-								Title:      "title1",
-							},
+					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.Interactive{
+						Metadata: &models.InteractiveMetadata{
+							Label:      "label1",
+							InternalID: "idValue",
+							Title:      "title1",
 						},
 					})
 				} else {
@@ -269,13 +267,11 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 
 		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen)
 
-		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.InteractiveUpdate{
-			Interactive: models.Interactive{
-				Metadata: &models.InteractiveMetadata{
-					Label:      "label1",
-					InternalID: "idValue",
-					Title:      "title1",
-				},
+		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.Interactive{
+			Metadata: &models.InteractiveMetadata{
+				Label:      "label1",
+				InternalID: "idValue",
+				Title:      "title1",
 			},
 		})
 
