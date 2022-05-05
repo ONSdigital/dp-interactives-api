@@ -58,11 +58,11 @@ Feature: Interactives API (Patch interactive)
         When I PATCH "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "action": "ImportArchive",
-                    "successful": true,
-                    "message": "message",
+                    "attribute": "Archive",
                     "interactive": {
                         "archive": {
+                            "import_successful": true,
+                            "import_message": "message",
                             "name": "f5XNzqLK76cMwldF835lkCuKO34=/single-interactive.zip",
                             "size_in_bytes": 86159,
                             "files": [
@@ -82,6 +82,7 @@ Feature: Interactives API (Patch interactive)
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                     "published": false,
                     "archive": {
+                        "import_message": "message",
                         "name": "f5XNzqLK76cMwldF835lkCuKO34=/single-interactive.zip",
                         "size_in_bytes": 86159,
                         "files": [

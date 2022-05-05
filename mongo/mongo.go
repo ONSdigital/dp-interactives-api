@@ -23,21 +23,21 @@ const (
 	queryTimeoutInSeconds   = 15
 	interactivesCol         = "interactives"
 
-	ImportArchive PatchAction = iota
+	Archive PatchAttribure = iota
 )
 
 var (
 	ErrNoRecordFound = errors.New("no record exists")
 )
 
-type PatchAction int64
+type PatchAttribure int
 
-func (a PatchAction) String() string {
+func (a PatchAttribure) String() string {
 	switch a {
-	case ImportArchive:
-		return "ImportArchive"
+	case Archive:
+		return "Archive"
 	}
-	return "unknown"
+	return ""
 }
 
 type Mongo struct {
@@ -247,15 +247,15 @@ func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.In
 }
 
 // PatchInteractive patches an existing interactive
-func (m *Mongo) PatchInteractive(ctx context.Context, a PatchAction, i *models.Interactive) error {
+func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribure, i *models.Interactive) error {
 	log.Info(ctx, "patching interactive", log.Data{"id": i.ID})
 
 	var patch bson.M
-	switch a {
-	case ImportArchive:
-		patch = bson.M{"archive": i.Archive, "import_message": i.ImportMessage, "state": i.State}
+	switch attribute {
+	case Archive:
+		patch = bson.M{"archive": i.Archive, "state": i.State}
 	default:
-		return fmt.Errorf("unsupported patch action %s", a)
+		return fmt.Errorf("unsupported attribute %s", attribute)
 	}
 
 	update := bson.M{

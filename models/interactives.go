@@ -34,10 +34,8 @@ func (s InteractiveState) String() string {
 
 // HTTP request
 
-type PatchUpdate struct {
-	PatchAction string      `json:"action,omitempty"`
-	Successful  bool        `json:"successful,omitempty"`
-	Message     string      `json:"message,omitempty"`
+type PatchRequest struct {
+	Attribute   string      `json:"attribute,omitempty"`
 	Interactive Interactive `json:"interactive,omitempty"`
 }
 
@@ -100,9 +98,8 @@ type Interactive struct {
 	State       string               `bson:"state,omitempty"             json:"state,omitempty"`
 	LastUpdated *time.Time           `bson:"last_updated,omitempty"      json:"last_updated,omitempty"`
 	//Mongo only
-	Active        *bool   `bson:"active,omitempty"            json:"-"`
-	SHA           string  `bson:"sha,omitempty"               json:"-"`
-	ImportMessage *string `bson:"import_message,omitempty"    json:"-"`
+	Active *bool  `bson:"active,omitempty"            json:"-"`
+	SHA    string `bson:"sha,omitempty"               json:"-"`
 	//JSON only
 	URL string `bson:"-" json:"url,omitempty"`
 }
@@ -114,9 +111,11 @@ func (i *Interactive) SetURL(domain string) {
 }
 
 type Archive struct {
-	Name  string  `bson:"name,omitempty"          json:"name,omitempty"`
-	Size  int64   `bson:"size_in_bytes,omitempty" json:"size_in_bytes,omitempty"`
-	Files []*File `bson:"files,omitempty"         json:"files,omitempty"`
+	Name             string  `bson:"name,omitempty"           json:"name,omitempty"`
+	Size             int64   `bson:"size_in_bytes,omitempty"  json:"size_in_bytes,omitempty"`
+	Files            []*File `bson:"files,omitempty"          json:"files,omitempty"`
+	ImportMessage    string  `bson:"import_message,omitempty" json:"import_message,omitempty"`
+	ImportSuccessful bool    `bson:"-"                        json:"import_successful,omitempty"`
 }
 
 type File struct {

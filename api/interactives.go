@@ -189,11 +189,10 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 
 	// 5. prepare updated model
 	updatedModel := &models.Interactive{
-		ID:            id,
-		Published:     existing.Published,
-		State:         existing.State,
-		Archive:       existing.Archive,
-		ImportMessage: existing.ImportMessage,
+		ID:        id,
+		Published: existing.Published,
+		State:     existing.State,
+		Archive:   existing.Archive,
 	}
 
 	update := formDataRequest.Interactive
@@ -336,28 +335,29 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	var update models.PatchUpdate
-	if err := json.Unmarshal(bytes, &update); err != nil {
+	var patchReq models.PatchRequest
+	if err := json.Unmarshal(bytes, &patchReq); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(req.Context(), err.Error(), err)
 		return
 	}
 
-	var patchAction mongo.PatchAction
-	switch update.PatchAction {
-	case "ImportArchive":
-		patchAction = mongo.ImportArchive
-		i.State = models.ImportFailure.String()
-		if update.Successful {
-			i.State = models.ImportSuccess.String()
-		}
-		i.ImportMessage = &update.Message
-		if update.Interactive.Archive != nil {
-			i.Archive = &models.Archive{
-				Name: update.Interactive.Archive.Name,
-				Size: update.Interactive.Archive.Size,
+	var patchAttribute mongo.PatchAttribure
+	switch patchReq.Attribute {
+	case "Archive":
+		patchAttribute = mongo.Archive
+		if patchReq.Interactive.Archive != nil {
+			i.State = models.ImportFailure.String()
+			if patchReq.Interactive.Archive.ImportSuccessful {
+				i.State = models.ImportSuccess.String()
 			}
-			for _, f := range update.Interactive.Archive.Files {
+
+			i.Archive = &models.Archive{
+				Name:          patchReq.Interactive.Archive.Name,
+				Size:          patchReq.Interactive.Archive.Size,
+				ImportMessage: patchReq.Interactive.Archive.ImportMessage,
+			}
+			for _, f := range patchReq.Interactive.Archive.Files {
 				i.Archive.Files = append(i.Archive.Files, &models.File{
 					Name:     f.Name,
 					Mimetype: f.Mimetype,
@@ -366,13 +366,13 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, req *http.Request
 			}
 		}
 	default:
-		err := fmt.Errorf("invalid action %s", update.PatchAction)
+		err := fmt.Errorf("unsuppported attribute %s", patchReq.Attribute)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		log.Error(req.Context(), err.Error(), err)
 		return
 	}
 
-	err = api.mongoDB.PatchInteractive(ctx, patchAction, i)
+	err = api.mongoDB.PatchInteractive(ctx, patchAttribute, i)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Error(ctx, "Unable to write to DB", err)
