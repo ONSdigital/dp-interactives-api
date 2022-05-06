@@ -193,6 +193,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, req *http.Reques
 		Published: existing.Published,
 		State:     existing.State,
 		Archive:   existing.Archive,
+		Metadata:  existing.Metadata,
 	}
 
 	update := formDataRequest.Interactive

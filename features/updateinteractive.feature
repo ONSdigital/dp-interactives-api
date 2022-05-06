@@ -107,11 +107,10 @@ Feature: Interactives API (Update interactive)
                         "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
-                        "title": "Title123",
-                        "label": "Title123",
-                        "slug": "Title123",
-                        "resource_id": "resid321",
-                        "internal_id": "123"
+                        "title": "Title456",
+                        "label": "Title456",
+                        "slug": "Title456",
+                        "internal_id": "456"
                     }
                 }
             """
@@ -124,14 +123,14 @@ Feature: Interactives API (Update interactive)
                         "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
-                        "title": "Title123",
-                        "label": "Title123",
-                        "slug": "Title123",
+                        "title": "Title456",
+                        "label": "Title456",
+                        "slug": "Title456",
                         "resource_id": "resid321",
-                        "internal_id": "123"
+                        "internal_id": "456"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27400/interactives/Title123-resid321/embed"
+                    "url": "http://localhost:27400/interactives/Title456-resid321/embed"
                 }
             """
 
