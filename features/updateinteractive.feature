@@ -110,7 +110,8 @@ Feature: Interactives API (Update interactive)
                         "title": "Title456",
                         "label": "Title456",
                         "slug": "Title456",
-                        "internal_id": "456"
+                        "internal_id": "456",
+                        "resource_id": "should_not_update"
                     }
                 }
             """
