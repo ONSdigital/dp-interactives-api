@@ -18,13 +18,7 @@ import (
 )
 
 const (
-	MaxCollisions          = 10
-	MarshallingErrorCode   = "ErrMarshalling"
-	EventPublishErrorCode  = "ErrPublishingEvent"
-	DbErrorCode            = "ErrDB"
-	UploadErrorCode        = "ErrUpload"
-	RequestErrorCode       = "ErrRequest"
-	DownstreamAPIErrorCode = "ErrDownstreamAPI"
+	MaxCollisions = 10
 )
 
 var (

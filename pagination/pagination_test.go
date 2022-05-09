@@ -1,4 +1,4 @@
-package api
+package pagination
 
 import (
 	"encoding/json"
@@ -8,7 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"github.com/stretchr/testify/assert"
+)
+
+var (
+	respond = responder.New()
 )
 
 func TestGetPaginationParametersReturnsErrorWhenOffsetIsNegative(t *testing.T) {
@@ -108,11 +113,12 @@ func TestRenderPageTakesListOfAnyType(t *testing.T) {
 func TestNewPaginatorReturnsPaginatorStructWithFilledValues(t *testing.T) {
 
 	expectedPaginator := &Paginator{
+		respond:         respond,
 		DefaultLimit:    10,
 		DefaultOffset:   5,
 		DefaultMaxLimit: 100,
 	}
-	actualPaginator := NewPaginator(10, 5, 100)
+	actualPaginator := NewPaginator(respond, 10, 5, 100)
 
 	assert.Equal(t, expectedPaginator, actualPaginator)
 }
@@ -135,12 +141,12 @@ func TestReturnPaginatedResultsWritesJSONPageToHTTPResponseBody(t *testing.T) {
 		Limit:      20,
 		TotalCount: 3,
 	}
-	returnPaginatedResults(w, r, inputPage)
+	returnPaginatedResults(respond, w, r, inputPage)
 
 	content, _ := ioutil.ReadAll(w.Body)
 	expectedContent, _ := json.Marshal(expectedPage)
 	assert.Equal(t, expectedContent, content)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
 	assert.Equal(t, 200, w.Code)
 }
 
@@ -156,10 +162,10 @@ func TestReturnPaginatedResultsReturnsErrorIfCanNotMarshalJSON(t *testing.T) {
 		TotalCount: 3,
 	}
 
-	returnPaginatedResults(w, r, inputPage)
+	returnPaginatedResults(respond, w, r, inputPage)
 	content, _ := ioutil.ReadAll(w.Body)
 
-	assert.Equal(t, "internal error\n", string(content))
+	assert.Contains(t, string(content), "errors")
 	assert.Equal(t, 500, w.Code)
 }
 
@@ -167,7 +173,7 @@ func TestPaginateFunctionPassesParametersDownToProvidedFunction(t *testing.T) {
 	r := httptest.NewRequest("GET", "/test?limit=1&offset=2", nil)
 	w := httptest.NewRecorder()
 
-	fetchListFunc := func(w http.ResponseWriter, r *http.Request, limit int, offset int) (interface{}, int, error) {
+	fetchListFunc := func(r *http.Request, limit int, offset int) (interface{}, int, error) {
 		return []int{limit, offset}, 10, nil
 	}
 
@@ -199,7 +205,7 @@ func TestPaginateFunctionPassesParametersDownToProvidedFunction(t *testing.T) {
 func TestPaginateFunctionReturnsBadRequestWhenInvalidQueryParametersAreGiven(t *testing.T) {
 	r := httptest.NewRequest("GET", "/test?limit=-1", nil)
 	w := httptest.NewRecorder()
-	fetchListFunc := func(w http.ResponseWriter, r *http.Request, limit int, offset int) (interface{}, int, error) {
+	fetchListFunc := func(r *http.Request, limit int, offset int) (interface{}, int, error) {
 		return []int{}, 0, nil
 	}
 
@@ -209,14 +215,13 @@ func TestPaginateFunctionReturnsBadRequestWhenInvalidQueryParametersAreGiven(t *
 	paginatedHandler(w, r)
 	content, _ := ioutil.ReadAll(w.Body)
 	assert.Equal(t, 400, w.Code)
-	assert.Equal(t, "invalid query parameter\n", string(content))
+	assert.Equal(t, "{\"errors\":[\"invalid query parameter\"]}", string(content))
 }
 
 func TestPaginateFunctionReturnsListFuncImplementedHttpErrorIfListFuncReturnsAnError(t *testing.T) {
 	r := httptest.NewRequest("GET", "/test", nil)
 	w := httptest.NewRecorder()
-	fetchListFunc := func(w http.ResponseWriter, r *http.Request, limit int, offset int) (interface{}, int, error) {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+	fetchListFunc := func(r *http.Request, limit int, offset int) (interface{}, int, error) {
 		return 0, 0, errors.New("internal error")
 	}
 
@@ -226,5 +231,5 @@ func TestPaginateFunctionReturnsListFuncImplementedHttpErrorIfListFuncReturnsAnE
 	paginatedHandler(w, r)
 	content, _ := ioutil.ReadAll(w.Body)
 	assert.Equal(t, 500, w.Code)
-	assert.Equal(t, "internal error\n", string(content))
+	assert.Equal(t, "{\"errors\":[\"internal error\"]}", string(content))
 }

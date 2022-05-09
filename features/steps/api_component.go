@@ -2,6 +2,7 @@ package steps
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 	"strings"
 
@@ -211,6 +212,10 @@ func (f *InteractivesApiComponent) DoGetFSClient(ctx context.Context, cfg *confi
 	return f.filesService, nil
 }
 
+func (f *InteractivesApiComponent) DoGetResponder(_ context.Context, _ *config.Config) (*responder.Responder, error) {
+	return responder.New(), nil
+}
+
 func (c *InteractivesApiComponent) setInitialiserMock() {
 	c.initialiser = &serviceMock.InitialiserMock{
 		DoGetMongoDBFunc:                 c.DoGetMongoDB,
@@ -221,5 +226,6 @@ func (c *InteractivesApiComponent) setInitialiserMock() {
 		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
 		DoGetGeneratorsFunc:              c.DoGetGenerators,
 		DoGetFilesServiceFunc:            c.DoGetFSClient,
+		DoGetResponderFunc:               c.DoGetResponder,
 	}
 }

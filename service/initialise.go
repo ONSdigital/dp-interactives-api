@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -114,6 +115,11 @@ func (e *ExternalServiceList) GetFilesService(ctx context.Context, cfg *config.C
 	return client, nil
 }
 
+// GetResponder returns rhe responder for handling responses in a generic way
+func (e *ExternalServiceList) GetResponder(ctx context.Context, cfg *config.Config) (*responder.Responder, error) {
+	return e.Init.DoGetResponder(ctx, cfg)
+}
+
 // DoGetFilesService returns a files service backend
 func (e *Init) DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
 	apiClient := files.NewAPIClient(cfg.FilesAPIURL, cfg.ServiceAuthToken)
@@ -206,4 +212,9 @@ func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationCo
 // DoGetGenerators creates authorisation middleware for the given config
 func (e *Init) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
 	return models.GenerateUUID(), models.GenerateResourceId(), models.GenerateHumanReadableSlug()
+}
+
+// DoGetResponder creates the default responder
+func (e *Init) DoGetResponder(_ context.Context, _ *config.Config) (*responder.Responder, error) {
+	return responder.New(), nil
 }

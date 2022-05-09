@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/ONSdigital/dp-interactives-api/models"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
@@ -29,6 +30,7 @@ type Initialiser interface {
 	DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
 	DoGetGenerators() (models.Generator, models.Generator, models.Generator)
 	DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error)
+	DoGetResponder(ctx context.Context, cfg *config.Config) (*responder.Responder, error)
 }
 
 // HTTPServer defines the required methods from the HTTP server

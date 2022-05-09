@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/service"
 	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 	"sync"
 )
@@ -51,6 +52,9 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetMongoDBFunc: func(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
 // 				panic("mock out the DoGetMongoDB method")
 // 			},
+// 			DoGetResponderFunc: func(ctx context.Context, cfg *config.Config) (*responder.Responder, error) {
+// 				panic("mock out the DoGetResponder method")
+// 			},
 // 			DoGetS3ClientFunc: func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
 // 				panic("mock out the DoGetS3Client method")
 // 			},
@@ -84,6 +88,9 @@ type InitialiserMock struct {
 
 	// DoGetMongoDBFunc mocks the DoGetMongoDB method.
 	DoGetMongoDBFunc func(ctx context.Context, cfg *config.Config) (api.MongoServer, error)
+
+	// DoGetResponderFunc mocks the DoGetResponder method.
+	DoGetResponderFunc func(ctx context.Context, cfg *config.Config) (*responder.Responder, error)
 
 	// DoGetS3ClientFunc mocks the DoGetS3Client method.
 	DoGetS3ClientFunc func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)
@@ -146,6 +153,13 @@ type InitialiserMock struct {
 			// Cfg is the cfg argument value.
 			Cfg *config.Config
 		}
+		// DoGetResponder holds details about calls to the DoGetResponder method.
+		DoGetResponder []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Cfg is the cfg argument value.
+			Cfg *config.Config
+		}
 		// DoGetS3Client holds details about calls to the DoGetS3Client method.
 		DoGetS3Client []struct {
 			// Ctx is the ctx argument value.
@@ -162,6 +176,7 @@ type InitialiserMock struct {
 	lockDoGetHealthClient            sync.RWMutex
 	lockDoGetKafkaProducer           sync.RWMutex
 	lockDoGetMongoDB                 sync.RWMutex
+	lockDoGetResponder               sync.RWMutex
 	lockDoGetS3Client                sync.RWMutex
 }
 
@@ -441,6 +456,41 @@ func (mock *InitialiserMock) DoGetMongoDBCalls() []struct {
 	mock.lockDoGetMongoDB.RLock()
 	calls = mock.calls.DoGetMongoDB
 	mock.lockDoGetMongoDB.RUnlock()
+	return calls
+}
+
+// DoGetResponder calls DoGetResponderFunc.
+func (mock *InitialiserMock) DoGetResponder(ctx context.Context, cfg *config.Config) (*responder.Responder, error) {
+	if mock.DoGetResponderFunc == nil {
+		panic("InitialiserMock.DoGetResponderFunc: method is nil but Initialiser.DoGetResponder was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}{
+		Ctx: ctx,
+		Cfg: cfg,
+	}
+	mock.lockDoGetResponder.Lock()
+	mock.calls.DoGetResponder = append(mock.calls.DoGetResponder, callInfo)
+	mock.lockDoGetResponder.Unlock()
+	return mock.DoGetResponderFunc(ctx, cfg)
+}
+
+// DoGetResponderCalls gets all the calls that were made to DoGetResponder.
+// Check the length with:
+//     len(mockedInitialiser.DoGetResponderCalls())
+func (mock *InitialiserMock) DoGetResponderCalls() []struct {
+	Ctx context.Context
+	Cfg *config.Config
+} {
+	var calls []struct {
+		Ctx context.Context
+		Cfg *config.Config
+	}
+	mock.lockDoGetResponder.RLock()
+	calls = mock.calls.DoGetResponder
+	mock.lockDoGetResponder.RUnlock()
 	return calls
 }
 

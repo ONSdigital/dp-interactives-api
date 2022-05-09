@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 )
 
 var (
+	respondr              = responder.New()
 	on, off               = true, false
 	noopGen               = func(string) string { return "" }
 	validInteractiveIdGen = func(string) string { return "an-id" }
@@ -184,7 +186,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, validInteractiveIdGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, validInteractiveIdGen, noopGen, noopGen, respondr)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -265,7 +267,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			return strconv.Itoa(callCount)
 		}
 
-		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen)
+		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen, respondr)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.Interactive{
 			Metadata: &models.InteractiveMetadata{
@@ -342,7 +344,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{PublishingEnabled: tc.publishingEnabled}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, nil, noopGen, noopGen, noopGen)
+			api := api.Setup(ctx, &config.Config{PublishingEnabled: tc.publishingEnabled}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, nil, noopGen, noopGen, noopGen, respondr)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)

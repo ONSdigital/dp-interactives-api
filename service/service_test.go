@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 	"sync"
 	"testing"
@@ -50,6 +51,10 @@ var (
 	}
 	funcDoGetHTTPServerNil = func(bindAddr string, router http.Handler) service.HTTPServer {
 		return nil
+	}
+
+	funcDoGetResponder = func(ctx context.Context, cfg *config.Config) (*responder.Responder, error) {
+		return responder.New(), nil
 	}
 )
 
@@ -159,6 +164,7 @@ func TestRun(t *testing.T) {
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -182,6 +188,7 @@ func TestRun(t *testing.T) {
 				DoGetS3ClientFunc:                funcDoGetS3Ok,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -205,6 +212,7 @@ func TestRun(t *testing.T) {
 				DoGetS3ClientFunc:                funcDoGetS3Err,
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -230,6 +238,7 @@ func TestRun(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
 				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -264,6 +273,7 @@ func TestRun(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
 				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -295,6 +305,7 @@ func TestRun(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
 				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -336,6 +347,7 @@ func TestRun(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: funcDoGetAuthOk,
 				DoGetGeneratorsFunc:              funcDoGetGenerator,
 				DoGetFilesServiceFunc:            funcDoGetFilesServiceOk,
+				DoGetResponderFunc:               funcDoGetResponder,
 			}
 			svcErrors := make(chan error, 1)
 			svcList := service.NewServiceList(initMock)
@@ -440,6 +452,7 @@ func TestClose(t *testing.T) {
 				},
 				DoGetGeneratorsFunc:   funcDoGetGenerator,
 				DoGetFilesServiceFunc: func(ctx context.Context, cfg *config.Config) (api.FilesService, error) { return fsMock, nil },
+				DoGetResponderFunc:    funcDoGetResponder,
 			}
 
 			svcErrors := make(chan error, 1)
@@ -476,8 +489,9 @@ func TestClose(t *testing.T) {
 				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
-				DoGetGeneratorsFunc: funcDoGetGenerator,
+				DoGetGeneratorsFunc:   funcDoGetGenerator,
 				DoGetFilesServiceFunc: func(ctx context.Context, cfg *config.Config) (api.FilesService, error) { return fsMock, nil },
+				DoGetResponderFunc:    funcDoGetResponder,
 			}
 
 			svcErrors := make(chan error, 1)

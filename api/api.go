@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dp-interactives-api/pagination"
 	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 
@@ -51,7 +52,8 @@ func Setup(ctx context.Context,
 	filesService FilesService,
 	newUUID models.Generator,
 	newResourceID models.Generator,
-	newSlug models.Generator) *API {
+	newSlug models.Generator,
+	respond *responder.Responder) *API {
 
 	var kProducer *event.AvroProducer
 	if kafkaProducer != nil {
@@ -71,20 +73,21 @@ func Setup(ctx context.Context,
 		newUUID:       newUUID,
 		newSlug:       newSlug,
 		newResourceID: newResourceID,
+		respond:       respond,
 	}
 
-	paginator := NewPaginator(cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
+	paginator := pagination.NewPaginator(api.respond, cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
 
 	if r != nil {
 		if cfg.PublishingEnabled {
 			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, api.UploadInteractivesHandler)).Methods(http.MethodPost)
-			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.respond, api.ListInteractivesHandler))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, api.GetInteractiveHandler)).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.PatchInteractiveHandler)).Methods(http.MethodPatch)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
 		} else {
-			r.HandleFunc("/v1/interactives", paginator.Paginate(api.respond, api.ListInteractivesHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveHandler).Methods(http.MethodGet)
 		}
 	} else {

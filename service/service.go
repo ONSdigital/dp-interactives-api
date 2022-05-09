@@ -74,8 +74,8 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	}
 
 	uuidGen, resourceIdGen, slugGen := serviceList.GetGenerators()
-
-	a := api.Setup(ctx, cfg, r, authorisationMiddleware, mongoDB, producer, s3Client, filesService, uuidGen, resourceIdGen, slugGen)
+	responder, _ := serviceList.GetResponder(ctx, cfg)
+	a := api.Setup(ctx, cfg, r, authorisationMiddleware, mongoDB, producer, s3Client, filesService, uuidGen, resourceIdGen, slugGen, responder)
 
 	//heathcheck
 	hc, err := serviceList.GetHealthCheck(cfg, buildTime, gitCommit, version)
