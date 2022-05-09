@@ -35,7 +35,7 @@ Feature: Interactives API (List interactives)
             ]
             """
         When I GET "/v1/interactives?limit=10&offset=0"
-        Then I should receive the following JSON response with status "200":
+        Then I should receive the following list(model) response with status "200":
             """
                 {
                     "items": [
@@ -57,7 +57,7 @@ Feature: Interactives API (List interactives)
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "last_updated":"2021-01-01T00:00:01Z",
-                            "url": "http://localhost:27400/interactives/slug-abcde123/embed"
+                            "url": "http://localhost:27300/interactives/slug-abcde123/embed"
                         }
                     ],
                     "count": 1,
@@ -74,7 +74,7 @@ Feature: Interactives API (List interactives)
             []
             """
         When I GET "/v1/interactives?limit=10&offset=0"
-        Then I should receive the following JSON response with status "200":
+        Then I should receive the following list(model) response with status "200":
             """
                 {
                     "items": [],

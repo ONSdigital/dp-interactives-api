@@ -116,7 +116,7 @@ func (e *ExternalServiceList) GetFilesService(ctx context.Context, cfg *config.C
 
 // DoGetFilesService returns a files service backend
 func (e *Init) DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
-	apiClient := files.NewAPIClient(cfg.FilesAPIURL)
+	apiClient := files.NewAPIClient(cfg.FilesAPIURL, cfg.ServiceAuthToken)
 	return apiClient, nil
 }
 

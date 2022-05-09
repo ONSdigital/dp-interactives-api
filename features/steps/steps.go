@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +21,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const (
+	expectedContentType = "application/json; charset=utf-8"
+)
+
 var (
 	WellKnownTestTime, _ = time.Parse("2006-01-02T15:04:05Z", "2021-01-01T00:00:00Z")
 )
@@ -31,6 +36,7 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdata)
 	ctx.Step(`^I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdata)
 	ctx.Step(`^I should receive the following model response with status "([^"]*)":$`, c.IShouldReceiveTheFollowingModelResponse)
+	ctx.Step(`^I should receive the following list\(model\) response with status "([^"]*)":$`, c.iShouldReceiveTheFollowingListmodelResponseWithStatus)
 	ctx.Step(`^I am an interactives user`, c.adminJWTToken)
 	ctx.Step(`^As an interactives user I POST file "([^"]*)" with form-data "([^"]*)"$`, c.IPostToWithFormDataAsAdmin)
 	ctx.Step(`^As an interactives user I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdataAsAdmin)
@@ -136,14 +142,14 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	}
 
 	var req *http.Request
-	var update *models.InteractiveUpdate
+	var i *models.Interactive
 	if data != nil {
-		err = json.Unmarshal(data, &update)
+		err = json.Unmarshal(data, &i)
 		if err != nil {
 			return err
 		}
 
-		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, update)
+		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, i)
 	} else {
 		req = httptest.NewRequest(method, "http://foo"+path, bytes.NewReader(data))
 	}
@@ -158,24 +164,19 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	return c.StepError()
 }
 
-func (c *InteractivesApiComponent) IShouldReceiveTheFollowingModelResponse(expectedCodeStr string, expectedAPIResponse *godog.DocString) error {
-	if err := c.ApiFeature.TheHTTPStatusCodeShouldBe(expectedCodeStr); err != nil {
-		return err
-	}
-	if err := c.ApiFeature.TheResponseHeaderShouldBe("Content-Type", "application/json"); err != nil {
-		return err
-	}
-
-	var expected *models.Interactive
-	err := json.Unmarshal([]byte(expectedAPIResponse.Content), &expected)
+func (c *InteractivesApiComponent) iShouldReceiveTheFollowingListmodelResponseWithStatus(expectedCodeStr string, expectedAPIResponse *godog.DocString) error {
+	var expected, actual interactives.List
+	err := c.toModel(expectedCodeStr, expectedAPIResponse, &expected, &actual)
 	if err != nil {
 		return err
 	}
+	assert.Equal(c, expected, actual)
+	return c.StepError()
+}
 
-	var actual *models.Interactive
-	responseBody := c.ApiFeature.HttpResponse.Body
-	body, _ := ioutil.ReadAll(responseBody)
-	err = json.Unmarshal(body, &actual)
+func (c *InteractivesApiComponent) IShouldReceiveTheFollowingModelResponse(expectedCodeStr string, expectedAPIResponse *godog.DocString) error {
+	var expected, actual models.Interactive
+	err := c.toModel(expectedCodeStr, expectedAPIResponse, &expected, &actual)
 	if err != nil {
 		return err
 	}
@@ -194,4 +195,28 @@ func (c *InteractivesApiComponent) IShouldReceiveTheFollowingModelResponse(expec
 	assert.Equal(c, expected, actual)
 
 	return c.StepError()
+}
+
+func (c *InteractivesApiComponent) toModel(expectedCodeStr string, expectedAPIResponse *godog.DocString, expected, actual interface{}) error {
+	if err := c.ApiFeature.TheHTTPStatusCodeShouldBe(expectedCodeStr); err != nil {
+		return err
+	}
+
+	if err := c.ApiFeature.TheResponseHeaderShouldBe("Content-Type", expectedContentType); err != nil {
+		return err
+	}
+
+	err := json.Unmarshal([]byte(expectedAPIResponse.Content), expected)
+	if err != nil {
+		return err
+	}
+
+	responseBody := c.ApiFeature.HttpResponse.Body
+	body, _ := ioutil.ReadAll(responseBody)
+	err = json.Unmarshal(body, actual)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

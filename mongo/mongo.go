@@ -3,6 +3,11 @@ package mongo
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -11,20 +16,29 @@ import (
 	dpMongoDriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/ONSdigital/log.go/v2/log"
 	"go.mongodb.org/mongo-driver/bson"
-	"reflect"
-	"strings"
-	"time"
 )
 
 const (
 	connectTimeoutInSeconds = 5
 	queryTimeoutInSeconds   = 15
 	interactivesCol         = "interactives"
+
+	Archive PatchAttribure = iota
 )
 
 var (
 	ErrNoRecordFound = errors.New("no record exists")
 )
+
+type PatchAttribure int
+
+func (a PatchAttribure) String() string {
+	switch a {
+	case Archive:
+		return "Archive"
+	}
+	return ""
+}
 
 type Mongo struct {
 	Config       *config.Config
@@ -130,7 +144,7 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 	return &interactive, nil
 }
 
-func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFilter *models.InteractiveMetadata) ([]*models.Interactive, int, error) {
+func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFilter *models.InteractiveFilter) ([]*models.Interactive, int, error) {
 
 	filter := generateFilter(modelFilter)
 	f := m.Connection.GetConfiguredCollection().Find(filter).Sort(bson.M{"_id": -1})
@@ -153,21 +167,32 @@ func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFi
 // generate filter string depending on data type
 // string eq value
 // array in value(s)
-func generateFilter(model *models.InteractiveMetadata) bson.M {
+func generateFilter(model *models.InteractiveFilter) bson.M {
 	filter := bson.M{}
 	filter["active"] = bson.M{"$eq": true}
-	if model == nil {
+	if model == nil || model.Metadata == nil {
+		return filter
+	}
+
+	// if filter by collection-id
+	if model.AssociateCollection {
+		// collection_id == given
+		// OR
+		// no collection_id AND not published
+		fil := bson.M{}
+		fil["$and"] = []interface{}{bson.M{"metadata.collection_id": ""}, bson.M{"published": false}}
+		filter["$or"] = []interface{}{bson.M{"metadata.collection_id": model.Metadata.CollectionID}, fil}
 		return filter
 	}
 
 	// if there is a resource_id set, filter using that
-	if model.ResourceID != "" {
-		filter["metadata.resource_id"] = bson.M{"$eq": model.ResourceID}
+	if model.Metadata.ResourceID != "" {
+		filter["metadata.resource_id"] = bson.M{"$eq": model.Metadata.ResourceID}
 		return filter
 	}
 
 	// else filter using other metadata
-	v := reflect.ValueOf(*model)
+	v := reflect.ValueOf(*(model.Metadata))
 	typeOfS := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
@@ -178,12 +203,7 @@ func generateFilter(model *models.InteractiveMetadata) bson.M {
 		switch valType {
 		case reflect.String:
 			if val != "" {
-				filter["metadata."+tag] = bson.M{"$eq": val}
-			}
-		case reflect.Slice:
-			stringSlice := val.([]string)
-			if len(stringSlice) > 0 {
-				filter["metadata."+tag] = bson.M{"$in": stringSlice}
+				filter["metadata."+tag] = bson.M{"$regex": val, "$options": "i"}
 			}
 		}
 	}
@@ -224,6 +244,28 @@ func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.In
 
 	_, err = m.Connection.GetConfiguredCollection().UpsertById(ctx, id, update)
 	return
+}
+
+// PatchInteractive patches an existing interactive
+func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribure, i *models.Interactive) error {
+	log.Info(ctx, "patching interactive", log.Data{"id": i.ID})
+
+	var patch bson.M
+	switch attribute {
+	case Archive:
+		patch = bson.M{"archive": i.Archive, "state": i.State}
+	default:
+		return fmt.Errorf("unsupported attribute %s", attribute)
+	}
+
+	update := bson.M{
+		"$set": patch,
+		"$currentDate": bson.M{
+			"last_updated": true,
+		},
+	}
+	_, err := m.Connection.GetConfiguredCollection().UpdateById(ctx, i.ID, update)
+	return err
 }
 
 // Close closes the mongo session and returns any error

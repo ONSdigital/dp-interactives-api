@@ -7,19 +7,36 @@ Feature: Interactives API (Get interactive)
             }
         """
         Then the HTTP status code should be "403"
+
+    Scenario: Update failed if validation rules not followed
+        When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
+            """
+                {
+                    "metadata": { }
+                }
+            """
+        Then the HTTP status code should be "400"
+        And I should receive the following JSON response:
+            """
+                {
+                    "errors": [
+                        "Interactive.Metadata.Title",
+                        "Interactive.Metadata.Label",
+                        "Interactive.Metadata.InternalID"
+                    ]
+                }
+            """
         
     Scenario: New interactive success with file
         When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
             """
                 {
-                    "interactive": {
-                        "metadata": {
-                            "label": "Title123",
-                            "slug": "Title123",
-                            "title": "Title123",
-                            "resource_id": "AbcdE123",
-                            "internal_id": "123"
-                        }
+                    "metadata": {
+                        "label": "Title123",
+                        "slug": "Title123",
+                        "title": "Title123",
+                        "resource_id": "AbcdE123",
+                        "internal_id": "123"
                     }
                 }
             """
@@ -39,6 +56,6 @@ Feature: Interactives API (Get interactive)
                         "internal_id": "123"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27400/interactives/Title123-AbcdE123/embed"
+                    "url": "http://localhost:27300/interactives/Title123-AbcdE123/embed"
                 }
             """

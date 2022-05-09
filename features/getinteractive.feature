@@ -26,7 +26,7 @@ Feature: Interactives API (Get interactive)
             ]
             """
         When I GET "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
-        Then I should receive the following JSON response with status "200":
+        Then I should receive the following model response with status "200":
             """
                 {
                     "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
@@ -43,7 +43,7 @@ Feature: Interactives API (Get interactive)
                     },
                     "state": "ArchiveUploaded",
                     "last_updated":"2021-01-01T00:00:00Z",
-                    "url": "http://localhost:27400/interactives/slug-abcde123/embed"
+                    "url": "http://localhost:27300/interactives/slug-abcde123/embed"
                 }
             """
 

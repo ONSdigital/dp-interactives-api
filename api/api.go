@@ -3,8 +3,8 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
@@ -37,20 +37,7 @@ type API struct {
 	newUUID       models.Generator
 	newResourceID models.Generator
 	newSlug       models.Generator
-}
-
-type baseHandler func(ctx context.Context, w http.ResponseWriter, r *http.Request) (*models.SuccessResponse, *models.ErrorResponse)
-
-func contextAndErrors(h baseHandler) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
-		response, err := h(ctx, w, req)
-		if err != nil {
-			writeErrorResponse(ctx, w, err)
-			return
-		}
-		writeSuccessResponse(ctx, w, response)
-	}
+	respond       *responder.Responder
 }
 
 // Setup creates the API struct and its endpoints with corresponding handlers
@@ -90,14 +77,15 @@ func Setup(ctx context.Context,
 
 	if r != nil {
 		if cfg.PublishingEnabled {
-			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, contextAndErrors(api.UploadInteractivesHandler))).Methods(http.MethodPost)
-			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, contextAndErrors(paginator.Paginate(api.ListInteractivesHandler)))).Methods(http.MethodGet)
-			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, contextAndErrors(api.GetInteractiveMetadataHandler))).Methods(http.MethodGet)
-			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, contextAndErrors(api.UpdateInteractiveHandler))).Methods(http.MethodPut)
-			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, contextAndErrors(api.DeleteInteractivesHandler))).Methods(http.MethodDelete)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, api.UploadInteractivesHandler)).Methods(http.MethodPost)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.respond, api.ListInteractivesHandler))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, api.GetInteractiveHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.PatchInteractiveHandler)).Methods(http.MethodPatch)
+			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
 		} else {
-			r.HandleFunc("/v1/interactives", contextAndErrors(paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
-			r.HandleFunc("/v1/interactives/{id}", contextAndErrors(api.GetInteractiveMetadataHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives", paginator.Paginate(api.respond, api.ListInteractivesHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveHandler).Methods(http.MethodGet)
 		}
 	} else {
 		log.Error(ctx, "api setup error - no router", nil)
@@ -141,44 +129,4 @@ func (api *API) blockAccess(i *models.Interactive) bool {
 	viewable := api.cfg.PublishingEnabled || *i.Published
 
 	return !viewable
-}
-
-func JSONify(v interface{}) ([]byte, error) {
-	// Marshal provided model
-	json, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	return json, nil
-}
-
-func writeErrorResponse(ctx context.Context, w http.ResponseWriter, errorResponse *models.ErrorResponse) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(errorResponse.Status)
-
-	jsonResponse, err := json.Marshal(errorResponse)
-	if err != nil {
-		responseErr := models.NewError(ctx, err, "JSONMarshalError", "failed to write http response")
-		http.Error(w, responseErr.Description, http.StatusInternalServerError)
-		return
-	}
-
-	_, err = w.Write(jsonResponse)
-	if err != nil {
-		responseErr := models.NewError(ctx, err, "WriteResponseError", "failed to write http response")
-		http.Error(w, responseErr.Description, http.StatusInternalServerError)
-		return
-	}
-}
-
-func writeSuccessResponse(ctx context.Context, w http.ResponseWriter, successResponse *models.SuccessResponse) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(successResponse.Status)
-
-	_, err := w.Write(successResponse.Body)
-	if err != nil {
-		responseErr := models.NewError(ctx, err, "WriteResponseError", "failed to write http response")
-		http.Error(w, responseErr.Description, http.StatusInternalServerError)
-		return
-	}
 }

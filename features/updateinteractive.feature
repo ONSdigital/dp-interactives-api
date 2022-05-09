@@ -1,5 +1,24 @@
 Feature: Interactives API (Update interactive)
 
+    Scenario: Update failed if validation rules not followed
+        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+            """
+                {
+                    "metadata": { }
+                }
+            """
+        Then the HTTP status code should be "400"
+        And I should receive the following JSON response:
+            """
+                {
+                    "errors": [
+                        "Interactive.Metadata.Title",
+                        "Interactive.Metadata.Label",
+                        "Interactive.Metadata.InternalID"
+                    ]
+                }
+            """
+
     Scenario: Update failed if no message body
         Given I am an interactives user
         When I PUT "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
@@ -14,9 +33,10 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "import_successful": true,
-                    "interactive": {
-                        "metadata": {"metadata1" : "updatedval1", "metadata5" : "val5"}
+                    "metadata": {
+                        "label": "Title12345",
+                        "title": "Title123",
+                        "internal_id": "1234"
                     }
                 }
             """
@@ -42,13 +62,11 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "interactive": {
-                        "metadata": {
-                            "label": "Title12345",
-                            "title": "Title123",
-                            "resource_id": "resid321",
-                            "internal_id": "1234"
-                        }
+                    "metadata": {
+                        "label": "Title12345",
+                        "title": "Title123",
+                        "resource_id": "resid321",
+                        "internal_id": "1234"
                     }
                 }
             """
@@ -76,14 +94,12 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
             """
                 {
-                    "interactive": {
-                        "metadata": {
-                            "label": "Title123",
-                            "title": "Title123",
-                            "slug": "Title321-update",
-                            "resource_id": "resid321",
-                            "internal_id": "123"
-                        }
+                    "metadata": {
+                        "label": "Title123",
+                        "title": "Title123",
+                        "slug": "Title321-update",
+                        "resource_id": "resid321",
+                        "internal_id": "123"
                     }
                 }
             """
@@ -110,17 +126,15 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "interactive": {
-                        "archive": {
-                            "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
-                        },
-                        "metadata": {
-                            "title": "Title123",
-                            "label": "Title123",
-                            "slug": "Title123",
-                            "resource_id": "resid321",
-                            "internal_id": "123"
-                        }
+                    "archive": {
+                        "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
+                    },
+                    "metadata": {
+                        "title": "Title456",
+                        "label": "Title456",
+                        "slug": "Title456",
+                        "internal_id": "456",
+                        "resource_id": "should_not_update"
                     }
                 }
             """
@@ -133,14 +147,14 @@ Feature: Interactives API (Update interactive)
                         "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
                     },
                     "metadata": {
-                        "title": "Title123",
-                        "label": "Title123",
-                        "slug": "Title123",
+                        "title": "Title456",
+                        "label": "Title456",
+                        "slug": "Title456",
                         "resource_id": "resid321",
-                        "internal_id": "123"
+                        "internal_id": "456"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27400/interactives/Title123-resid321/embed"
+                    "url": "http://localhost:27300/interactives/Title456-resid321/embed"
                 }
             """
 
@@ -164,14 +178,12 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT no file with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "interactive": {
-                        "metadata": {
-                            "label": "Title321",
-                            "title": "Title123",
-                            "slug": "Title321",
-                            "resource_id": "resid321",
-                            "internal_id": "123"
-                        }
+                    "metadata": {
+                        "label": "Title321",
+                        "title": "Title123",
+                        "slug": "Title321",
+                        "resource_id": "resid321",
+                        "internal_id": "123"
                     }
                 }
             """
@@ -191,7 +203,7 @@ Feature: Interactives API (Update interactive)
                         "internal_id": "123"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27400/interactives/Title321-resid321/embed"
+                    "url": "http://localhost:27300/interactives/Title321-resid321/embed"
                 }
             """
 
@@ -217,14 +229,12 @@ Feature: Interactives API (Update interactive)
         When As an interactives user I PUT no file with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "interactive": {
-                        "metadata": {
-                            "label": "Title321",
-                            "title": "Title123",
-                            "slug": "Title321",
-                            "resource_id": "resid321",
-                            "internal_id": "123"
-                        }
+                    "metadata": {
+                        "label": "Title321",
+                        "title": "Title123",
+                        "slug": "Title321",
+                        "resource_id": "resid321",
+                        "internal_id": "123"
                     }
                 }
             """

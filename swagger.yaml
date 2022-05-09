@@ -12,26 +12,26 @@ paths:
       tags:
         - interactives
       summary: Upload a new interactive
-      description: ""
+      description: ''
       operationId: UploadInteractivesHandler
       requestBody:
-        $ref: "#/components/requestBodies/NewInteractiveHandler"
+        $ref: '#/components/requestBodies/NewInteractiveHandler'
       responses:
-        "202":
+        '202':
           description: Accepted (returns the interactive)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Interactive"
-        "400":
+                $ref: '#/components/schemas/Interactive'
+        '400':
           description: Bad request
-        "500":
+        '500':
           description: Internal server error
     get:
       tags:
         - interactives
       summary: List all interactives (exclude deleted)
-      description: ""
+      description: ''
       operationId: ListInteractivesHandler
       parameters:
         - name: limit
@@ -50,27 +50,34 @@ paths:
             format: int64
         - name: filter
           in: query
-          description: '{"label":"Interactive label"}'
+          description: >-
+            {"associate_collection": true/false, "metadata" : {"title":
+            "Interactive Title"}}
           required: false
           schema:
-            $ref: "#/components/schemas/InteractiveMetadataResponse"
+            type: object
+            properties:
+              associate_collection:
+                type: boolean
+              metadata:
+                $ref: '#/components/schemas/InteractiveMetadata'
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Interactive"
-        "500":
+                  $ref: '#/components/schemas/Interactive'
+        '500':
           description: Internal error
-  "/interactives/{id}":
+  /interactives/{id}:
     put:
       tags:
         - interactives
       summary: Update an existing interactive (by id)
-      description: ""
+      description: ''
       operationId: UpdateInteractiveHandler
       parameters:
         - name: id
@@ -81,25 +88,25 @@ paths:
             type: integer
             format: int64
       requestBody:
-        $ref: "#/components/requestBodies/UpdateInteractiveHandler"
+        $ref: '#/components/requestBodies/UpdateInteractiveHandler'
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Interactive"
-        "400":
+                $ref: '#/components/schemas/Interactive'
+        '400':
           description: Bad request
-        "404":
+        '404':
           description: Interactive not found
-        "500":
+        '500':
           description: Internal error
     get:
       tags:
         - interactives
       summary: Find an interactive by ID
-      description: ""
+      description: ''
       operationId: GetInteractiveMetadataHandler
       parameters:
         - name: id
@@ -110,21 +117,21 @@ paths:
             type: integer
             format: int64
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Interactive"
-        "404":
+                $ref: '#/components/schemas/Interactive'
+        '404':
           description: Interactive not found
-        "500":
+        '500':
           description: Internal error
     delete:
       tags:
         - interactives
       summary: Sets the interactive as inactive
-      description: "Does not physically delete, only unsets the active flag."
+      description: Does not physically delete, only unsets the active flag.
       operationId: DeleteInteractivesHandler
       parameters:
         - name: id
@@ -135,11 +142,42 @@ paths:
             type: integer
             format: int64
       responses:
-        "204":
+        '204':
           description: Success (no content)
-        "404":
+        '404':
           description: Interactive not found
-        "500":
+        '500':
+          description: Internal error
+    patch:
+      tags:
+        - interactives
+      summary: Patch interactive with partial update
+      description: >-
+        Patch interactive with partial update for only attribute provided in
+        request
+      operationId: PatchInteractiveHandler
+      requestBody:
+        $ref: '#/components/requestBodies/PatchInteractiveHandler'
+      parameters:
+        - name: id
+          in: path
+          description: ID of interactive to inactivate
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interactive'
+        '400':
+          description: Bad request
+        '404':
+          description: Interactive not found
+        '500':
           description: Internal error
 components:
   requestBodies:
@@ -153,11 +191,11 @@ components:
                 description: Archive file for interactive
                 type: string
                 format: binary
-              update:
-                $ref: '#/components/schemas/InteractiveUpdate'
+              interactive:
+                $ref: '#/components/schemas/Interactive'
             required:
               - file
-              - update
+              - interactive
           encoding:
             update:
               contentType: application/json
@@ -171,26 +209,64 @@ components:
                 description: Archive file for interactive
                 type: string
                 format: binary
-              update:
-                $ref: '#/components/schemas/InteractiveUpdate'
+              interactive:
+                $ref: '#/components/schemas/Interactive'
             required:
-              - update
+              - interactive
+          encoding:
+            update:
+              contentType: application/json
+    PatchInteractiveHandler:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              atttribute:
+                description: attribute to patch
+                type: string
+              interactive:
+                $ref: '#/components/schemas/Interactive'
+            required:
+              - interactive
           encoding:
             update:
               contentType: application/json
   schemas:
-    InteractiveMetadata:
+    Interactive:
       type: object
       properties:
-        title:
+        id:
           type: string
-        label:
+        published:
+          type: boolean
+        state:
           type: string
-        internal_id:
-          type: string
-        collection_id:
-          type: string
-    InteractiveMetadataResponse:
+        metadata:
+          $ref: '#/components/schemas/InteractiveMetadata'
+        archive:
+          type: object
+          properties:
+            import_message:
+              type: string
+            name:
+              type: string
+            size_in_bytes:
+              type: integer
+            files:
+              type: array
+              items:
+                type: object
+                properties:
+                  mimetype:
+                    type: string
+                  size_in_bytes:
+                    type: integer
+                  name:
+                    type: string
+      xml:
+        name: Interactive
+    InteractiveMetadata:
       type: object
       properties:
         title:
@@ -205,72 +281,3 @@ components:
           type: string
         resource_id:
           type: string
-    InteractiveUpdate:
-      type: object
-      properties:
-        interactive:
-          $ref: "#/components/schemas/InteractiveUpdateRequest"
-      xml:
-        name: InteractiveUpdate
-    Interactive:
-      type: object
-      properties:
-        id:
-          type: string
-        published:
-          type: boolean
-        archive:
-          type: object
-          properties:
-            name:
-              type: string
-            size_in_bytes:
-              type: integer
-            files:
-              type: array
-              items:
-                type: object
-                properties:
-                  mimetype:
-                    type: string
-                  size_in_bytes:
-                    type: integer
-                  name:
-                    type: string
-        metadata:
-          $ref: "#/components/schemas/InteractiveMetadataResponse"
-      xml:
-        name: Interactive
-    InteractiveUpdateRequest:
-      type: object
-      properties:
-        id:
-          type: string
-        published:
-          type: boolean
-        last_updated:
-          type: string
-          format: date-time
-          example: "2022-04-19T12:41:12Z"
-        archive:
-          type: object
-          properties:
-            name:
-              type: string
-            size_in_bytes:
-              type: integer
-            files:
-              type: array
-              items:
-                type: object
-                properties:
-                  mimetype:
-                    type: string
-                  size_in_bytes:
-                    type: integer
-                  name:
-                    type: string
-        metadata:
-          $ref: "#/components/schemas/InteractiveMetadata"
-      xml:
-        name: Interactive

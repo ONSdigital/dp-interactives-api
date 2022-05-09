@@ -6,19 +6,23 @@ replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
 
 replace github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go v3.2.1-0.20210802184156-9742bd7fca1c+incompatible
 
+replace github.com/ONSdigital/dp-net => github.com/ONSdigital/dp-net v1.4.0
+
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.114.2
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.16.0
 	github.com/ONSdigital/dp-component-test v0.6.4
-	github.com/ONSdigital/dp-healthcheck v1.2.3
+	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v3 v3.2.0
 	github.com/ONSdigital/dp-mongodb/v3 v3.0.0-beta.4
-	github.com/ONSdigital/dp-net v1.2.0
+	github.com/ONSdigital/dp-net v1.4.1
+	github.com/ONSdigital/dp-net/v2 v2.4.0
 	github.com/ONSdigital/dp-s3/v2 v2.0.0-beta.2
-	github.com/ONSdigital/log.go/v2 v2.0.9
-	github.com/aws/aws-sdk-go v1.42.29
+	github.com/ONSdigital/log.go/v2 v2.2.0
+	github.com/aws/aws-sdk-go v1.43.38
 	github.com/cucumber/godog v0.12.4
+	github.com/go-playground/validator/v10 v10.11.0
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
@@ -45,7 +49,6 @@ require (
 	github.com/go-avro/avro v0.0.0-20171219232920-444163702c11 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
@@ -81,10 +84,9 @@ require (
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
+	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

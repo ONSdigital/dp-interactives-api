@@ -35,6 +35,7 @@ type Config struct {
 	DefaultMaxLimit            int           `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
 	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
 	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
+	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN" 			   json:"-"`
 	MongoConfig                MongoConfig
 	AuthorisationConfig        *authorisation.Config
 }

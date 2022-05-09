@@ -1,9 +1,8 @@
 package api
 
 import (
-	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/models"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -35,33 +34,28 @@ func NewPaginator(defaultLimit, defaultOffset, defaultMaxLimit int) *Paginator {
 }
 
 // Paginate wraps a http endpoint to return a paginated list from the list returned by the provided function
-func (p *Paginator) Paginate(paginatedHandler PaginatedHandler) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (*models.SuccessResponse, *models.ErrorResponse) {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (*models.SuccessResponse, *models.ErrorResponse) {
+func (p *Paginator) Paginate(respond *responder.Responder, paginatedHandler PaginatedHandler) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		offset, limit, err := p.getPaginationParameters(r)
 		if err != nil {
-			responseErr := models.NewError(ctx, err, RequestErrorCode, err.Error())
-			return nil, models.NewErrorResponse(http.StatusBadRequest, nil, responseErr)
+			respond.Error(ctx, w, http.StatusBadRequest, err)
+			return
 		}
 
 		list, totalCount, err := paginatedHandler(r, limit, offset)
 		if err != nil {
-			responseErr := models.NewError(ctx, err, DbErrorCode, err.Error())
-			return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
+			respond.Error(ctx, w, http.StatusInternalServerError, err)
+			return
 		}
 
-		jsonB, err := JSONify(page{
+		respond.JSON(ctx, w, http.StatusOK, page{
 			Items:      list,
 			Count:      listLength(list),
 			Offset:     offset,
 			Limit:      limit,
 			TotalCount: totalCount,
 		})
-		if err != nil {
-			responseErr := models.NewError(ctx, err, MarshallingErrorCode, err.Error())
-			return nil, models.NewErrorResponse(http.StatusInternalServerError, nil, responseErr)
-		}
-
-		return models.NewSuccessResponse(jsonB, http.StatusAccepted), nil
 	}
 }
 
