@@ -12,7 +12,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -29,7 +28,6 @@ type FormDataValidator func(*http.Request) error
 var (
 	v                                 = validator.New()
 	conform                           = modifiers.New()
-	alphaNumWithSpacesRegEx           = regexp.MustCompile("^[a-zA-Z0-9\\s]+$")
 	WantOnlyOneAttachmentWithMetadata = func(r *http.Request) error {
 		numOfAttachments, update := len(r.MultipartForm.File), r.FormValue(UpdateFieldKey)
 		if numOfAttachments == 1 && update != "" {
