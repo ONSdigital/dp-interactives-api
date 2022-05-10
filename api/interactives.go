@@ -47,27 +47,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if api.cfg.ValidateSHAEnabled {
-		// 2. Check if duplicate exists
-		existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-		if existing != nil {
-			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive already exists id (%s) with sha (%s)", existing.ID, existing.SHA))
-			return
-		}
-	}
-
-	// 3. Check "label + title are unique"
 	update := formDataRequest.Interactive
-	existing, _ := api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.label", update.Metadata.Label)
-	if existing != nil {
-		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive with label (%s) already exists id (%s)", existing.Metadata.Label, existing.ID))
-		return
-	}
-	existing, _ = api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.title", update.Metadata.Title)
-	if existing != nil {
-		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive with title (%s) already exists id (%s)", existing.Metadata.Title, existing.ID))
-		return
-	}
 
 	// 4. upload to S3
 	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
@@ -205,15 +185,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	// Finally check if file to be uploaded
 	uri := ""
 	if formDataRequest.FileData != nil {
-		if api.cfg.ValidateSHAEnabled {
-			// Check if duplicate SHA exists
-			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-			if i != nil {
-				api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA))
-				return
-			}
-		}
-
 		// Process form data (S3)
 		uri, err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 		if err != nil {

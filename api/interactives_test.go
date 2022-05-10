@@ -87,18 +87,6 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		},
 		{
 			requests: []request{
-				{"/v1/interactives", http.MethodPost, http.StatusBadRequest},
-				{"/v1/interactives/an-id", http.MethodPut, http.StatusBadRequest},
-			},
-			title:    "WhenFileIsZipButAlreadyExists_ThenStatusBadRequest",
-			formFile: "resources/interactives.zip",
-			mongoServer: &apiMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc: func(ctx context.Context, sha string) (*models.Interactive, error) { return &models.Interactive{}, nil },
-				GetInteractiveFunc:               getInteractiveFunc,
-			},
-		},
-		{
-			requests: []request{
 				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
 				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
 			},
@@ -186,7 +174,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, validInteractiveIdGen, noopGen, noopGen, respondr)
+			api := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, validInteractiveIdGen, noopGen, noopGen, respondr)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -267,7 +255,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			return strconv.Itoa(callCount)
 		}
 
-		a := api.Setup(ctx, &config.Config{ValidateSHAEnabled: true, PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen, respondr)
+		a := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen, respondr)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.Interactive{
 			Metadata: &models.InteractiveMetadata{

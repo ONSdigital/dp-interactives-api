@@ -12,7 +12,6 @@ type Config struct {
 	BindAddr                   string        `envconfig:"BIND_ADDR"`
 	PublishingEnabled          bool          `envconfig:"PUBLISHING_ENABLED"`
 	PreviewRootURL             string        `envconfig:"PREVIEW_ROOT_URL"`
-	ValidateSHAEnabled         bool          `envconfig:"VALIDATE_SHA_ENABLED"`
 	AwsEndpoint                string        `envconfig:"AWS_ENDPOINT"`
 	AwsRegion                  string        `envconfig:"AWS_REGION"`
 	UploadBucketName           string        `envconfig:"UPLOAD_BUCKET_NAME"`
@@ -66,7 +65,6 @@ func Get() (*Config, error) {
 		BindAddr:                   ":27500",
 		PublishingEnabled:          true,
 		PreviewRootURL:             "http://localhost:27300",
-		ValidateSHAEnabled:         true,
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
 		Brokers:                    []string{"localhost:9093"},
