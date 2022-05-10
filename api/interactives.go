@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"io/ioutil"
 	"net/http"
 
@@ -32,18 +31,9 @@ var (
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. Validate request
 	ctx := r.Context()
-	formDataRequest, err := newFormDataRequest(r, api, WantOnlyOneAttachmentWithMetadata, true)
-	if err != nil {
-		if validationErrs, ok := err.(validator.ValidationErrors); ok {
-			var errs []error
-			for _, vErr := range validationErrs {
-				errs = append(errs, fmt.Errorf("%s", vErr.Namespace()))
-			}
-			api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
-			return
-		}
-
-		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("request validation failed %w", err))
+	formDataRequest, errs := newFormDataRequest(r, api, WantOnlyOneAttachmentWithMetadata, true)
+	if errs != nil {
+		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -131,18 +121,9 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	id := vars["id"]
 
 	// Validate request
-	formDataRequest, err := newFormDataRequest(r, api, WantAtleastMaxOneAttachmentAndOrMetadata, false)
-	if err != nil {
-		if validationErrs, ok := err.(validator.ValidationErrors); ok {
-			var errs []error
-			for _, vErr := range validationErrs {
-				errs = append(errs, fmt.Errorf("%s", vErr.Namespace()))
-			}
-			api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
-			return
-		}
-
-		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("request validation failed %w", err))
+	formDataRequest, errs := newFormDataRequest(r, api, WantAtleastMaxOneAttachmentAndOrMetadata, false)
+	if errs != nil {
+		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
 		return
 	}
 

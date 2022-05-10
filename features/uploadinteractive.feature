@@ -20,9 +20,9 @@ Feature: Interactives API (Get interactive)
             """
                 {
                     "errors": [
-                        "Interactive.Metadata.Title",
-                        "Interactive.Metadata.Label",
-                        "Interactive.Metadata.InternalID"
+                        "interactive.metadata.title: required",
+                        "interactive.metadata.label: required",
+                        "interactive.metadata.internalid: required"
                     ]
                 }
             """
@@ -43,9 +43,9 @@ Feature: Interactives API (Get interactive)
             """
                 {
                     "errors": [
-                        "Interactive.Metadata.Title",
-                        "Interactive.Metadata.Label",
-                        "Interactive.Metadata.InternalID"
+                        "interactive.metadata.title: required",
+                        "interactive.metadata.label: alphanum",
+                        "interactive.metadata.internalid: alphanum"
                     ]
                 }
             """
