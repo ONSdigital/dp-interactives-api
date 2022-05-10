@@ -316,7 +316,7 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 	api.GetInteractiveHandler(w, r)
 }
 
-func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int) (interface{}, int, error) {
+func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var filter *models.InteractiveFilter
 
@@ -326,13 +326,15 @@ func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int
 		filter = &models.InteractiveFilter{}
 
 		if err := json.Unmarshal([]byte(filterJson), &filter); err != nil {
-			return nil, 0, fmt.Errorf("error unmarshalling body %w", ErrInvalidBody)
+			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error unmarshalling body %w", ErrInvalidBody))
+			return
 		}
 	}
 
-	db, _, err := api.mongoDB.ListInteractives(ctx, offset, limit, filter)
+	db, err := api.mongoDB.ListInteractives(ctx, filter)
 	if err != nil {
-		return nil, 0, fmt.Errorf("api endpoint getDatasets datastore.GetDatasets returned an error %w", err)
+		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("api endpoint getDatasets datastore.GetDatasets returned an error %w", err))
+		return
 	}
 
 	response := make([]*models.Interactive, 0)
@@ -342,7 +344,7 @@ func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int
 		}
 	}
 
-	return response, len(response), nil
+	api.respond.JSON(ctx, w, http.StatusOK, response)
 }
 
 func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request) {

@@ -34,20 +34,6 @@ paths:
       description: ''
       operationId: ListInteractivesHandler
       parameters:
-        - name: limit
-          in: query
-          description: Pagination limit, max results (clipped at 100 results)
-          required: false
-          schema:
-            type: integer
-            format: int64
-        - name: offset
-          in: query
-          description: Page offset
-          required: false
-          schema:
-            type: integer
-            format: int64
         - name: filter
           in: query
           description: >-

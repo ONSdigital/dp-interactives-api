@@ -36,8 +36,7 @@ Feature: Interactives API (List interactives)
         When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20false%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22label%22%3A%20%22Title321%22%0A%20%20%7D%0A%7D'
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [
+                 [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                             "published" : false,
@@ -58,12 +57,7 @@ Feature: Interactives API (List interactives)
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-abcde2/embed"
                         }
-                    ],
-                    "count": 1,
-                    "offset": 0,
-                    "limit": 20,
-                    "total_count": 1
-                }
+                    ]
             """
 
         Scenario: GET interactives (filter by resource_id)
@@ -101,8 +95,7 @@ Feature: Interactives API (List interactives)
         When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20false%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22resource_id%22%3A%20%22resid2%22%0A%20%20%7D%0A%7D'
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [
+                [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                             "published" : false,
@@ -123,15 +116,10 @@ Feature: Interactives API (List interactives)
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-resid2/embed"
                         }
-                    ],
-                    "count": 1,
-                    "offset": 0,
-                    "limit": 20,
-                    "total_count": 1
-                }
+                    ]
             """
 
-        Scenario: GET interactives (fliter by associated collection-id - linked + exclude other linked)
+        Scenario: GET interactives (filter by associated collection-id - linked + exclude other linked)
         Given I have these interactives:
             """
             [
@@ -168,8 +156,7 @@ Feature: Interactives API (List interactives)
         When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20true%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22collection_id%22%3A%20%2254321%22%0A%20%20%7D%0A%7D'
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [
+                [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                             "published" : false,
@@ -191,12 +178,7 @@ Feature: Interactives API (List interactives)
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-resid2/embed"
                         }
-                    ],
-                    "count": 1,
-                    "offset": 0,
-                    "limit": 20,
-                    "total_count": 1
-                }
+                ]
             """
 
         Scenario: GET interactives (fliter by associated collection-id - linked + exclude published)
@@ -235,8 +217,7 @@ Feature: Interactives API (List interactives)
         When As an interactives user with filter I GET '/v1/interactives?filter=%7B%0A%20%20%22associate_collection%22%3A%20true%2C%0A%20%20%22metadata%22%3A%20%7B%0A%20%20%20%20%22collection_id%22%3A%20%2254321%22%0A%20%20%7D%0A%7D'
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [
+                [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                             "published" : false,
@@ -258,10 +239,5 @@ Feature: Interactives API (List interactives)
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-resid2/embed"
                         }
-                    ],
-                    "count": 1,
-                    "offset": 0,
-                    "limit": 20,
-                    "total_count": 1
-                }
+                    ]
             """

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -165,7 +164,7 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 }
 
 func (c *InteractivesApiComponent) iShouldReceiveTheFollowingListmodelResponseWithStatus(expectedCodeStr string, expectedAPIResponse *godog.DocString) error {
-	var expected, actual interactives.List
+	var expected, actual []models.Interactive
 	err := c.toModel(expectedCodeStr, expectedAPIResponse, &expected, &actual)
 	if err != nil {
 		return err

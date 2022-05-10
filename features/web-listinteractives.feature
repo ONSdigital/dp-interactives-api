@@ -47,11 +47,10 @@ Feature: Interactives API (List interactives) - from public web access
                 }
             ]
             """
-        When I GET "/v1/interactives?limit=10&offset=0"
+        When I GET "/v1/interactives"
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [
+                [
                         {
                             "id": "671375fa-2fc4-41cc-b845-ad04a56d0003",
                             "published" : true,
@@ -69,10 +68,5 @@ Feature: Interactives API (List interactives) - from public web access
                             "last_updated":"2021-01-01T00:00:02Z",
                             "url": "http://localhost:27300/interactives/slug-abcde123/embed"
                         }
-                    ],
-                    "count": 1,
-                    "offset": 0,
-                    "limit": 10,
-                    "total_count": 1
-                }
+                ]
             """

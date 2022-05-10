@@ -34,11 +34,10 @@ Feature: Interactives API (List interactives)
                 }
             ]
             """
-        When I GET "/v1/interactives?limit=10&offset=0"
+        When I GET "/v1/interactives"
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [
+                [
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                             "published" : false,
@@ -59,12 +58,7 @@ Feature: Interactives API (List interactives)
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-abcde123/embed"
                         }
-                    ],
-                    "count": 1,
-                    "offset": 0,
-                    "limit": 10,
-                    "total_count": 1
-                }
+                ]
             """
 
     Scenario: GET returns an empty array if nothing in the database
@@ -76,11 +70,5 @@ Feature: Interactives API (List interactives)
         When I GET "/v1/interactives?limit=10&offset=0"
         Then I should receive the following list(model) response with status "200":
             """
-                {
-                    "items": [],
-                    "count": 0,
-                    "offset": 0,
-                    "limit": 10,
-                    "total_count": 0
-                }
+                []
             """

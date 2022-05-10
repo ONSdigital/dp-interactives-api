@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/pagination"
-	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
+
+	"github.com/ONSdigital/dp-net/v2/responder"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/config"
@@ -76,18 +76,16 @@ func Setup(ctx context.Context,
 		respond:       respond,
 	}
 
-	paginator := pagination.NewPaginator(api.respond, cfg.DefaultLimit, cfg.DefaultOffset, cfg.DefaultMaxLimit)
-
 	if r != nil {
 		if cfg.PublishingEnabled {
 			r.HandleFunc("/v1/interactives", auth.Require(InteractivesCreatePermission, api.UploadInteractivesHandler)).Methods(http.MethodPost)
-			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, paginator.Paginate(api.ListInteractivesHandler))).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives", auth.Require(InteractivesReadPermission, api.ListInteractivesHandler)).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesReadPermission, api.GetInteractiveHandler)).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.PatchInteractiveHandler)).Methods(http.MethodPatch)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
 		} else {
-			r.HandleFunc("/v1/interactives", paginator.Paginate(api.ListInteractivesHandler)).Methods(http.MethodGet)
+			r.HandleFunc("/v1/interactives", api.ListInteractivesHandler).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveHandler).Methods(http.MethodGet)
 		}
 	} else {
