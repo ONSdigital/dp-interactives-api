@@ -12,9 +12,9 @@ Feature: Interactives API (Update interactive)
             """
                 {
                     "errors": [
-                        "Interactive.Metadata.Title",
-                        "Interactive.Metadata.Label",
-                        "Interactive.Metadata.InternalID"
+                        "Interactive.Metadata.Title: required",
+                        "Interactive.Metadata.Label: required",
+                        "Interactive.Metadata.InternalID: required"
                     ]
                 }
             """

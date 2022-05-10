@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -19,27 +20,29 @@ import (
 
 const (
 	UpdateFieldKey      = "interactive"
+	FileFieldKey        = "file"
 	maxUploadFileSizeMb = 50
 )
 
-type FormDataValidator func(numOfAttachments int, update string) error
+type FormDataValidator func(*http.Request) error
 
 var (
 	v                                 = validator.New()
 	conform                           = modifiers.New()
-	WantOnlyOneAttachmentWithMetadata = func(numOfAttachments int, update string) error {
+	alphaNumWithSpacesRegEx           = regexp.MustCompile("^[a-zA-Z0-9\\s]+$")
+	WantOnlyOneAttachmentWithMetadata = func(r *http.Request) error {
+		numOfAttachments, update := len(r.MultipartForm.File), r.FormValue(UpdateFieldKey)
 		if numOfAttachments == 1 && update != "" {
 			return nil
-		} else {
-			return errors.New("expecting one attachment with metadata")
 		}
+		return errors.New("expecting one attachment with metadata")
 	}
-	WantAtleastMaxOneAttachmentAndOrMetadata = func(numOfAttachments int, update string) error {
+	WantAtleastMaxOneAttachmentAndOrMetadata = func(r *http.Request) error {
+		numOfAttachments, update := len(r.MultipartForm.File), r.FormValue(UpdateFieldKey)
 		if numOfAttachments == 1 || update != "" {
 			return nil
-		} else {
-			return errors.New("no attachment (max one) or metadata present")
 		}
+		return errors.New("no attachment (max one) or metadata present")
 	}
 )
 
@@ -53,7 +56,7 @@ type FormDataRequest struct {
 	isMetadataMandatory bool
 }
 
-func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDataValidator, metadataMandatory bool) (*FormDataRequest, error) {
+func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDataValidator, metadataMandatory bool) (*FormDataRequest, []error) {
 	f := &FormDataRequest{
 		req:                 req,
 		api:                 api,
@@ -62,84 +65,102 @@ func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDat
 	return f, f.validate(attachmentValidator)
 }
 
-func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error {
+func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs []error) {
 	var data []byte
-	var vErr error
+	var err error
 	var filename string
 
 	// Expecting 1 file attachment - only zip
-	vErr = f.req.ParseMultipartForm(maxUploadFileSizeMb << 20)
-	if vErr != nil {
-		return fmt.Errorf("parsing form data (%s)", vErr.Error())
+	if err = f.req.ParseMultipartForm(maxUploadFileSizeMb << 20); err != nil {
+		msg := fmt.Sprintf("error parsing form data %s", err.Error())
+		errs = append(errs, validatorError(FileFieldKey, msg))
 	}
-	numOfAttach := len(f.req.MultipartForm.File)
-	updateModelJson := f.req.FormValue(UpdateFieldKey)
-	if vErr := attachmentValidator(numOfAttach, updateModelJson); vErr != nil {
-		return vErr
-	}
-	if updateModelJson == "" && f.isMetadataMandatory {
-		return fmt.Errorf("missing mandatory (%s) key in form data", UpdateFieldKey)
-	}
-	if numOfAttach > 0 {
-		var fileHeader *multipart.FileHeader
-		var fileKey string
 
-		for k, v := range f.req.MultipartForm.File {
-			fileHeader = v[0]
-			fileKey = k
+	if f.req.MultipartForm != nil {
+		if numOfAttach := len(f.req.MultipartForm.File); numOfAttach > 0 {
+			var fileHeader *multipart.FileHeader
+			var fileKey string
+
+			for k, v := range f.req.MultipartForm.File {
+				fileHeader = v[0]
+				fileKey = k
+			}
+
+			file, _, vErr := f.req.FormFile(fileKey)
+			if vErr != nil {
+				msg := fmt.Sprintf("error reading form data %s", err.Error())
+				errs = append(errs, validatorError(FileFieldKey, msg))
+			}
+			defer file.Close()
+
+			if ext := filepath.Ext(fileHeader.Filename); ext != ".zip" {
+				msg := fmt.Sprintf("file extension (%s) should be zip", ext)
+				errs = append(errs, validatorError(FileFieldKey, msg))
+			}
+
+			if mb := fileHeader.Size / (1 << 20); mb >= maxUploadFileSizeMb {
+				msg := fmt.Sprintf("size of content (%d) MB exceeded allowed limit (%d MB)", maxUploadFileSizeMb, mb)
+				errs = append(errs, validatorError(FileFieldKey, msg))
+			}
+
+			if data, err = ioutil.ReadAll(file); err != nil {
+				msg := fmt.Sprintf("http body read error %s", err.Error())
+				errs = append(errs, validatorError(FileFieldKey, msg))
+			}
+
+			filename = fileHeader.Filename
 		}
 
-		file, _, vErr := f.req.FormFile(fileKey)
-		if vErr != nil {
-			return fmt.Errorf("error reading form data (%s)", vErr.Error())
+		if err = attachmentValidator(f.req); err != nil {
+			errs = append(errs, validatorError(FileFieldKey, err.Error()))
 		}
-		defer file.Close()
-
-		if ext := filepath.Ext(fileHeader.Filename); ext != ".zip" {
-			return fmt.Errorf("file extension (%s) should be zip", ext)
-		}
-		mb := fileHeader.Size / (1 << 20)
-		if mb >= maxUploadFileSizeMb {
-			return fmt.Errorf("size of content (%d) MB exceeded allowed limit (%d MB)", maxUploadFileSizeMb, mb)
-		}
-
-		if data, vErr = ioutil.ReadAll(file); vErr != nil {
-			return fmt.Errorf("http body read error (%s)", vErr.Error())
-		}
-
-		filename = fileHeader.Filename
 	}
 
 	// Unmarshal the update field from JSON
+	updateModelJson := f.req.FormValue(UpdateFieldKey)
+	if updateModelJson == "" && f.isMetadataMandatory {
+		errs = append(errs, validatorError(UpdateFieldKey, "missing mandatory key in form data"))
+	}
+
 	var interactive *models.Interactive
 	if updateModelJson != "" {
-		if err := json.Unmarshal([]byte(updateModelJson), &interactive); err != nil {
-			return fmt.Errorf("cannot unmarshal update json %w", err)
+		if err = json.Unmarshal([]byte(updateModelJson), &interactive); err != nil {
+			errs = append(errs, validatorError(UpdateFieldKey, "cannot unmarshal update json"))
 		}
+
 		if interactive.Metadata == nil {
 			interactive.Metadata = &models.InteractiveMetadata{}
 		}
 		interactive.Metadata.Label = strings.TrimSpace(interactive.Metadata.Label)
+
+		if err = conform.Struct(f.req.Context(), interactive); err != nil {
+			return []error{err}
+		}
+
+		if err = v.Struct(interactive); err != nil {
+			if validationErrs, ok := err.(validator.ValidationErrors); ok {
+				for _, vErr := range validationErrs {
+					errs = append(errs, validatorError(strings.ToLower(vErr.Namespace()), vErr.Tag()))
+				}
+				return
+			} else {
+				errs = append(errs, validatorError(UpdateFieldKey, err.Error()))
+			}
+		}
 	}
 
-	if err := conform.Struct(f.req.Context(), interactive); err != nil {
-		return err
+	if len(errs) == 0 {
+		hasher := sha1.New()
+		hasher.Write(data)
+		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
+		f.FileData = data
+		f.FileName = filename
+		f.Interactive = interactive
+		f.Sha = sha
 	}
 
-	if err := v.Struct(interactive); err != nil {
-		return err
-	}
-
-	hasher := sha1.New()
-	hasher.Write(data)
-	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-
-	f.FileData = data
-	f.FileName = filename
-	f.Interactive = interactive
-	f.Sha = sha
-
-	return nil
+	return
 }
 
 func (f *FormDataRequest) hasMetadata() bool {
@@ -147,4 +168,8 @@ func (f *FormDataRequest) hasMetadata() bool {
 		return false
 	}
 	return f.Interactive.Metadata.HasData()
+}
+
+func validatorError(ns, msg string) error {
+	return fmt.Errorf("%s: %s", ns, msg)
 }
