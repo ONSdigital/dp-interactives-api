@@ -51,9 +51,9 @@ type InteractiveFilter struct {
 // Mongo/HTTP models
 
 type InteractiveMetadata struct {
-	Title             string `bson:"title"                    json:"title"                      validate:"required"`
-	Label             string `bson:"label"                    json:"label"                      validate:"required,alphanumspaces"`
-	InternalID        string `bson:"internal_id"              json:"internal_id"                validate:"required,alphanumspaces"`
+	Title             string `bson:"title"                    json:"title"                      mod:"trim" validate:"required"`
+	Label             string `bson:"label"                    json:"label"                      mod:"trim" validate:"required,alphanum"`
+	InternalID        string `bson:"internal_id"              json:"internal_id"                mod:"trim" validate:"required,alphanum"`
 	CollectionID      string `bson:"collection_id,omitempty"  json:"collection_id,omitempty"`
 	HumanReadableSlug string `bson:"slug,omitempty"           json:"slug,omitempty"`
 	ResourceID        string `bson:"resource_id,omitempty"    json:"resource_id,omitempty"`

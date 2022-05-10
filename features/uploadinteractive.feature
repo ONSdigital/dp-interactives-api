@@ -8,11 +8,34 @@ Feature: Interactives API (Get interactive)
         """
         Then the HTTP status code should be "403"
 
-    Scenario: Update failed if validation rules not followed
+    Scenario: Update failed if validation rules not followed - missing mandatory attributes
         When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
             """
                 {
                     "metadata": { }
+                }
+            """
+        Then the HTTP status code should be "400"
+        And I should receive the following JSON response:
+            """
+                {
+                    "errors": [
+                        "Interactive.Metadata.Title",
+                        "Interactive.Metadata.Label",
+                        "Interactive.Metadata.InternalID"
+                    ]
+                }
+            """
+
+    Scenario: Update failed if validation rules not followed - attributes not correct format
+        When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
+            """
+                {
+                    "metadata": {
+                        "title": " ",
+                        "label": "only alphanum allowed",
+                        "internal_id": "only alphanum allowed"
+                    }
                 }
             """
         Then the HTTP status code should be "400"

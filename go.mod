@@ -22,6 +22,7 @@ require (
 	github.com/ONSdigital/log.go/v2 v2.2.0
 	github.com/aws/aws-sdk-go v1.43.38
 	github.com/cucumber/godog v0.12.4
+	github.com/go-playground/mold/v4 v4.2.0
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/gorilla/mux v1.8.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -75,6 +76,8 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/segmentio/go-camelcase v0.0.0-20160726192923-7085f1e3c734 // indirect
+	github.com/segmentio/go-snakecase v1.2.0 // indirect
 	github.com/smartystreets/assertions v1.2.1 // indirect
 	github.com/spf13/afero v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

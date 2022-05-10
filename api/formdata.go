@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-playground/mold/v4/modifiers"
 	"github.com/go-playground/validator/v10"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -26,7 +26,7 @@ type FormDataValidator func(numOfAttachments int, update string) error
 
 var (
 	v                                 = validator.New()
-	alphaNumWithSpacesRegEx           = regexp.MustCompile("^[a-zA-Z0-9\\s]+$")
+	conform                           = modifiers.New()
 	WantOnlyOneAttachmentWithMetadata = func(numOfAttachments int, update string) error {
 		if numOfAttachments == 1 && update != "" {
 			return nil
@@ -42,19 +42,6 @@ var (
 		}
 	}
 )
-
-func init() {
-	err := v.RegisterValidation("alphanumspaces", ValidateAlphaNumWithSpaces)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// ValidateAlphaNumWithSpaces implements validator.Func
-func ValidateAlphaNumWithSpaces(fl validator.FieldLevel) bool {
-	re := alphaNumWithSpacesRegEx.FindStringSubmatch(fl.Field().String())
-	return re != nil
-}
 
 type FormDataRequest struct {
 	req                 *http.Request
@@ -133,6 +120,10 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) error 
 			interactive.Metadata = &models.InteractiveMetadata{}
 		}
 		interactive.Metadata.Label = strings.TrimSpace(interactive.Metadata.Label)
+	}
+
+	if err := conform.Struct(f.req.Context(), interactive); err != nil {
+		return err
 	}
 
 	if err := v.Struct(interactive); err != nil {
