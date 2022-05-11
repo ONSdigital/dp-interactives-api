@@ -156,11 +156,55 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	update := formDataRequest.Interactive
-	if update.Metadata != nil {
-		updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
-	}
-	if update.Published != nil {
-		updatedModel.Published = update.Published
+	if update != nil {
+		if update.Metadata != nil {
+			updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
+		}
+		if update.Published != nil {
+			updatedModel.Published = update.Published
+		}
+
+		// link with collection-id
+		// a collectionID is present in the update message
+		if update.Metadata != nil && update.Metadata.CollectionID != "" {
+			colID := update.Metadata.CollectionID
+			// update if empty OR different
+			if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
+				// files/archive can be in the update or existing - check update first
+				arch := update.Archive
+				if arch == nil || len(arch.Files) == 0 {
+					arch = existing.Archive
+				}
+				if arch != nil && len(arch.Files) > 0 {
+					for _, file := range arch.Files {
+						if err := api.filesService.SetCollectionID(ctx, file.Name, colID); err != nil {
+							api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error setting collectionID %s %s %w", id, colID, err))
+							return
+						}
+					}
+					updatedModel.Metadata.CollectionID = colID
+				}
+			}
+		}
+
+		// publish (if not already)
+		if existing.Published != nil && !*(existing.Published) &&
+			update.Published != nil && *(update.Published) {
+			collID := update.Metadata.CollectionID
+			if collID == "" {
+				collID = existing.Metadata.CollectionID
+			}
+
+			if collID != "" {
+				if err := api.filesService.PublishCollection(ctx, collID); err != nil {
+					api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing collectionID %s %s %w", id, collID, err))
+					return
+				}
+				updatedModel.Published = &enabled
+			} else {
+				log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
+			}
+		}
 	}
 
 	// Finally check if file to be uploaded
@@ -175,48 +219,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 		updatedModel.State = models.ArchiveUploaded.String()
 		updatedModel.SHA = formDataRequest.Sha
-	}
-
-	// link with collection-id
-	// a collectionID is present in the update message
-	if update.Metadata != nil && update.Metadata.CollectionID != "" {
-		colID := update.Metadata.CollectionID
-		// update if empty OR different
-		if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
-			// files/archive can be in the update or existing - check update first
-			arch := update.Archive
-			if arch == nil || len(arch.Files) == 0 {
-				arch = existing.Archive
-			}
-			if arch != nil && len(arch.Files) > 0 {
-				for _, file := range arch.Files {
-					if err := api.filesService.SetCollectionID(ctx, file.Name, colID); err != nil {
-						api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error setting collectionID %s %s %w", id, colID, err))
-						return
-					}
-				}
-				updatedModel.Metadata.CollectionID = colID
-			}
-		}
-	}
-
-	// publish (if not already)
-	if existing.Published != nil && !*(existing.Published) &&
-		update.Published != nil && *(update.Published) {
-		collID := update.Metadata.CollectionID
-		if collID == "" {
-			collID = existing.Metadata.CollectionID
-		}
-
-		if collID != "" {
-			if err := api.filesService.PublishCollection(ctx, collID); err != nil {
-				api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing collectionID %s %s %w", id, collID, err))
-				return
-			}
-			updatedModel.Published = &enabled
-		} else {
-			log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
-		}
 	}
 
 	// write to DB

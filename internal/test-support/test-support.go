@@ -31,8 +31,10 @@ func NewFileUploadRequest(method, uri, paramName, path string, i *models.Interac
 		part.Write(fileContents)
 	}
 
-	jsonB, _ := json.Marshal(i)
-	_ = writer.WriteField(api.UpdateFieldKey, string(jsonB))
+	if i != nil {
+		jsonB, _ := json.Marshal(i)
+		_ = writer.WriteField(api.UpdateFieldKey, string(jsonB))
+	}
 
 	request, _ := http.NewRequest(method, uri, body)
 	request.Header.Add("Content-Type", writer.FormDataContentType())

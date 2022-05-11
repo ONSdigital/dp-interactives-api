@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"time"
 
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
@@ -143,9 +144,13 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	var req *http.Request
 	var i *models.Interactive
 	if data != nil {
-		err = json.Unmarshal(data, &i)
-		if err != nil {
-			return err
+		sanitisedData := strings.ReplaceAll(string(data), "\n", "")
+		sanitisedData = strings.ReplaceAll(sanitisedData, " ", "")
+		if sanitisedData != "{}" {
+			err = json.Unmarshal(data, &i)
+			if err != nil {
+				return err
+			}
 		}
 
 		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, i)
