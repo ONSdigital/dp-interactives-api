@@ -237,9 +237,14 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 			collID = existing.Metadata.CollectionID
 		}
 
+		if *update.Published && !existing.CanPublish() {
+			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("error publishing %s to collection %s %s", id, collID, existing.State))
+			return
+		}
+
 		if collID != "" {
 			if err := api.filesService.PublishCollection(ctx, collID); err != nil {
-				api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing collectionID %s %s %w", id, collID, err))
+				api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing %s to collection %s %w", id, collID, err))
 				return
 			}
 			updatedModel.Published = &enabled

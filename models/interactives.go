@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -13,6 +14,16 @@ const (
 	ArchiveDispatchedToImporter
 	ImportFailure
 	ImportSuccess
+)
+
+var (
+	states = map[string]InteractiveState{
+		"ArchiveUploaded":             ArchiveUploaded,
+		"ArchiveDispatchFailed":       ArchiveDispatchFailed,
+		"ArchiveDispatchedToImporter": ArchiveDispatchedToImporter,
+		"ImportFailure":               ImportFailure,
+		"ImportSuccess":               ImportSuccess,
+	}
 )
 
 func (s InteractiveState) String() string {
@@ -30,6 +41,11 @@ func (s InteractiveState) String() string {
 	}
 
 	return "InteractiveStateUnknown"
+}
+
+func ParseState(s string) (InteractiveState, bool) {
+	enum, ok := states[strings.ToLower(s)]
+	return enum, ok
 }
 
 // HTTP request
@@ -108,6 +124,16 @@ func (i *Interactive) SetURL(domain string) {
 	if i != nil && i.Metadata != nil {
 		i.URL = fmt.Sprintf("%s/%s/%s-%s/embed", domain, "interactives", i.Metadata.HumanReadableSlug, i.Metadata.ResourceID)
 	}
+}
+
+func (i *Interactive) CanPublish() (ok bool) {
+	var state InteractiveState
+	if i != nil {
+		if state, ok = ParseState(i.State); !ok {
+			return
+		}
+	}
+	return state == ImportSuccess
 }
 
 type Archive struct {
