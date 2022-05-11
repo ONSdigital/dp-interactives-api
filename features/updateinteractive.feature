@@ -239,3 +239,47 @@ Feature: Interactives API (Update interactive)
                 }
             """
         Then the HTTP status code should be "403"
+
+    Scenario: Update success with only a new file for published interactive
+        Given I have these interactives:
+                """
+                [
+                    {
+                        "published": true,
+                        "active": true,
+                        "metadata": {
+                            "label": "Title123",
+                            "title": "Title123",
+                            "slug": "human readable slug",
+                            "resource_id": "resid321",
+                            "internal_id": "123"
+                        },
+                        "state": "ImportSuccess"
+                    }
+                ]
+                """
+        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+            """
+                {
+
+                }
+            """
+        Then I should receive the following model response with status "200":
+            """
+                {
+                    "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
+                    "published": true,
+                    "archive": {
+                        "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
+                    },
+                    "metadata": {
+                        "label": "Title123",
+                        "slug": "human readable slug",
+                        "title": "Title123",
+                        "resource_id": "resid321",
+                        "internal_id": "123"
+                    },
+                    "state": "ArchiveUploaded",
+                    "url": "http://localhost:27300/interactives/human readable slug-resid321/embed"
+                }
+            """
