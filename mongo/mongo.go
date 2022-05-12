@@ -144,23 +144,20 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 	return &interactive, nil
 }
 
-func (m *Mongo) ListInteractives(ctx context.Context, offset, limit int, modelFilter *models.InteractiveFilter) ([]*models.Interactive, int, error) {
-
+func (m *Mongo) ListInteractives(ctx context.Context, modelFilter *models.InteractiveFilter) ([]*models.Interactive, error) {
+	var values []*models.Interactive
 	filter := generateFilter(modelFilter)
 	f := m.Connection.GetConfiguredCollection().Find(filter).Sort(bson.M{"_id": -1})
-
-	// get total count and paginated values according to provided offset and limit
-	var values []*models.Interactive
-	totalCount, err := QueryPage(ctx, f, offset, limit, &values)
+	err := f.IterAll(ctx, &values)
 	if err != nil {
-		return values, 0, err
+		return values, err
 	}
 
 	for _, interactive := range values {
 		interactive.SetURL(m.Config.PreviewRootURL)
 	}
 
-	return values, totalCount, nil
+	return values, nil
 }
 
 // Reflect into the metadata structure
@@ -208,24 +205,6 @@ func generateFilter(model *models.InteractiveFilter) bson.M {
 		}
 	}
 	return filter
-}
-
-func QueryPage(ctx context.Context, f *dpMongoDriver.Find, offset, limit int, result *[]*models.Interactive) (totalCount int, err error) {
-
-	// get total count of items for the provided query
-	totalCount, err = f.Count(ctx)
-	if err != nil {
-		log.Error(ctx, "error counting items", err)
-		return 0, err
-	}
-
-	// query the items corresponding to the provided offset and limit (only if necessary)
-	// guaranteeing at least one document will be found
-	if totalCount > 0 && limit > 0 && offset < totalCount {
-		return totalCount, f.Skip(offset).Limit(limit).IterAll(ctx, result)
-	}
-
-	return totalCount, nil
 }
 
 // UpsertInteractive adds or overides an existing interactive

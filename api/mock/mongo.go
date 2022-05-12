@@ -37,7 +37,7 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 // 				panic("mock out the GetInteractive method")
 // 			},
-// 			ListInteractivesFunc: func(ctx context.Context, offset int, limit int, filter *models.InteractiveFilter) ([]*models.Interactive, int, error) {
+// 			ListInteractivesFunc: func(ctx context.Context, filter *models.InteractiveFilter) ([]*models.Interactive, error) {
 // 				panic("mock out the ListInteractives method")
 // 			},
 // 			PatchInteractiveFunc: func(contextMoqParam context.Context, patchAttribure mongo.PatchAttribure, interactive *models.Interactive) error {
@@ -69,7 +69,7 @@ type MongoServerMock struct {
 	GetInteractiveFunc func(ctx context.Context, id string) (*models.Interactive, error)
 
 	// ListInteractivesFunc mocks the ListInteractives method.
-	ListInteractivesFunc func(ctx context.Context, offset int, limit int, filter *models.InteractiveFilter) ([]*models.Interactive, int, error)
+	ListInteractivesFunc func(ctx context.Context, filter *models.InteractiveFilter) ([]*models.Interactive, error)
 
 	// PatchInteractiveFunc mocks the PatchInteractive method.
 	PatchInteractiveFunc func(contextMoqParam context.Context, patchAttribure mongo.PatchAttribure, interactive *models.Interactive) error
@@ -118,10 +118,6 @@ type MongoServerMock struct {
 		ListInteractives []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Offset is the offset argument value.
-			Offset int
-			// Limit is the limit argument value.
-			Limit int
 			// Filter is the filter argument value.
 			Filter *models.InteractiveFilter
 		}
@@ -330,25 +326,21 @@ func (mock *MongoServerMock) GetInteractiveCalls() []struct {
 }
 
 // ListInteractives calls ListInteractivesFunc.
-func (mock *MongoServerMock) ListInteractives(ctx context.Context, offset int, limit int, filter *models.InteractiveFilter) ([]*models.Interactive, int, error) {
+func (mock *MongoServerMock) ListInteractives(ctx context.Context, filter *models.InteractiveFilter) ([]*models.Interactive, error) {
 	if mock.ListInteractivesFunc == nil {
 		panic("MongoServerMock.ListInteractivesFunc: method is nil but MongoServer.ListInteractives was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
-		Offset int
-		Limit  int
 		Filter *models.InteractiveFilter
 	}{
 		Ctx:    ctx,
-		Offset: offset,
-		Limit:  limit,
 		Filter: filter,
 	}
 	mock.lockListInteractives.Lock()
 	mock.calls.ListInteractives = append(mock.calls.ListInteractives, callInfo)
 	mock.lockListInteractives.Unlock()
-	return mock.ListInteractivesFunc(ctx, offset, limit, filter)
+	return mock.ListInteractivesFunc(ctx, filter)
 }
 
 // ListInteractivesCalls gets all the calls that were made to ListInteractives.
@@ -356,14 +348,10 @@ func (mock *MongoServerMock) ListInteractives(ctx context.Context, offset int, l
 //     len(mockedMongoServer.ListInteractivesCalls())
 func (mock *MongoServerMock) ListInteractivesCalls() []struct {
 	Ctx    context.Context
-	Offset int
-	Limit  int
 	Filter *models.InteractiveFilter
 } {
 	var calls []struct {
 		Ctx    context.Context
-		Offset int
-		Limit  int
 		Filter *models.InteractiveFilter
 	}
 	mock.lockListInteractives.RLock()

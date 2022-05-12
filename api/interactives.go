@@ -37,27 +37,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if api.cfg.ValidateSHAEnabled {
-		// 2. Check if duplicate exists
-		existing, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-		if existing != nil {
-			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive already exists id (%s) with sha (%s)", existing.ID, existing.SHA))
-			return
-		}
-	}
-
-	// 3. Check "label + title are unique"
 	update := formDataRequest.Interactive
-	existing, _ := api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.label", update.Metadata.Label)
-	if existing != nil {
-		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive with label (%s) already exists id (%s)", existing.Metadata.Label, existing.ID))
-		return
-	}
-	existing, _ = api.mongoDB.GetActiveInteractiveGivenField(ctx, "metadata.title", update.Metadata.Title)
-	if existing != nil {
-		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive with title (%s) already exists id (%s)", existing.Metadata.Title, existing.ID))
-		return
-	}
 
 	// 4. upload to S3
 	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
@@ -176,25 +156,65 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	update := formDataRequest.Interactive
-	if update.Metadata != nil {
-		updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
-	}
-	if update.Published != nil {
-		updatedModel.Published = update.Published
+	if update != nil {
+		if update.Metadata != nil {
+			updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
+		}
+		if update.Published != nil {
+			updatedModel.Published = update.Published
+		}
+
+		// link with collection-id
+		// a collectionID is present in the update message
+		if update.Metadata != nil && update.Metadata.CollectionID != "" {
+			colID := update.Metadata.CollectionID
+			// update if empty OR different
+			if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
+				// files/archive can be in the update or existing - check update first
+				arch := update.Archive
+				if arch == nil || len(arch.Files) == 0 {
+					arch = existing.Archive
+				}
+				if arch != nil && len(arch.Files) > 0 {
+					for _, file := range arch.Files {
+						if err := api.filesService.SetCollectionID(ctx, file.Name, colID); err != nil {
+							api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error setting collectionID %s %s %w", id, colID, err))
+							return
+						}
+					}
+					updatedModel.Metadata.CollectionID = colID
+				}
+			}
+		}
+
+		// publish (if not already)
+		if existing.Published != nil && !*(existing.Published) &&
+			update.Published != nil && *(update.Published) {
+			collID := update.Metadata.CollectionID
+			if collID == "" {
+				collID = existing.Metadata.CollectionID
+			}
+
+			if *update.Published && !existing.CanPublish() {
+				api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("error publishing %s to collection %s %s", id, collID, existing.State))
+				return
+			}
+
+			if collID != "" {
+				if err := api.filesService.PublishCollection(ctx, collID); err != nil {
+					api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing %s to collection %s %w", id, collID, err))
+					return
+				}
+				updatedModel.Published = &enabled
+			} else {
+				log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
+			}
+		}
 	}
 
 	// Finally check if file to be uploaded
 	uri := ""
 	if formDataRequest.FileData != nil {
-		if api.cfg.ValidateSHAEnabled {
-			// Check if duplicate SHA exists
-			i, _ := api.mongoDB.GetActiveInteractiveGivenSha(ctx, formDataRequest.Sha)
-			if i != nil {
-				api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("archive already exists id (%s) with sha (%s)", i.ID, i.SHA))
-				return
-			}
-		}
-
 		// Process form data (S3)
 		uri, err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 		if err != nil {
@@ -204,53 +224,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 		updatedModel.State = models.ArchiveUploaded.String()
 		updatedModel.SHA = formDataRequest.Sha
-	}
-
-	// link with collection-id
-	// a collectionID is present in the update message
-	if update.Metadata != nil && update.Metadata.CollectionID != "" {
-		colID := update.Metadata.CollectionID
-		// update if empty OR different
-		if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
-			// files/archive can be in the update or existing - check update first
-			arch := update.Archive
-			if arch == nil || len(arch.Files) == 0 {
-				arch = existing.Archive
-			}
-			if arch != nil && len(arch.Files) > 0 {
-				for _, file := range arch.Files {
-					if err := api.filesService.SetCollectionID(ctx, file.Name, colID); err != nil {
-						api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error setting collectionID %s %s %w", id, colID, err))
-						return
-					}
-				}
-				updatedModel.Metadata.CollectionID = colID
-			}
-		}
-	}
-
-	// publish (if not already)
-	if existing.Published != nil && !*(existing.Published) &&
-		update.Published != nil && *(update.Published) {
-		collID := update.Metadata.CollectionID
-		if collID == "" {
-			collID = existing.Metadata.CollectionID
-		}
-
-		if *update.Published && !existing.CanPublish() {
-			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("error publishing %s to collection %s %s", id, collID, existing.State))
-			return
-		}
-
-		if collID != "" {
-			if err := api.filesService.PublishCollection(ctx, collID); err != nil {
-				api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing %s to collection %s %w", id, collID, err))
-				return
-			}
-			updatedModel.Published = &enabled
-		} else {
-			log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
-		}
 	}
 
 	// write to DB
@@ -350,7 +323,7 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 	api.GetInteractiveHandler(w, r)
 }
 
-func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int) (interface{}, int, error) {
+func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	var filter *models.InteractiveFilter
 
@@ -360,13 +333,15 @@ func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int
 		filter = &models.InteractiveFilter{}
 
 		if err := json.Unmarshal([]byte(filterJson), &filter); err != nil {
-			return nil, 0, fmt.Errorf("error unmarshalling body %w", ErrInvalidBody)
+			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error unmarshalling body %w", ErrInvalidBody))
+			return
 		}
 	}
 
-	db, _, err := api.mongoDB.ListInteractives(ctx, offset, limit, filter)
+	db, err := api.mongoDB.ListInteractives(ctx, filter)
 	if err != nil {
-		return nil, 0, fmt.Errorf("api endpoint getDatasets datastore.GetDatasets returned an error %w", err)
+		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("api endpoint getDatasets datastore.GetDatasets returned an error %w", err))
+		return
 	}
 
 	response := make([]*models.Interactive, 0)
@@ -376,7 +351,7 @@ func (api *API) ListInteractivesHandler(req *http.Request, limit int, offset int
 		}
 	}
 
-	return response, len(response), nil
+	api.respond.JSON(ctx, w, http.StatusOK, response)
 }
 
 func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request) {

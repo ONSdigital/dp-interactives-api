@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"time"
 
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
@@ -144,9 +144,13 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 	var req *http.Request
 	var i *models.Interactive
 	if data != nil {
-		err = json.Unmarshal(data, &i)
-		if err != nil {
-			return err
+		sanitisedData := strings.ReplaceAll(string(data), "\n", "")
+		sanitisedData = strings.ReplaceAll(sanitisedData, " ", "")
+		if sanitisedData != "{}" {
+			err = json.Unmarshal(data, &i)
+			if err != nil {
+				return err
+			}
 		}
 
 		req = test_support.NewFileUploadRequest(method, "http://foo"+path, "attachment", formFile, i)
@@ -165,7 +169,7 @@ func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, da
 }
 
 func (c *InteractivesApiComponent) iShouldReceiveTheFollowingListmodelResponseWithStatus(expectedCodeStr string, expectedAPIResponse *godog.DocString) error {
-	var expected, actual interactives.List
+	var expected, actual []models.Interactive
 	err := c.toModel(expectedCodeStr, expectedAPIResponse, &expected, &actual)
 	if err != nil {
 		return err
