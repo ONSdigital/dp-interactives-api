@@ -31,6 +31,7 @@ var (
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. Validate request
 	ctx := r.Context()
+	log.Info(ctx, "upload interactives")
 	formDataRequest, errs := newFormDataRequest(r, api, WantOnlyOneAttachmentWithMetadata, true)
 	if errs != nil {
 		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
@@ -119,6 +120,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	vars := mux.Vars(r)
 	id := vars["id"]
+	log.Info(ctx, "list interactives", log.Data{"_id": id})
 
 	// Validate request
 	formDataRequest, errs := newFormDataRequest(r, api, WantAtleastMaxOneAttachmentAndOrMetadata, false)
@@ -268,6 +270,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	log.Info(ctx, "patch interactive")
 	i, status, err := api.GetInteractive(ctx, r)
 	if err != nil {
 		api.respond.Error(ctx, w, status, err)
@@ -328,6 +331,7 @@ func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request
 	var filter *models.InteractiveFilter
 
 	filterJson := req.URL.Query().Get("filter")
+	log.Info(ctx, "list interactives", log.Data{"filter": filterJson})
 	if filterJson != "" {
 		defer req.Body.Close()
 		filter = &models.InteractiveFilter{}
@@ -391,7 +395,7 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request
 func (api *API) GetInteractive(ctx context.Context, req *http.Request) (*models.Interactive, int, error) {
 	vars := mux.Vars(req)
 	id := vars["id"]
-
+	log.Info(ctx, "GetInteractive", log.Data{"_id": id})
 	// fetch info from DB
 	i, err := api.mongoDB.GetInteractive(ctx, id)
 	if err != nil && err != mongo.ErrNoRecordFound {
