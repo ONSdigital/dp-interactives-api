@@ -24,6 +24,7 @@ const (
 	interactivesCol         = "interactives"
 
 	Archive PatchAttribure = iota
+	Publish
 )
 
 var (
@@ -231,10 +232,12 @@ func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribure, 
 
 	var patch bson.M
 	switch attribute {
-	case Archive:
-		patch = bson.M{"archive": i.Archive, "state": i.State}
-	default:
-		return fmt.Errorf("unsupported attribute %s", attribute)
+		case Archive:
+			patch = bson.M{"archive": i.Archive, "state": i.State}
+		case Publish:
+			patch = bson.M{"published": i.Published}
+		default:
+			return fmt.Errorf("unsupported attribute %s", attribute)
 	}
 
 	update := bson.M{

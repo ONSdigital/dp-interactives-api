@@ -162,9 +162,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		if update.Metadata != nil {
 			updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
 		}
-		if update.Published != nil {
-			updatedModel.Published = update.Published
-		}
 
 		// link with collection-id
 		// a collectionID is present in the update message
@@ -186,30 +183,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 					}
 					updatedModel.Metadata.CollectionID = colID
 				}
-			}
-		}
-
-		// publish (if not already)
-		if existing.Published != nil && !*(existing.Published) &&
-			update.Published != nil && *(update.Published) {
-			collID := update.Metadata.CollectionID
-			if collID == "" {
-				collID = existing.Metadata.CollectionID
-			}
-
-			if *update.Published && !existing.CanPublish() {
-				api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("error publishing %s to collection %s %s", id, collID, existing.State))
-				return
-			}
-
-			if collID != "" {
-				if err := api.filesService.PublishCollection(ctx, collID); err != nil {
-					api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing %s to collection %s %w", id, collID, err))
-					return
-				}
-				updatedModel.Published = &enabled
-			} else {
-				log.Error(ctx, fmt.Sprintf("no collection id for interactive (%s)", existing.ID), ErrPubErrNoCollectionID)
 			}
 		}
 	}
@@ -266,6 +239,55 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	api.respond.JSON(ctx, w, http.StatusOK, interactive)
+}
+
+// dedicated publish collection as multiple interactives can be a part of a single collection
+func (api *API) PublishCollectionHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	collectionId := vars["id"]
+	log.Info(ctx, "publish collection", log.Data{"collection_id": collectionId})
+	publish := true
+
+	ix, err := api.mongoDB.ListInteractives(ctx, &models.InteractiveFilter{Metadata: &models.InteractiveMetadata{CollectionID: collectionId}})
+	if err != nil {
+		api.respond.Error(ctx, w, http.StatusInternalServerError, err)
+		return
+	}
+	if len(ix) <= 0 {
+		api.respond.Error(ctx, w, http.StatusNotFound, fmt.Errorf("no interactives linked to %s", collectionId))
+		return
+	}
+	errInteractives := ""
+	for _, inter := range ix {
+		if !inter.CanPublish() {
+			errInteractives = errInteractives + inter.ID + ", "
+		}
+	}
+	if errInteractives != "" {
+		api.respond.Error(ctx, w, http.StatusConflict, fmt.Errorf("interactive(s) not in correct state %s", errInteractives))
+		return
+	}
+
+	if err := api.filesService.PublishCollection(ctx, collectionId); err != nil {
+		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing collection to file server %s %w", collectionId, err))
+		return
+	}
+
+	for _, inter := range ix {
+		inter.Published = &publish
+
+		if err := api.mongoDB.PatchInteractive(ctx, mongo.Publish, inter); err != nil {
+			errInteractives = errInteractives + inter.ID + ", "
+			log.Error(ctx, fmt.Sprintf("error setting publish state for interactive [%s]", inter.ID), err)
+		}
+	}
+	if errInteractives != "" {
+		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("failed to update publish state interactive(s) [%s]", errInteractives))
+		return
+	}
+
+	api.respond.JSON(ctx, w, http.StatusOK, nil)
 }
 
 func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) {

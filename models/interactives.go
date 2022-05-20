@@ -18,11 +18,11 @@ const (
 
 var (
 	states = map[string]InteractiveState{
-		"ArchiveUploaded":             ArchiveUploaded,
-		"ArchiveDispatchFailed":       ArchiveDispatchFailed,
-		"ArchiveDispatchedToImporter": ArchiveDispatchedToImporter,
-		"ImportFailure":               ImportFailure,
-		"ImportSuccess":               ImportSuccess,
+		"archiveuploaded":             ArchiveUploaded,
+		"archivedispatchfailed":       ArchiveDispatchFailed,
+		"archivedispatchedtoimporter": ArchiveDispatchedToImporter,
+		"importfailure":               ImportFailure,
+		"importsuccess":               ImportSuccess,
 	}
 )
 

@@ -84,6 +84,7 @@ func Setup(ctx context.Context,
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.UpdateInteractiveHandler)).Methods(http.MethodPut)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesUpdatePermission, api.PatchInteractiveHandler)).Methods(http.MethodPatch)
 			r.HandleFunc("/v1/interactives/{id}", auth.Require(InteractivesDeletePermission, api.DeleteInteractivesHandler)).Methods(http.MethodDelete)
+			r.HandleFunc("/v1/collection/{id}", auth.Require(InteractivesUpdatePermission, api.PublishCollectionHandler)).Methods(http.MethodPatch)
 		} else {
 			r.HandleFunc("/v1/interactives", api.ListInteractivesHandler).Methods(http.MethodGet)
 			r.HandleFunc("/v1/interactives/{id}", api.GetInteractiveHandler).Methods(http.MethodGet)
