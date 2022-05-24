@@ -334,6 +334,11 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 				})
 			}
 		}
+	case "LinkToCollection":
+		patchAttribute = mongo.LinkToCollection
+		if patchReq.Interactive.Metadata != nil && patchReq.Interactive.Metadata.CollectionID != "" {
+			i.Metadata.CollectionID = patchReq.Interactive.Metadata.CollectionID
+		}
 	default:
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unsuppported attribute %s", patchReq.Attribute))
 		return

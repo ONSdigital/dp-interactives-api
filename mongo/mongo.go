@@ -25,6 +25,7 @@ const (
 
 	Archive PatchAttribure = iota
 	Publish
+	LinkToCollection
 )
 
 var (
@@ -236,6 +237,8 @@ func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribure, 
 			patch = bson.M{"archive": i.Archive, "state": i.State}
 		case Publish:
 			patch = bson.M{"published": i.Published}
+		case LinkToCollection:
+			patch = bson.M{"metadata.collection_id": i.Metadata.CollectionID}
 		default:
 			return fmt.Errorf("unsupported attribute %s", attribute)
 	}
