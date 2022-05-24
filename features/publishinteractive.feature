@@ -1,6 +1,7 @@
 Feature: Interactives API (publish interactive)
     Scenario: Publishing fails if not in correct state
-        Given I have these interactives:
+        Given I am an interactives user
+        And I have these interactives:
                 """
                 [
                     {
@@ -17,18 +18,9 @@ Feature: Interactives API (publish interactive)
                     }
                 ]
                 """
-        When As an interactives user I PUT no file with form-data "/v1/collection/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When I PATCH "/v1/collection/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
-                    "published": true,
-                    "metadata": {
-                        "collection_id": "col123",
-                        "label": "Title321",
-                        "title": "Title123",
-                        "slug": "Title321",
-                        "resource_id": "resid321",
-                        "internal_id": "123"
-                    }
                 }
             """
-        Then the HTTP status code should be "405"
+        Then the HTTP status code should be "409"

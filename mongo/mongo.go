@@ -235,8 +235,8 @@ func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribure, 
 	switch attribute {
 		case Archive:
 			patch = bson.M{"archive": i.Archive, "state": i.State}
-		case Publish:
-			patch = bson.M{"published": i.Published}
+		case Publish: // unlink from collection
+			patch = bson.M{"published": i.Published, "metadata.collection_id": ""}
 		case LinkToCollection:
 			patch = bson.M{"metadata.collection_id": i.Metadata.CollectionID}
 		default:
