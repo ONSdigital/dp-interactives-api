@@ -311,7 +311,7 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var patchAttribute mongo.PatchAttribure
+	var patchAttribute mongo.PatchAttribute
 	switch patchReq.Attribute {
 	case "Archive":
 		patchAttribute = mongo.Archive
