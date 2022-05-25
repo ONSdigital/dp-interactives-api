@@ -40,7 +40,7 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			ListInteractivesFunc: func(ctx context.Context, filter *models.InteractiveFilter) ([]*models.Interactive, error) {
 // 				panic("mock out the ListInteractives method")
 // 			},
-// 			PatchInteractiveFunc: func(contextMoqParam context.Context, patchAttribure mongo.PatchAttribure, interactive *models.Interactive) error {
+// 			PatchInteractiveFunc: func(contextMoqParam context.Context, patchAttribure mongo.PatchAttribute, interactive *models.Interactive) error {
 // 				panic("mock out the PatchInteractive method")
 // 			},
 // 			UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
@@ -72,7 +72,7 @@ type MongoServerMock struct {
 	ListInteractivesFunc func(ctx context.Context, filter *models.InteractiveFilter) ([]*models.Interactive, error)
 
 	// PatchInteractiveFunc mocks the PatchInteractive method.
-	PatchInteractiveFunc func(contextMoqParam context.Context, patchAttribure mongo.PatchAttribure, interactive *models.Interactive) error
+	PatchInteractiveFunc func(contextMoqParam context.Context, patchAttribure mongo.PatchAttribute, interactive *models.Interactive) error
 
 	// UpsertInteractiveFunc mocks the UpsertInteractive method.
 	UpsertInteractiveFunc func(ctx context.Context, id string, vis *models.Interactive) error
@@ -126,7 +126,7 @@ type MongoServerMock struct {
 			// ContextMoqParam is the contextMoqParam argument value.
 			ContextMoqParam context.Context
 			// PatchAttribure is the patchAttribure argument value.
-			PatchAttribure mongo.PatchAttribure
+			PatchAttribure mongo.PatchAttribute
 			// Interactive is the interactive argument value.
 			Interactive *models.Interactive
 		}
@@ -361,13 +361,13 @@ func (mock *MongoServerMock) ListInteractivesCalls() []struct {
 }
 
 // PatchInteractive calls PatchInteractiveFunc.
-func (mock *MongoServerMock) PatchInteractive(contextMoqParam context.Context, patchAttribure mongo.PatchAttribure, interactive *models.Interactive) error {
+func (mock *MongoServerMock) PatchInteractive(contextMoqParam context.Context, patchAttribure mongo.PatchAttribute, interactive *models.Interactive) error {
 	if mock.PatchInteractiveFunc == nil {
 		panic("MongoServerMock.PatchInteractiveFunc: method is nil but MongoServer.PatchInteractive was just called")
 	}
 	callInfo := struct {
 		ContextMoqParam context.Context
-		PatchAttribure  mongo.PatchAttribure
+		PatchAttribure  mongo.PatchAttribute
 		Interactive     *models.Interactive
 	}{
 		ContextMoqParam: contextMoqParam,
@@ -385,12 +385,12 @@ func (mock *MongoServerMock) PatchInteractive(contextMoqParam context.Context, p
 //     len(mockedMongoServer.PatchInteractiveCalls())
 func (mock *MongoServerMock) PatchInteractiveCalls() []struct {
 	ContextMoqParam context.Context
-	PatchAttribure  mongo.PatchAttribure
+	PatchAttribure  mongo.PatchAttribute
 	Interactive     *models.Interactive
 } {
 	var calls []struct {
 		ContextMoqParam context.Context
-		PatchAttribure  mongo.PatchAttribure
+		PatchAttribure  mongo.PatchAttribute
 		Interactive     *models.Interactive
 	}
 	mock.lockPatchInteractive.RLock()
