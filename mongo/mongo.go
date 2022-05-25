@@ -23,7 +23,7 @@ const (
 	queryTimeoutInSeconds   = 15
 	interactivesCol         = "interactives"
 
-	Archive PatchAttribure = iota
+	Archive PatchAttribute = iota
 	Publish
 	LinkToCollection
 )
@@ -32,14 +32,19 @@ var (
 	ErrNoRecordFound = errors.New("no record exists")
 )
 
-type PatchAttribure int
+type PatchAttribute int
 
-func (a PatchAttribure) String() string {
+func (a PatchAttribute) String() string {
 	switch a {
 	case Archive:
 		return "Archive"
+	case LinkToCollection:
+		return "LinkToCollection"
+	case Publish:
+		return "Publish"
+	default:
+		return ""
 	}
-	return ""
 }
 
 type Mongo struct {
@@ -228,19 +233,19 @@ func (m *Mongo) UpsertInteractive(ctx context.Context, id string, vis *models.In
 }
 
 // PatchInteractive patches an existing interactive
-func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribure, i *models.Interactive) error {
+func (m *Mongo) PatchInteractive(ctx context.Context, attribute PatchAttribute, i *models.Interactive) error {
 	log.Info(ctx, "patching interactive", log.Data{"id": i.ID})
 
 	var patch bson.M
 	switch attribute {
-		case Archive:
-			patch = bson.M{"archive": i.Archive, "state": i.State}
-		case Publish: // unlink from collection
-			patch = bson.M{"published": i.Published, "metadata.collection_id": ""}
-		case LinkToCollection:
-			patch = bson.M{"metadata.collection_id": i.Metadata.CollectionID}
-		default:
-			return fmt.Errorf("unsupported attribute %s", attribute)
+	case Archive:
+		patch = bson.M{"archive": i.Archive, "state": i.State}
+	case Publish: // unlink from collection
+		patch = bson.M{"published": i.Published, "metadata.collection_id": ""}
+	case LinkToCollection:
+		patch = bson.M{"metadata.collection_id": i.Metadata.CollectionID}
+	default:
+		return fmt.Errorf("unsupported attribute %s", attribute)
 	}
 
 	update := bson.M{
