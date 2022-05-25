@@ -181,7 +181,7 @@ Feature: Interactives API (List interactives)
                 ]
             """
 
-        Scenario: GET interactives (fliter by associated collection-id - linked + exclude published)
+        Scenario: GET interactives (fliter by associated collection-id - linked + published)
         Given I have these interactives:
             """
             [
@@ -193,7 +193,8 @@ Feature: Interactives API (List interactives)
                         "title": "title123",
                         "label": "Title123",
                         "resource_id": "resid1",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "slug": "slug"
                     },
                     "state": "ImportSuccess"
                 },
@@ -218,12 +219,26 @@ Feature: Interactives API (List interactives)
         Then I should receive the following list(model) response with status "200":
             """
                 [
+                    {
+                            "id": "671375fa-2fc4-41cc-b845-ad04a56d96a7",
+                            "published" : true,
+                            "metadata": {
+                                "title": "title123",
+                                "label": "Title123",
+                                "resource_id": "resid1",
+                                "internal_id": "123",
+                                "slug": "slug"
+                            },
+                            "state": "ImportSuccess",
+                            "archive": {
+                                "name": "kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
+                            },
+                            "last_updated":"2021-01-01T00:00:00Z",
+                            "url": "http://localhost:27300/interactives/slug-resid1/embed"
+                        },
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
                             "published" : false,
-                            "archive": {
-                               "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
-                            },
                             "metadata": {
                                 "title": "title123",
                                 "label": "Title123",

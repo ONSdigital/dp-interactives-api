@@ -179,7 +179,7 @@ func generateFilter(model *models.InteractiveFilter) bson.M {
 		// OR
 		// no collection_id AND not published
 		fil := bson.M{}
-		fil["$and"] = []interface{}{bson.M{"metadata.collection_id": ""}, bson.M{"published": false}}
+		fil["$and"] = []interface{}{bson.M{"published": true}}
 		filter["$or"] = []interface{}{bson.M{"metadata.collection_id": model.Metadata.CollectionID}, fil}
 		return filter
 	}
