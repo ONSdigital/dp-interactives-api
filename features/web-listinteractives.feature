@@ -66,7 +66,8 @@ Feature: Interactives API (List interactives) - from public web access
                             },
                             "state": "ImportSuccess",
                             "last_updated":"2021-01-01T00:00:02Z",
-                            "url": "http://localhost:27300/interactives/slug-abcde123/embed"
+                            "url": "http://localhost:27300/interactives/slug-abcde123/embed",
+                            "uri": "/interactives/slug-abcde123/embed"
                         }
                 ]
             """

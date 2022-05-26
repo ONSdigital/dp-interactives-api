@@ -118,11 +118,13 @@ type Interactive struct {
 	SHA    string `bson:"sha,omitempty"               json:"-"`
 	//JSON only
 	URL string `bson:"-" json:"url,omitempty"`
+	URI string `bson:"-" json:"uri,omitempty"`
 }
 
 func (i *Interactive) SetURL(domain string) {
 	if i != nil && i.Metadata != nil {
-		i.URL = fmt.Sprintf("%s/%s/%s-%s/embed", domain, "interactives", i.Metadata.HumanReadableSlug, i.Metadata.ResourceID)
+		i.URI = fmt.Sprintf("/%s/%s-%s/embed", "interactives", i.Metadata.HumanReadableSlug, i.Metadata.ResourceID)
+		i.URL = fmt.Sprintf("%s%s", domain, i.URI)
 	}
 }
 

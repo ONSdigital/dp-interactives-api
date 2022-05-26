@@ -101,6 +101,7 @@ Feature: Interactives API (Patch interactive)
                         "internal_id": "123"
                     },
                     "state": "ImportSuccess",
-                    "url": "http://localhost:27300/interactives/Title123-resid321/embed"
+                    "url": "http://localhost:27300/interactives/Title123-resid321/embed",
+                    "uri": "/interactives/Title123-resid321/embed"
                 }
             """
