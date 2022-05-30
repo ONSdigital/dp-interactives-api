@@ -23,9 +23,6 @@ var _ api.FilesService = &FilesServiceMock{}
 // 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
-// 			PublishCollectionFunc: func(ctx context.Context, collectionID string) error {
-// 				panic("mock out the PublishCollection method")
-// 			},
 // 			SetCollectionIDFunc: func(ctx context.Context, file string, collectionID string) error {
 // 				panic("mock out the SetCollectionID method")
 // 			},
@@ -39,9 +36,6 @@ type FilesServiceMock struct {
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
 
-	// PublishCollectionFunc mocks the PublishCollection method.
-	PublishCollectionFunc func(ctx context.Context, collectionID string) error
-
 	// SetCollectionIDFunc mocks the SetCollectionID method.
 	SetCollectionIDFunc func(ctx context.Context, file string, collectionID string) error
 
@@ -54,13 +48,6 @@ type FilesServiceMock struct {
 			// State is the state argument value.
 			State *healthcheck.CheckState
 		}
-		// PublishCollection holds details about calls to the PublishCollection method.
-		PublishCollection []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// CollectionID is the collectionID argument value.
-			CollectionID string
-		}
 		// SetCollectionID holds details about calls to the SetCollectionID method.
 		SetCollectionID []struct {
 			// Ctx is the ctx argument value.
@@ -71,9 +58,8 @@ type FilesServiceMock struct {
 			CollectionID string
 		}
 	}
-	lockChecker           sync.RWMutex
-	lockPublishCollection sync.RWMutex
-	lockSetCollectionID   sync.RWMutex
+	lockChecker         sync.RWMutex
+	lockSetCollectionID sync.RWMutex
 }
 
 // Checker calls CheckerFunc.
@@ -108,41 +94,6 @@ func (mock *FilesServiceMock) CheckerCalls() []struct {
 	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
 	mock.lockChecker.RUnlock()
-	return calls
-}
-
-// PublishCollection calls PublishCollectionFunc.
-func (mock *FilesServiceMock) PublishCollection(ctx context.Context, collectionID string) error {
-	if mock.PublishCollectionFunc == nil {
-		panic("FilesServiceMock.PublishCollectionFunc: method is nil but FilesService.PublishCollection was just called")
-	}
-	callInfo := struct {
-		Ctx          context.Context
-		CollectionID string
-	}{
-		Ctx:          ctx,
-		CollectionID: collectionID,
-	}
-	mock.lockPublishCollection.Lock()
-	mock.calls.PublishCollection = append(mock.calls.PublishCollection, callInfo)
-	mock.lockPublishCollection.Unlock()
-	return mock.PublishCollectionFunc(ctx, collectionID)
-}
-
-// PublishCollectionCalls gets all the calls that were made to PublishCollection.
-// Check the length with:
-//     len(mockedFilesService.PublishCollectionCalls())
-func (mock *FilesServiceMock) PublishCollectionCalls() []struct {
-	Ctx          context.Context
-	CollectionID string
-} {
-	var calls []struct {
-		Ctx          context.Context
-		CollectionID string
-	}
-	mock.lockPublishCollection.RLock()
-	calls = mock.calls.PublishCollection
-	mock.lockPublishCollection.RUnlock()
 	return calls
 }
 

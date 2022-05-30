@@ -32,6 +32,5 @@ type AuthHandler interface {
 
 type FilesService interface {
 	SetCollectionID(ctx context.Context, file, collectionID string) error
-	PublishCollection(ctx context.Context, collectionID string) error
 	Checker(ctx context.Context, state *healthcheck.CheckState) error
 }

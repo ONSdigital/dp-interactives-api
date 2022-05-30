@@ -113,8 +113,7 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 	cfg.AuthorisationConfig.PermissionsAPIURL = setupFakePermissionsAPI().URL()
 
 	c.filesService = &apiMock.FilesServiceMock{
-		PublishCollectionFunc: func(ctx context.Context, collectionID string) error { return nil },
-		SetCollectionIDFunc:   func(ctx context.Context, file string, collectionID string) error { return nil },
+		SetCollectionIDFunc: func(ctx context.Context, file string, collectionID string) error { return nil },
 	}
 
 	return c, nil

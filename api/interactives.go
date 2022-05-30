@@ -269,11 +269,6 @@ func (api *API) PublishCollectionHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := api.filesService.PublishCollection(ctx, collectionId); err != nil {
-		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error publishing collection to file server %s %w", collectionId, err))
-		return
-	}
-
 	for _, inter := range ix {
 		inter.Published = &publish
 
