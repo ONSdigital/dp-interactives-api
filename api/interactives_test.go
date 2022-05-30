@@ -67,7 +67,6 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		formFile      string
 		mongoServer   api.MongoServer
 		s3            upload.S3Interface
-		fs            api.FilesService
 		kafkaProducer kafka.IProducer
 	}{
 		{
@@ -174,7 +173,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
 
-			api := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, tc.fs, validInteractiveIdGen, noopGen, noopGen, respondr)
+			api := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, tc.kafkaProducer, tc.s3, validInteractiveIdGen, noopGen, noopGen, respondr)
 
 			for _, testReq := range tc.requests {
 				var req *http.Request
@@ -214,7 +213,6 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 	kafkaProducer := &kMock.IProducerMock{
 		ChannelsFunc: func() *kafka.ProducerChannels { return &kafka.ProducerChannels{Output: nil} },
 	}
-	fs := &apiMock.FilesServiceMock{}
 
 	mongoServer := &apiMock.MongoServerMock{
 		GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
@@ -255,7 +253,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			return strconv.Itoa(callCount)
 		}
 
-		a := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen, respondr)
+		a := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, validInteractiveIdGen, resourceIdGen, noopGen, respondr)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.Interactive{
 			Metadata: &models.InteractiveMetadata{
@@ -332,7 +330,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.title, func(t *testing.T) {
 			ctx := context.Background()
-			api := api.Setup(ctx, &config.Config{PublishingEnabled: tc.publishingEnabled}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, nil, noopGen, noopGen, noopGen, respondr)
+			api := api.Setup(ctx, &config.Config{PublishingEnabled: tc.publishingEnabled}, mux.NewRouter(), newAuthMiddlwareMock(), tc.mongoServer, nil, nil, noopGen, noopGen, noopGen, respondr)
 			resp := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:27050/v1/interactives/%s", interactiveID), nil)
 			api.Router.ServeHTTP(resp, req)

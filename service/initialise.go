@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/ONSdigital/dp-api-clients-go/v2/files"
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -28,7 +27,6 @@ type ExternalServiceList struct {
 	HealthCheck   bool
 	KafkaProducer bool
 	S3Client      bool
-	FilesService  bool
 	Init          Initialiser
 }
 
@@ -105,25 +103,9 @@ func (e *ExternalServiceList) GetGenerators() (models.Generator, models.Generato
 	return e.Init.DoGetGenerators()
 }
 
-// GetFilesService creates files service  and sets the FilesService flag to true
-func (e *ExternalServiceList) GetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
-	client, err := e.Init.DoGetFilesService(ctx, cfg)
-	if err != nil {
-		return nil, err
-	}
-	e.FilesService = true
-	return client, nil
-}
-
 // GetResponder returns rhe responder for handling responses in a generic way
 func (e *ExternalServiceList) GetResponder(ctx context.Context, cfg *config.Config) (*responder.Responder, error) {
 	return e.Init.DoGetResponder(ctx, cfg)
-}
-
-// DoGetFilesService returns a files service backend
-func (e *Init) DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
-	apiClient := files.NewAPIClient(cfg.FilesAPIURL, cfg.ServiceAuthToken)
-	return apiClient, nil
 }
 
 // DoGetHTTPServer creates an HTTP Server with the provided bind address and router

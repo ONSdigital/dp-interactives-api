@@ -31,9 +31,6 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 // 				panic("mock out the DoGetAuthorisationMiddleware method")
 // 			},
-// 			DoGetFilesServiceFunc: func(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
-// 				panic("mock out the DoGetFilesService method")
-// 			},
 // 			DoGetGeneratorsFunc: func() (models.Generator, models.Generator, models.Generator) {
 // 				panic("mock out the DoGetGenerators method")
 // 			},
@@ -68,9 +65,6 @@ type InitialiserMock struct {
 	// DoGetAuthorisationMiddlewareFunc mocks the DoGetAuthorisationMiddleware method.
 	DoGetAuthorisationMiddlewareFunc func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
 
-	// DoGetFilesServiceFunc mocks the DoGetFilesService method.
-	DoGetFilesServiceFunc func(ctx context.Context, cfg *config.Config) (api.FilesService, error)
-
 	// DoGetGeneratorsFunc mocks the DoGetGenerators method.
 	DoGetGeneratorsFunc func() (models.Generator, models.Generator, models.Generator)
 
@@ -103,13 +97,6 @@ type InitialiserMock struct {
 			Ctx context.Context
 			// AuthorisationConfig is the authorisationConfig argument value.
 			AuthorisationConfig *authorisation.Config
-		}
-		// DoGetFilesService holds details about calls to the DoGetFilesService method.
-		DoGetFilesService []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Cfg is the cfg argument value.
-			Cfg *config.Config
 		}
 		// DoGetGenerators holds details about calls to the DoGetGenerators method.
 		DoGetGenerators []struct {
@@ -169,7 +156,6 @@ type InitialiserMock struct {
 		}
 	}
 	lockDoGetAuthorisationMiddleware sync.RWMutex
-	lockDoGetFilesService            sync.RWMutex
 	lockDoGetGenerators              sync.RWMutex
 	lockDoGetHTTPServer              sync.RWMutex
 	lockDoGetHealthCheck             sync.RWMutex
@@ -212,41 +198,6 @@ func (mock *InitialiserMock) DoGetAuthorisationMiddlewareCalls() []struct {
 	mock.lockDoGetAuthorisationMiddleware.RLock()
 	calls = mock.calls.DoGetAuthorisationMiddleware
 	mock.lockDoGetAuthorisationMiddleware.RUnlock()
-	return calls
-}
-
-// DoGetFilesService calls DoGetFilesServiceFunc.
-func (mock *InitialiserMock) DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
-	if mock.DoGetFilesServiceFunc == nil {
-		panic("InitialiserMock.DoGetFilesServiceFunc: method is nil but Initialiser.DoGetFilesService was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Cfg *config.Config
-	}{
-		Ctx: ctx,
-		Cfg: cfg,
-	}
-	mock.lockDoGetFilesService.Lock()
-	mock.calls.DoGetFilesService = append(mock.calls.DoGetFilesService, callInfo)
-	mock.lockDoGetFilesService.Unlock()
-	return mock.DoGetFilesServiceFunc(ctx, cfg)
-}
-
-// DoGetFilesServiceCalls gets all the calls that were made to DoGetFilesService.
-// Check the length with:
-//     len(mockedInitialiser.DoGetFilesServiceCalls())
-func (mock *InitialiserMock) DoGetFilesServiceCalls() []struct {
-	Ctx context.Context
-	Cfg *config.Config
-} {
-	var calls []struct {
-		Ctx context.Context
-		Cfg *config.Config
-	}
-	mock.lockDoGetFilesService.RLock()
-	calls = mock.calls.DoGetFilesService
-	mock.lockDoGetFilesService.RUnlock()
 	return calls
 }
 

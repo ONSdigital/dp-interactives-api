@@ -208,10 +208,6 @@ func (f *InteractivesApiComponent) DoGetGenerators() (models.Generator, models.G
 	return emptyUUID, fakeResourceID, noopSlug
 }
 
-func (f *InteractivesApiComponent) DoGetFSClient(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
-	return f.filesService, nil
-}
-
 func (f *InteractivesApiComponent) DoGetResponder(_ context.Context, _ *config.Config) (*responder.Responder, error) {
 	return responder.New(), nil
 }
@@ -225,7 +221,6 @@ func (c *InteractivesApiComponent) setInitialiserMock() {
 		DoGetS3ClientFunc:                c.DoS3Client,
 		DoGetAuthorisationMiddlewareFunc: c.DoGetAuthorisationMiddleware,
 		DoGetGeneratorsFunc:              c.DoGetGenerators,
-		DoGetFilesServiceFunc:            c.DoGetFSClient,
 		DoGetResponderFunc:               c.DoGetResponder,
 	}
 }
