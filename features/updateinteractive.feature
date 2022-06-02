@@ -72,7 +72,7 @@ Feature: Interactives API (Update interactive)
             """
         Then the HTTP status code should be "404"
 
-    Scenario: Slug update for a published interactive is forbidden
+    Scenario: Slug update for a published interactive is allowed - redirect logic means old url will still work
         Given I have these interactives:
                 """
                 [
@@ -95,15 +95,34 @@ Feature: Interactives API (Update interactive)
             """
                 {
                     "metadata": {
-                        "label": "Title123",
-                        "title": "Title123",
-                        "slug": "Title321-update",
-                        "resource_id": "resid321",
-                        "internal_id": "123"
+                        "label": "Title456",
+                        "title": "Title456",
+                        "slug": "Title456",
+                        "resource_id": "resid456",
+                        "internal_id": "456"
                     }
                 }
             """
-        Then the HTTP status code should be "403"
+        Then I should receive the following model response with status "200":
+            """
+                {
+                    "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
+                    "published": true,
+                    "archive": {
+                        "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
+                    },
+                    "metadata": {
+                        "title": "Title456",
+                        "label": "Title456",
+                        "slug": "Title456",
+                        "resource_id": "resid321",
+                        "internal_id": "456"
+                    },
+                    "state": "ArchiveUploaded",
+                    "url": "http://localhost:27300/interactives/Title456-resid321/embed",
+                    "uri": "/interactives/Title456-resid321"
+                }
+            """
 
     Scenario: Update success with new file
         Given I have these interactives:
@@ -209,7 +228,7 @@ Feature: Interactives API (Update interactive)
                 }
             """
 
-    Scenario: Metadata update for a published interactive must fail
+    Scenario: Metadata update for a published interactive is allowed - redirect logic means old url will still work
         Given I have these interactives:
                 """
                 [
@@ -232,15 +251,34 @@ Feature: Interactives API (Update interactive)
             """
                 {
                     "metadata": {
-                        "label": "Title321",
-                        "title": "Title123",
-                        "slug": "Title321",
-                        "resource_id": "resid321",
-                        "internal_id": "123"
+                        "label": "Title456",
+                        "title": "Title456",
+                        "slug": "Title456",
+                        "resource_id": "resid456",
+                        "internal_id": "456"
                     }
                 }
             """
-        Then the HTTP status code should be "403"
+        Then I should receive the following model response with status "200":
+            """
+                {
+                    "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
+                    "published": true,
+                    "archive": {
+                        "name":"kqA7qPo1GeOJeff69lByWLbPiZM=/docker-vernemq-master.zip"
+                    },
+                    "metadata": {
+                        "label": "Title456",
+                        "slug": "Title456",
+                        "title": "Title456",
+                        "resource_id": "resid321",
+                        "internal_id": "456"
+                    },
+                    "state": "ArchiveUploaded",
+                    "url": "http://localhost:27300/interactives/Title456-resid321/embed",
+                    "uri": "/interactives/Title456-resid321"
+                }
+            """
 
     Scenario: Update success with only a new file for published interactive
         Given I have these interactives:

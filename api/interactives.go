@@ -23,9 +23,7 @@ const (
 var (
 	enabled, disabled        = true, false
 	ErrInvalidBody           = errors.New("body has invalid format")
-	ErrCantUpdateMeta        = errors.New("cannot update metadata for a published interactive")
 	ErrCantDeletePublishedIn = errors.New("cannot delete a published interactive")
-	ErrPubErrNoCollectionID  = errors.New("cannot publish interactive, no collection ID")
 )
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request) {
@@ -139,14 +137,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error fetching interactive %s %w", id, err))
 		return
 	}
-
-	// fail if attempting to update metadata for a published model
-	if *existing.Published && formDataRequest.hasMetadata() {
-		api.respond.Error(ctx, w, http.StatusForbidden, ErrCantUpdateMeta)
-		return
-	}
-
-	// -- ALL GOOD ABOVE
 
 	// prepare updated model
 	updatedModel := &models.Interactive{
