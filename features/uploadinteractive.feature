@@ -80,6 +80,6 @@ Feature: Interactives API (Get interactive)
                     },
                     "state": "ArchiveUploaded",
                     "url": "http://localhost:27300/interactives/Title123-AbcdE123/embed",
-                    "uri": "/interactives/Title123-AbcdE123/embed"
+                    "uri": "/interactives/Title123-AbcdE123"
                 }
             """

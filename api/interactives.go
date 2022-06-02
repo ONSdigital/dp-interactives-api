@@ -310,24 +310,27 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 	switch patchReq.Attribute {
 	case "Archive":
 		patchAttribute = mongo.Archive
-		if patchReq.Interactive.Archive != nil {
-			i.State = models.ImportFailure.String()
-			if patchReq.Interactive.Archive.ImportSuccessful {
-				i.State = models.ImportSuccess.String()
-			}
+		if patchReq.Interactive.Archive == nil {
+			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("no archive to patch"))
+		}
 
-			i.Archive = &models.Archive{
-				Name:          patchReq.Interactive.Archive.Name,
-				Size:          patchReq.Interactive.Archive.Size,
-				ImportMessage: patchReq.Interactive.Archive.ImportMessage,
-			}
-			for _, f := range patchReq.Interactive.Archive.Files {
-				i.Archive.Files = append(i.Archive.Files, &models.File{
-					Name:     f.Name,
-					Mimetype: f.Mimetype,
-					Size:     f.Size,
-				})
-			}
+		i.State = models.ImportFailure.String()
+		if patchReq.Interactive.Archive.ImportSuccessful {
+			i.State = models.ImportSuccess.String()
+		}
+
+		i.Archive = &models.Archive{
+			Name:          patchReq.Interactive.Archive.Name,
+			Size:          patchReq.Interactive.Archive.Size,
+			ImportMessage: patchReq.Interactive.Archive.ImportMessage,
+		}
+		for _, f := range patchReq.Interactive.Archive.Files {
+			i.Archive.Files = append(i.Archive.Files, &models.File{
+				Name:     f.Name,
+				Mimetype: f.Mimetype,
+				Size:     f.Size,
+				URI:      f.URI,
+			})
 		}
 	case "LinkToCollection":
 		patchAttribute = mongo.LinkToCollection

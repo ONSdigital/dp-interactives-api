@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -146,7 +147,24 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 		return nil, err
 	}
 
+	//derived attributes
 	interactive.SetURL(m.Config.PreviewRootURL)
+	if interactive.Archive != nil {
+		var htmlFiles []models.HTMLFile
+		for _, f := range interactive.Archive.Files {
+			if f == nil {
+				continue
+			}
+			filename := filepath.Base(f.URI)
+			if filename == "index.html" {
+				htmlFiles = append(htmlFiles, models.HTMLFile{
+					Name: filename,
+					URI:  fmt.Sprintf("%s/%s", interactive.URI, f.URI),
+				})
+			}
+		}
+		interactive.HTMLFiles = &htmlFiles
+	}
 
 	return &interactive, nil
 }

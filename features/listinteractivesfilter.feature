@@ -56,7 +56,7 @@ Feature: Interactives API (List interactives)
                             },
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-abcde2/embed",
-                            "uri": "/interactives/slug-abcde2/embed"
+                            "uri": "/interactives/slug-abcde2"
                         }
                     ]
             """
@@ -116,7 +116,7 @@ Feature: Interactives API (List interactives)
                             },
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-resid2/embed",
-                            "uri": "/interactives/slug-resid2/embed"
+                            "uri": "/interactives/slug-resid2"
                         }
                     ]
             """
@@ -179,7 +179,7 @@ Feature: Interactives API (List interactives)
                             },
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-resid2/embed",
-                            "uri": "/interactives/slug-resid2/embed"
+                            "uri": "/interactives/slug-resid2"
                         }
                 ]
             """
@@ -238,7 +238,7 @@ Feature: Interactives API (List interactives)
                             },
                             "last_updated":"2021-01-01T00:00:00Z",
                             "url": "http://localhost:27300/interactives/slug-resid1/embed",
-                            "uri": "/interactives/slug-resid1/embed"
+                            "uri": "/interactives/slug-resid1"
                         },
                         {
                             "id": "2683c698-e15b-4d32-a990-ba37d93a4d83",
@@ -257,7 +257,7 @@ Feature: Interactives API (List interactives)
                             },
                             "last_updated":"2021-01-01T00:00:01Z",
                             "url": "http://localhost:27300/interactives/slug-resid2/embed",
-                            "uri": "/interactives/slug-resid2/embed"
+                            "uri": "/interactives/slug-resid2"
                         }
                     ]
             """

@@ -33,13 +33,7 @@ type ExternalServiceList struct {
 }
 
 func NewServiceList(initialiser Initialiser) *ExternalServiceList {
-	return &ExternalServiceList{
-		MongoDB:       false,
-		HealthCheck:   false,
-		KafkaProducer: false,
-		S3Client:      false,
-		Init:          initialiser,
-	}
+	return &ExternalServiceList{Init: initialiser}
 }
 
 type Init struct{}

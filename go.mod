@@ -9,7 +9,7 @@ replace github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go v3.2.1-0.2021
 replace github.com/ONSdigital/dp-net => github.com/ONSdigital/dp-net v1.4.0
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.117.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.138.1
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.16.0
 	github.com/ONSdigital/dp-component-test v0.6.4

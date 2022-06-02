@@ -28,6 +28,10 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	expectedChecks = 5
+)
+
 var (
 	ctx              = context.Background()
 	testBuildTime    = "BuildTime"
@@ -284,7 +288,7 @@ func TestRun(t *testing.T) {
 				So(err.Error(), ShouldResemble, fmt.Sprintf("unable to register checkers: %s", errAddheckFail.Error()))
 				So(svcList.MongoDB, ShouldBeTrue)
 				So(svcList.HealthCheck, ShouldBeTrue)
-				So(hcMockAddFail.AddCheckCalls(), ShouldHaveLength, 5)
+				So(hcMockAddFail.AddCheckCalls(), ShouldHaveLength, expectedChecks)
 				So(hcMockAddFail.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 				So(hcMockAddFail.AddCheckCalls()[1].Name, ShouldResemble, "Uploaded Kafka Producer")
 				So(hcMockAddFail.AddCheckCalls()[2].Name, ShouldResemble, "S3 checker")
@@ -321,7 +325,7 @@ func TestRun(t *testing.T) {
 			})
 
 			Convey("The checkers are registered and the healthcheck and http server started", func() {
-				So(hcMock.AddCheckCalls(), ShouldHaveLength, 5)
+				So(hcMock.AddCheckCalls(), ShouldHaveLength, expectedChecks)
 				So(hcMock.AddCheckCalls()[0].Name, ShouldResemble, "Mongo DB")
 				So(hcMock.AddCheckCalls()[1].Name, ShouldResemble, "Uploaded Kafka Producer")
 				So(hcMock.AddCheckCalls()[2].Name, ShouldResemble, "S3 checker")

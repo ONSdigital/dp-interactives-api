@@ -83,7 +83,8 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		log.Fatal(ctx, "could not instantiate healthcheck", err)
 		return nil, err
 	}
-	if err := registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client, authorisationMiddleware, filesService); err != nil {
+	err = registerCheckers(ctx, cfg, hc, mongoDB, producer, s3Client, authorisationMiddleware, filesService)
+	if err != nil {
 		return nil, errors.Wrap(err, "unable to register checkers")
 	}
 

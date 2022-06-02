@@ -155,7 +155,7 @@ Feature: Interactives API (Update interactive)
                     },
                     "state": "ArchiveUploaded",
                     "url": "http://localhost:27300/interactives/Title456-resid321/embed",
-                    "uri": "/interactives/Title456-resid321/embed"
+                    "uri": "/interactives/Title456-resid321"
                 }
             """
 
@@ -205,7 +205,7 @@ Feature: Interactives API (Update interactive)
                     },
                     "state": "ArchiveUploaded",
                     "url": "http://localhost:27300/interactives/Title321-resid321/embed",
-                    "uri": "/interactives/Title321-resid321/embed"
+                    "uri": "/interactives/Title321-resid321"
                 }
             """
 
@@ -283,6 +283,6 @@ Feature: Interactives API (Update interactive)
                     },
                     "state": "ArchiveUploaded",
                     "url": "http://localhost:27300/interactives/human readable slug-resid321/embed",
-                    "uri": "/interactives/human readable slug-resid321/embed"
+                    "uri": "/interactives/human readable slug-resid321"
                 }
             """

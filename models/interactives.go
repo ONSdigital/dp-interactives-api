@@ -117,14 +117,15 @@ type Interactive struct {
 	Active *bool  `bson:"active,omitempty"            json:"-"`
 	SHA    string `bson:"sha,omitempty"               json:"-"`
 	//JSON only
-	URL string `bson:"-" json:"url,omitempty"`
-	URI string `bson:"-" json:"uri,omitempty"`
+	URL       string      `bson:"-" json:"url,omitempty"`
+	URI       string      `bson:"-" json:"uri,omitempty"`
+	HTMLFiles *[]HTMLFile `bson:"-" json:"html_files,omitempty"`
 }
 
 func (i *Interactive) SetURL(domain string) {
 	if i != nil && i.Metadata != nil {
-		i.URI = fmt.Sprintf("/%s/%s-%s/embed", "interactives", i.Metadata.HumanReadableSlug, i.Metadata.ResourceID)
-		i.URL = fmt.Sprintf("%s%s", domain, i.URI)
+		i.URI = fmt.Sprintf("/%s/%s-%s", "interactives", i.Metadata.HumanReadableSlug, i.Metadata.ResourceID)
+		i.URL = fmt.Sprintf("%s%s/%s", domain, i.URI, "embed")
 	}
 }
 
@@ -150,4 +151,10 @@ type File struct {
 	Name     string `bson:"name,omitempty"          json:"name,omitempty"`
 	Mimetype string `bson:"mimetype,omitempty"      json:"mimetype,omitempty"`
 	Size     int64  `bson:"size_in_bytes,omitempty" json:"size_in_bytes,omitempty"`
+	URI      string `bson:"uri,omitempty"           json:"uri,omitempty"`
+}
+
+type HTMLFile struct {
+	Name string `bson:"-" json:"name,omitempty"`
+	URI  string `bson:"-" json:"uri,omitempty"`
 }

@@ -48,7 +48,8 @@ Feature: Interactives API (Patch interactive)
                             "label": "Title123",
                             "slug": "Title123",
                             "resource_id": "resid321",
-                            "internal_id": "123"
+                            "internal_id": "123",
+                            "collection_id": "a_collection"
                         },
                         "state": "ArchiveUploaded",
                         "last_updated":"2021-01-01T00:00:00Z"
@@ -98,10 +99,11 @@ Feature: Interactives API (Patch interactive)
                         "label": "Title123",
                         "slug": "Title123",
                         "resource_id": "resid321",
-                        "internal_id": "123"
+                        "internal_id": "123",
+                        "collection_id": "a_collection"
                     },
                     "state": "ImportSuccess",
                     "url": "http://localhost:27300/interactives/Title123-resid321/embed",
-                    "uri": "/interactives/Title123-resid321/embed"
+                    "uri": "/interactives/Title123-resid321"
                 }
             """
