@@ -87,6 +87,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 
 	// 5. send kafka message to importer
 	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
+		CollectionID: interactive.Metadata.CollectionID,
 		ID:           id,
 		FilePath:     uri,
 		Title:        interactive.Metadata.Title,

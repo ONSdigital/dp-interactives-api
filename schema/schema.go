@@ -8,6 +8,7 @@ var interactiveUploadedEvent = `{
   "type": "record",
   "name": "interactive-uploaded",
   "fields": [
+    {"name": "collection_id", "type": "string"},
     {"name": "id", "type": "string"},
     {"name": "path", "type": "string"},
     {"name": "title", "type": "string"},
