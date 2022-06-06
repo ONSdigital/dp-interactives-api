@@ -200,7 +200,7 @@ func (e *Init) DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, versio
 
 // DoGetAuthorisationMiddleware creates authorisation middleware for the given config
 func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
-	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, nil)
+	return authorisation.NewFeatureFlaggedMiddleware(ctx, authorisationConfig, authorisationConfig.JWTVerificationPublicKeys)
 }
 
 // DoGetGenerators creates authorisation middleware for the given config
