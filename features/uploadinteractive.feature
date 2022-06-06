@@ -6,7 +6,7 @@ Feature: Interactives API (Get interactive)
             {
             }
         """
-        Then the HTTP status code should be "403"
+        Then the HTTP status code should be "401"
 
     Scenario: Update failed if validation rules not followed - missing mandatory attributes
         When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"

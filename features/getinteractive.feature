@@ -91,4 +91,4 @@ Feature: Interactives API (Get interactive)
             ]
             """
         When I GET "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
-        Then the HTTP status code should be "403"
+        Then the HTTP status code should be "401"

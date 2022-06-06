@@ -193,7 +193,7 @@ func (f *InteractivesApiComponent) DoS3Client(_ context.Context, _ *config.Confi
 }
 
 func (f *InteractivesApiComponent) DoGetAuthorisationMiddleware(ctx context.Context, cfg *authorisation.Config) (authorisation.Middleware, error) {
-	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg)
+	middleware, err := authorisation.NewMiddlewareFromConfig(ctx, cfg, cfg.JWTVerificationPublicKeys)
 	if err != nil {
 		return nil, err
 	}
