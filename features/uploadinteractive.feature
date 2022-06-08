@@ -9,7 +9,7 @@ Feature: Interactives API (Get interactive)
         Then the HTTP status code should be "401"
 
     Scenario: Update failed if validation rules not followed - missing mandatory attributes
-        When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
+        When As an interactives user I POST file "resources/single-interactive.zip" with form-data "/v1/interactives"
             """
                 {
                     "metadata": { }
@@ -28,7 +28,7 @@ Feature: Interactives API (Get interactive)
             """
 
     Scenario: Update failed if validation rules not followed - attributes not correct format
-        When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
+        When As an interactives user I POST file "resources/single-interactive.zip" with form-data "/v1/interactives"
             """
                 {
                     "metadata": {
@@ -51,7 +51,7 @@ Feature: Interactives API (Get interactive)
             """
         
     Scenario: New interactive success with file
-        When As an interactives user I POST file "resources/interactives.zip" with form-data "/v1/interactives"
+        When As an interactives user I POST file "resources/single-interactive.zip" with form-data "/v1/interactives"
             """
                 {
                     "metadata": {
@@ -69,7 +69,16 @@ Feature: Interactives API (Get interactive)
                     "id": "00000000-0000-0000-0000-000000000000",
                     "published": false,
                     "archive": {
-                        "name":"rhyCq4GCknxx0nzeqx2LE077Ruo=/interactives.zip"
+                        "name": "single-interactive.zip",
+                        "size_in_bytes": 591714,
+                        "files": [
+                            {
+                                "name": "index.html",
+                                "mimetype": "tbc",
+                                "size_in_bytes": 47767,
+                                "uri": "index.html"
+                            }
+                        ]
                     },
                     "metadata": {
                         "label": "Title123",
@@ -80,6 +89,12 @@ Feature: Interactives API (Get interactive)
                     },
                     "state": "ArchiveUploaded",
                     "url": "http://localhost:27300/interactives/Title123-AbcdE123/embed",
-                    "uri": "/interactives/Title123-AbcdE123"
+                    "uri": "/interactives/Title123-AbcdE123",
+                    "html_files": [
+                        {
+                            "name": "index.html",
+                            "uri": "/interactives/Title123-AbcdE123/index.html"
+                        }
+                    ]
                 }
             """

@@ -1,7 +1,7 @@
 Feature: Interactives API (Update interactive)
 
     Scenario: Update failed if validation rules not followed
-        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/single-interactive.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "metadata": { }
@@ -30,7 +30,7 @@ Feature: Interactives API (Update interactive)
         Then the HTTP status code should be "400"
 
     Scenario: Update failed if interactive not in DB
-        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/single-interactive.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "metadata": {
@@ -59,7 +59,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/single-interactive.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "metadata": {
@@ -91,7 +91,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
+        When As an interactives user I PUT file "resources/single-interactive.zip" with form-data "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
             """
                 {
                     "metadata": {
@@ -142,7 +142,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/single-interactive.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
                     "archive": {
@@ -298,7 +298,7 @@ Feature: Interactives API (Update interactive)
                     }
                 ]
                 """
-        When As an interactives user I PUT file "resources/interactives.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
+        When As an interactives user I PUT file "resources/single-interactive.zip" with form-data "/v1/interactives/0d77a889-abb2-4432-ad22-9c23cf7ee796"
             """
                 {
 

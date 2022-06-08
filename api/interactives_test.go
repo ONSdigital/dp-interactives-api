@@ -91,7 +91,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
 			},
 			title:    "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
-			formFile: "resources/interactives.zip",
+			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
@@ -107,7 +107,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
 			},
 			title:    "WhenUploadError_ThenInternalServerError",
-			formFile: "resources/interactives.zip",
+			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
@@ -126,7 +126,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
 			},
 			title:    "WhenDbError_ThenInternalServerError",
-			formFile: "resources/interactives.zip",
+			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
@@ -149,7 +149,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				{"/v1/interactives/inactive-id", http.MethodPut, http.StatusNotFound},
 			},
 			title:    "WhenAllSuccess_ThenStatus20x",
-			formFile: "resources/interactives.zip",
+			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
 				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
 				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
@@ -204,7 +204,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 
 	ctx := context.Background()
 
-	formFile := "resources/interactives.zip"
+	formFile := "resources/single-interactive.zip"
 	s3 := &s3Mock.S3InterfaceMock{
 		ValidateBucketFunc: func() error { return nil },
 		UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {

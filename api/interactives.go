@@ -27,7 +27,7 @@ var (
 )
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. Validate request
+	// Validate request
 	ctx := r.Context()
 	log.Info(ctx, "upload interactives")
 	formDataRequest, errs := newFormDataRequest(r, api, WantOnlyOneAttachmentWithMetadata, true)
@@ -35,17 +35,22 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
 		return
 	}
+	archive, err := Open(formDataRequest.FileName, formDataRequest.FileData)
+	if err != nil {
+		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
+		return
+	}
 
 	update := formDataRequest.Interactive
 
-	// 4. upload to S3
+	// Upload to S3
 	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 		return
 	}
 
-	// 5. Write to DB
+	// Write to DB
 	id := api.newUUID("")
 	interact := &models.Interactive{
 		ID:        id,
@@ -53,7 +58,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		Active:    &enabled,
 		Published: &disabled,
 		State:     models.ArchiveUploaded.String(),
-		Archive:   &models.Archive{Name: uri},
+		Archive:   archive,
 	}
 	collisions := 0
 	for {
@@ -85,7 +90,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// 5. send kafka message to importer
+	// Send kafka message to importer
 	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
 		ID:           id,
 		FilePath:     uri,
