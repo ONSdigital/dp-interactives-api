@@ -80,6 +80,12 @@ Feature: Interactives API (Get interactive)
                             }
                         ]
                     },
+                    "html_files": [
+                        {
+                            "name": "index.html",
+                            "uri": "/interactives/Title123-AbcdE123/index.html"
+                        }
+                    ],
                     "metadata": {
                         "label": "Title123",
                         "slug": "Title123",
@@ -89,12 +95,6 @@ Feature: Interactives API (Get interactive)
                     },
                     "state": "ArchiveUploaded",
                     "url": "http://localhost:27300/interactives/Title123-AbcdE123/embed",
-                    "uri": "/interactives/Title123-AbcdE123",
-                    "html_files": [
-                        {
-                            "name": "index.html",
-                            "uri": "/interactives/Title123-AbcdE123/index.html"
-                        }
-                    ]
+                    "uri": "/interactives/Title123-AbcdE123"
                 }
             """

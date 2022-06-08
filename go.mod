@@ -2,17 +2,13 @@ module github.com/ONSdigital/dp-interactives-api
 
 go 1.17
 
-replace github.com/coreos/etcd => github.com/coreos/etcd v3.3.24+incompatible
-
-replace github.com/dgrijalva/jwt-go => github.com/dgrijalva/jwt-go v3.2.1-0.20210802184156-9742bd7fca1c+incompatible
-
 replace github.com/ONSdigital/dp-net => github.com/ONSdigital/dp-net v1.4.0
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.138.1
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.18.0-rc.1
-	github.com/ONSdigital/dp-component-test v0.6.4
+	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v3 v3.2.0
 	github.com/ONSdigital/dp-mongodb/v3 v3.0.0-beta.4
@@ -40,6 +36,9 @@ require (
 	github.com/ONSdigital/dp-rchttp v1.0.0 // indirect
 	github.com/ONSdigital/go-ns v0.0.0-20210916104633-ac1c1c52327e // indirect
 	github.com/Shopify/sarama v1.30.1 // indirect
+	github.com/chromedp/cdproto v0.0.0-20211126220118-81fa0469ad77 // indirect
+	github.com/chromedp/chromedp v0.7.6 // indirect
+	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/cucumber/gherkin-go/v19 v19.0.3 // indirect
 	github.com/cucumber/messages-go/v16 v16.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -51,6 +50,9 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
+	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -66,10 +68,12 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.2 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/justinas/alice v1.2.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/maxcnunes/httpfake v1.2.4 // indirect
