@@ -192,6 +192,13 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
+		archive, err := Open(formDataRequest.FileName, formDataRequest.FileData)
+		if err != nil {
+			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
+			return
+		}
+
+		updatedModel.Archive = archive
 		updatedModel.State = models.ArchiveUploaded.String()
 		updatedModel.SHA = formDataRequest.Sha
 	}
