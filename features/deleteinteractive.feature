@@ -44,4 +44,4 @@ Feature: Interactives API (Delete interactive)
                 ]
                 """
         When I DELETE "/v1/interactives/ca99d09c-953a-4fe5-9b0a-51b3d40c01f7"
-        Then the HTTP status code should be "200"
+        Then the HTTP status code should be "204"

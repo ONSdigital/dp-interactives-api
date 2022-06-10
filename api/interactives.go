@@ -416,7 +416,7 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	api.respond.JSON(ctx, w, http.StatusOK, nil)
+	api.respond.JSON(ctx, w, http.StatusNoContent, nil)
 }
 
 func (api *API) GetInteractive(ctx context.Context, req *http.Request) (*models.Interactive, int, error) {
