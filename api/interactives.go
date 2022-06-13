@@ -256,8 +256,8 @@ func (api *API) PublishCollectionHandler(w http.ResponseWriter, r *http.Request)
 		api.respond.Error(ctx, w, http.StatusInternalServerError, err)
 		return
 	}
-	if len(ix) <= 0 {
-		api.respond.Error(ctx, w, http.StatusNotFound, fmt.Errorf("no interactives linked to %s", collectionId))
+	if len(ix) <= 0 { // There are no interactives in the collection, just return
+		api.respond.JSON(ctx, w, http.StatusOK, nil)
 		return
 	}
 	errInteractives := ""
