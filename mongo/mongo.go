@@ -157,7 +157,7 @@ func (m *Mongo) GetInteractive(ctx context.Context, id string) (*models.Interact
 			}
 			filename := filepath.Base(f.URI)
 			fileExt := filepath.Ext(f.URI)
-			if fileExt == ".html" || fileExt == ".htm" {
+			if strings.EqualFold(fileExt, ".html") || strings.EqualFold(fileExt, ".htm") {
 				htmlFiles = append(htmlFiles, models.HTMLFile{
 					Name: filename,
 					URI:  fmt.Sprintf("%s/%s", interactive.URI, f.URI),
