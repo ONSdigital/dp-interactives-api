@@ -32,13 +32,13 @@ func TestArchive(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("And files in archive should be 4", func() {
-				So(len(a.Files), ShouldEqual, 1)
+				So(len(a.Files), ShouldEqual, 2)
 			})
 		})
 	})
 
-	Convey("Given an invalid zip file (no index.html)", t, func() {
-		archiveName, b, err := createTestZip("root.css", "root.html", "root.js")
+	Convey("Given an invalid zip file (no .html file present)", t, func() {
+		archiveName, b, err := createTestZip("root.css", "root.js")
 		defer os.Remove(archiveName)
 		So(err, ShouldBeNil)
 		So(archiveName, ShouldNotBeEmpty)
