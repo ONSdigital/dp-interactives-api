@@ -20,7 +20,7 @@ import (
 const (
 	UpdateFieldKey      = "interactive"
 	FileFieldKey        = "file"
-	maxUploadFileSizeMb = 50
+	maxUploadFileSizeMb = 2500
 )
 
 type FormDataValidator func(*http.Request) error
