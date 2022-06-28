@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
+	"time"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/aws/aws-sdk-go/aws"
@@ -124,6 +125,8 @@ func (e *Init) DoGetFilesService(ctx context.Context, cfg *config.Config) (api.F
 func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer {
 	s := dphttp.NewServer(bindAddr, router)
 	s.HandleOSSignals = false
+	s.ReadTimeout = 900 * time.Second
+	s.WriteTimeout = 900 * time.Second
 	return s
 }
 
@@ -166,7 +169,7 @@ func (e *Init) DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3
 			Endpoint:         aws.String(cfg.AwsEndpoint),
 			Region:           aws.String(cfg.AwsRegion),
 			S3ForcePathStyle: aws.Bool(true),
-			Credentials:      credentials.NewStaticCredentials("n/a", "n/a", ""),
+			Credentials:      credentials.NewStaticCredentials("na", "na", ""),
 		})
 
 		if err != nil {

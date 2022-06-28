@@ -15,9 +15,9 @@ var (
 	ErrNoIndexHtml = errors.New("interactive must contain 1 htm(l) file")
 )
 
-//this is a tactical solution - we need ot know about html files on new upload
-//so zebedee collection json populated - this is for preview - as we process the
-//zip async - zebedee doesnt get this info quick enough
+//this is a tactical solution - we need to know about html files on new upload
+//so zebedee collection json populated as expected for preview
+//because we process the zip async - zebedee doesnt get this info quick enough
 
 func Open(name string, zipFile []byte) (*models.Archive, error) {
 	size := int64(len(zipFile))
@@ -30,16 +30,20 @@ func Open(name string, zipFile []byte) (*models.Archive, error) {
 	var htmlFiles []*models.File
 	for _, f := range zipReader.File {
 		filename := filepath.Base(f.Name)
+		if filename[0] == '.' {
+			//skip hidden files
+			continue
+		}
+
 		fileExt := filepath.Ext(f.Name)
 		if strings.EqualFold(fileExt, ".html") || strings.EqualFold(fileExt, ".htm") {
 			hasHtmFile = true
 			//we only care about html files right now for preview
 			//the patch from importer will overwrite with full details
 			htmlFiles = append(htmlFiles, &models.File{
-				Name:     filename,
-				Mimetype: "tbc",
-				Size:     int64(f.UncompressedSize64),
-				URI:      f.Name,
+				Name: filename,
+				Size: int64(f.UncompressedSize64),
+				URI:  f.Name,
 			})
 		}
 	}
