@@ -114,7 +114,6 @@ Feature: Interactives API (Update interactive)
                         "files": [
                             {
                                 "name": "index.html",
-                                "mimetype": "tbc",
                                 "size_in_bytes": 47767,
                                 "uri": "index.html"
                             }
@@ -183,7 +182,6 @@ Feature: Interactives API (Update interactive)
                         "files": [
                             {
                                 "name": "index.html",
-                                "mimetype": "tbc",
                                 "size_in_bytes": 47767,
                                 "uri": "index.html"
                             }
@@ -345,7 +343,6 @@ Feature: Interactives API (Update interactive)
                         "files": [
                             {
                                 "name": "index.html",
-                                "mimetype": "tbc",
                                 "size_in_bytes": 47767,
                                 "uri": "index.html"
                             }
