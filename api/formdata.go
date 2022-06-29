@@ -1,16 +1,15 @@
 package api
 
 import (
-	"crypto/sha1"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-playground/mold/v4/modifiers"
 	"github.com/go-playground/validator/v10"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -47,8 +46,6 @@ var (
 type FormDataRequest struct {
 	req                 *http.Request
 	api                 *API
-	FileData            []byte
-	Sha                 string
 	FileName            string
 	Interactive         *models.Interactive
 	isMetadataMandatory bool
@@ -64,7 +61,6 @@ func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDat
 }
 
 func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs []error) {
-	var data []byte
 	var err error
 	var filename string
 
@@ -101,12 +97,21 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 				errs = append(errs, validatorError(FileFieldKey, msg))
 			}
 
-			if data, err = ioutil.ReadAll(file); err != nil {
+			tmpZip, err := os.CreateTemp("", "s3-zip_*.zip")
+			if err != nil {
+				msg := fmt.Sprintf("http body read error %s", err.Error())
+				errs = append(errs, validatorError(FileFieldKey, msg))
+			}
+			if _, err = io.Copy(tmpZip, file); err != nil {
+				msg := fmt.Sprintf("http body read error %s", err.Error())
+				errs = append(errs, validatorError(FileFieldKey, msg))
+			}
+			if err = tmpZip.Close(); err != nil {
 				msg := fmt.Sprintf("http body read error %s", err.Error())
 				errs = append(errs, validatorError(FileFieldKey, msg))
 			}
 
-			filename = fileHeader.Filename
+			filename = tmpZip.Name()
 		}
 
 		if err = attachmentValidator(f.req); err != nil {
@@ -148,14 +153,8 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 	}
 
 	if len(errs) == 0 {
-		hasher := sha1.New()
-		hasher.Write(data)
-		sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-
-		f.FileData = data
 		f.FileName = filename
 		f.Interactive = interactive
-		f.Sha = sha
 	}
 
 	return

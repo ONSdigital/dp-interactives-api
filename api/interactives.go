@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/models"
@@ -35,16 +36,17 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
 		return
 	}
-	archive, err := Open(formDataRequest.FileName, formDataRequest.FileData)
+	archive, err := Open(formDataRequest.FileName)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 		return
 	}
+	defer os.Remove(formDataRequest.FileName)
 
 	update := formDataRequest.Interactive
 
 	// Upload to S3
-	uri, err := api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
+	uri, err := api.uploadFile(formDataRequest.FileName)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 		return
@@ -54,7 +56,6 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 	id := api.newUUID("")
 	interact := &models.Interactive{
 		ID:        id,
-		SHA:       formDataRequest.Sha,
 		Active:    &enabled,
 		Published: &disabled,
 		State:     models.ArchiveUploaded.String(),
@@ -184,23 +185,23 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 	// Finally check if file to be uploaded
 	uri := ""
-	if formDataRequest.FileData != nil {
+	if formDataRequest.FileName != "" {
 		// Process form data (S3)
-		uri, err = api.uploadFile(formDataRequest.Sha, formDataRequest.FileName, formDataRequest.FileData)
+		uri, err = api.uploadFile(formDataRequest.FileName)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 			return
 		}
 
-		archive, err := Open(formDataRequest.FileName, formDataRequest.FileData)
+		archive, err := Open(formDataRequest.FileName)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 			return
 		}
+		defer os.Remove(formDataRequest.FileName)
 
 		updatedModel.Archive = archive
 		updatedModel.State = models.ArchiveUploaded.String()
-		updatedModel.SHA = formDataRequest.Sha
 	}
 
 	// write to DB

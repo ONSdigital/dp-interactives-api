@@ -1,10 +1,10 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/ONSdigital/dp-net/v2/responder"
 
@@ -102,19 +102,23 @@ func (*API) Close(ctx context.Context) error {
 	return nil
 }
 
-func (api *API) uploadFile(sha, filename string, data []byte) (string, error) {
+func (api *API) uploadFile(filename string) (string, error) {
 	err := api.s3.ValidateBucket()
 	if err != nil {
 		return "", fmt.Errorf("invalid s3 bucket %w", err)
 	}
 
-	fileWithPath := fmt.Sprintf("%s/%s", sha, filename)
-	_, err = api.s3.Upload(&s3manager.UploadInput{Body: bytes.NewReader(data), Key: &fileWithPath})
+	file, err := os.Open(filename)
+	if err != nil {
+		return "", fmt.Errorf("cannot open zipfile %w", err)
+	}
+
+	_, err = api.s3.Upload(&s3manager.UploadInput{Body: file, Key: &filename})
 	if err != nil {
 		return "", fmt.Errorf("s3 upload error %w", err)
 	}
 
-	return fileWithPath, nil
+	return filename, nil
 }
 
 func (api *API) blockAccess(i *models.Interactive) bool {
