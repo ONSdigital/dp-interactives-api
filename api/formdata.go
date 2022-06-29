@@ -64,8 +64,12 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 	var err error
 	var filename string
 
-	// Expecting 1 file attachment - only zip
-	if err = f.req.ParseMultipartForm(maxUploadFileSizeMb << 20); err != nil {
+	// maxMemory needs to be manageable for containerised envs like Nomad:
+	// 		ParseMultipartForm parses a request body as multipart/form-data.
+	// 		The whole request body is parsed and up to a total of maxMemory bytes of
+	// 		its file parts are stored in memory, with the remainder stored on
+	// 		disk in temporary files.
+	if err = f.req.ParseMultipartForm(10 << 20); err != nil {
 		msg := fmt.Sprintf("error parsing form data %s", err.Error())
 		errs = append(errs, validatorError(FileFieldKey, msg))
 	}
