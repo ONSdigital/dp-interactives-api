@@ -13,22 +13,25 @@ import (
 
 func TestArchive(t *testing.T) {
 
-	Convey("Given an empty file", t, func() {
+	Convey("Given an invalid zip file", t, func() {
+		archive, err := os.CreateTemp("", "test-zip_*.zip")
+		So(err, ShouldBeNil)
+		defer os.Remove(archive.Name())
 		Convey("Then there should an error returned when attempt to open", func() {
-			a, err := api.Open("name", nil)
+			a, err := api.Open(archive.Name())
 			So(err, ShouldBeError, zip.ErrFormat)
 			So(a, ShouldBeNil)
 		})
 	})
 
 	Convey("Given a valid zip file", t, func() {
-		archiveName, b, err := createTestZip("root.css", "root.html", "root.js", "index.html")
+		archiveName, _, err := createTestZip("root.css", "root.html", "root.js", "index.html")
 		defer os.Remove(archiveName)
 		So(err, ShouldBeNil)
 		So(archiveName, ShouldNotBeEmpty)
 
 		Convey("Then open should run successfully", func() {
-			a, err := api.Open(archiveName, b)
+			a, err := api.Open(archiveName)
 			So(err, ShouldBeNil)
 
 			Convey("And files in archive should be 4", func() {
@@ -38,13 +41,13 @@ func TestArchive(t *testing.T) {
 	})
 
 	Convey("Given an invalid zip file (no .html file present)", t, func() {
-		archiveName, b, err := createTestZip("root.css", "root.js")
+		archiveName, _, err := createTestZip("root.css", "root.js")
 		defer os.Remove(archiveName)
 		So(err, ShouldBeNil)
 		So(archiveName, ShouldNotBeEmpty)
 
 		Convey("Then open should run successfully", func() {
-			a, err := api.Open(archiveName, b)
+			a, err := api.Open(archiveName)
 			So(err, ShouldEqual, api.ErrNoIndexHtml)
 			So(a, ShouldBeNil)
 		})

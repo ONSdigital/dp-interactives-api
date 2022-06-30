@@ -46,9 +46,10 @@ var (
 type FormDataRequest struct {
 	req                 *http.Request
 	api                 *API
-	FileName            string
+	Name                string
 	Interactive         *models.Interactive
 	isMetadataMandatory bool
+	TmpFileName         string
 }
 
 func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDataValidator, metadataMandatory bool) (*FormDataRequest, []error) {
@@ -62,7 +63,7 @@ func newFormDataRequest(req *http.Request, api *API, attachmentValidator FormDat
 
 func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs []error) {
 	var err error
-	var filename string
+	var tmpfilename, filename string
 
 	// maxMemory needs to be manageable for containerised envs like Nomad:
 	// 		ParseMultipartForm parses a request body as multipart/form-data.
@@ -115,7 +116,8 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 				errs = append(errs, validatorError(FileFieldKey, msg))
 			}
 
-			filename = tmpZip.Name()
+			tmpfilename = tmpZip.Name()
+			filename = fileHeader.Filename
 		}
 
 		if err = attachmentValidator(f.req); err != nil {
@@ -157,7 +159,8 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 	}
 
 	if len(errs) == 0 {
-		f.FileName = filename
+		f.TmpFileName = tmpfilename
+		f.Name = filename
 		f.Interactive = interactive
 	}
 

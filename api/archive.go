@@ -2,6 +2,7 @@ package api
 
 import (
 	"archive/zip"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -19,6 +20,11 @@ var (
 //because we process the zip async - zebedee doesnt get this info quick enough
 
 func Open(name string) (*models.Archive, error) {
+	fi, err := os.Stat(name)
+	if err != nil {
+		return nil, err
+	}
+
 	zipReader, err := zip.OpenReader(name)
 	if err != nil {
 		return nil, err
@@ -51,7 +57,7 @@ func Open(name string) (*models.Archive, error) {
 	}
 
 	return &models.Archive{
-		Name:  name,
+		Size:  fi.Size(),
 		Files: htmlFiles,
 	}, nil
 }

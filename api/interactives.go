@@ -36,17 +36,18 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
 		return
 	}
-	archive, err := Open(formDataRequest.FileName)
+	archive, err := Open(formDataRequest.TmpFileName)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 		return
 	}
-	defer os.Remove(formDataRequest.FileName)
+	defer os.Remove(formDataRequest.TmpFileName)
 
+	archive.Name = formDataRequest.Name
 	update := formDataRequest.Interactive
 
 	// Upload to S3
-	uri, err := api.uploadFile(formDataRequest.FileName)
+	uri, err := api.uploadFile(formDataRequest.TmpFileName)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 		return
@@ -185,21 +186,22 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 	// Finally check if file to be uploaded
 	uri := ""
-	if formDataRequest.FileName != "" {
+	if formDataRequest.TmpFileName != "" {
 		// Process form data (S3)
-		uri, err = api.uploadFile(formDataRequest.FileName)
+		uri, err = api.uploadFile(formDataRequest.TmpFileName)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 			return
 		}
 
-		archive, err := Open(formDataRequest.FileName)
+		archive, err := Open(formDataRequest.TmpFileName)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 			return
 		}
-		defer os.Remove(formDataRequest.FileName)
+		defer os.Remove(formDataRequest.TmpFileName)
 
+		archive.Name = formDataRequest.Name
 		updatedModel.Archive = archive
 		updatedModel.State = models.ArchiveUploaded.String()
 	}

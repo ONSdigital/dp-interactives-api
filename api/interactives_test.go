@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ONSdigital/dp-net/v2/responder"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -20,6 +21,7 @@ import (
 	s3Mock "github.com/ONSdigital/dp-interactives-api/upload/mock"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	kMock "github.com/ONSdigital/dp-kafka/v3/kafkatest"
+	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
@@ -55,6 +57,7 @@ var (
 
 func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 	t.Parallel()
+	log.SetDestination(io.Discard, io.Discard)
 
 	type request struct {
 		uri          string
@@ -201,6 +204,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 
 func TestUploadInteractivesHandlers(t *testing.T) {
 	t.Parallel()
+	log.SetDestination(io.Discard, io.Discard)
 
 	ctx := context.Background()
 
@@ -275,6 +279,8 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 
 func TestGetInteractiveMetadataHandler(t *testing.T) {
 	t.Parallel()
+	log.SetDestination(io.Discard, io.Discard)
+
 	interactiveID := "11-22-33-44"
 	tests := []struct {
 		title             string
