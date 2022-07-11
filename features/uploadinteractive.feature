@@ -93,7 +93,7 @@ Feature: Interactives API (Get interactive)
                         "internal_id": "123"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27300/interactives/Title123-AbcdE123/embed",
+                    "url": "http://preview_url/interactives/Title123-AbcdE123/embed",
                     "uri": "/interactives/Title123-AbcdE123"
                 }
             """

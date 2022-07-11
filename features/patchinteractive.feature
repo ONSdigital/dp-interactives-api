@@ -103,7 +103,7 @@ Feature: Interactives API (Patch interactive)
                         "collection_id": "a_collection"
                     },
                     "state": "ImportSuccess",
-                    "url": "http://localhost:27300/interactives/Title123-resid321/embed",
+                    "url": "http://preview_url/interactives/Title123-resid321/embed",
                     "uri": "/interactives/Title123-resid321"
                 }
             """

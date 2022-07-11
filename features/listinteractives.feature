@@ -56,7 +56,7 @@ Feature: Interactives API (List interactives)
                                 "name": "rhyCq4GCknxx0nzeqx2LE077Ruo=/TestMe.zip"
                             },
                             "last_updated":"2021-01-01T00:00:01Z",
-                            "url": "http://localhost:27300/interactives/slug-abcde123/embed",
+                            "url": "http://preview_url/interactives/slug-abcde123/embed",
                             "uri": "/interactives/slug-abcde123"
                         }
                 ]

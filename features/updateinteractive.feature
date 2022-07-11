@@ -133,7 +133,7 @@ Feature: Interactives API (Update interactive)
                         "internal_id": "456"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27300/interactives/Title456-resid321/embed",
+                    "url": "http://preview_url/interactives/Title456-resid321/embed",
                     "uri": "/interactives/Title456-resid321"
                 }
             """
@@ -201,7 +201,7 @@ Feature: Interactives API (Update interactive)
                         "internal_id": "456"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27300/interactives/Title456-resid321/embed",
+                    "url": "http://preview_url/interactives/Title456-resid321/embed",
                     "uri": "/interactives/Title456-resid321"
                 }
             """
@@ -251,7 +251,7 @@ Feature: Interactives API (Update interactive)
                         "internal_id": "123"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27300/interactives/Title321-resid321/embed",
+                    "url": "http://preview_url/interactives/Title321-resid321/embed",
                     "uri": "/interactives/Title321-resid321"
                 }
             """
@@ -303,7 +303,7 @@ Feature: Interactives API (Update interactive)
                         "internal_id": "456"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27300/interactives/Title456-resid321/embed",
+                    "url": "http://preview_url/interactives/Title456-resid321/embed",
                     "uri": "/interactives/Title456-resid321"
                 }
             """
@@ -362,7 +362,7 @@ Feature: Interactives API (Update interactive)
                         "internal_id": "123"
                     },
                     "state": "ArchiveUploaded",
-                    "url": "http://localhost:27300/interactives/human readable slug-resid321/embed",
+                    "url": "http://preview_url/interactives/human readable slug-resid321/embed",
                     "uri": "/interactives/human readable slug-resid321"
                 }
             """

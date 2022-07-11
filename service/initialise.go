@@ -132,8 +132,8 @@ func (e *Init) DoGetHTTPServer(bindAddr string, router http.Handler) HTTPServer 
 
 // DoGetMongoDB returns a MongoDB
 func (e *Init) DoGetMongoDB(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
-	mongodb := &mongo.Mongo{Config: cfg}
-	if err := mongodb.Init(ctx, false, true); err != nil {
+	mongodb := &mongo.Mongo{MongoConfig: cfg.MongoConfig, PreviewRootURL: cfg.PreviewRootURL}
+	if err := mongodb.Init(ctx); err != nil {
 		return nil, err
 	}
 	return mongodb, nil

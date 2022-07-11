@@ -99,7 +99,7 @@ func (c *InteractivesApiComponent) putDocumentInDatabase(document interface{}, i
 		},
 	}
 
-	_, err := c.MongoClient.Connection.C(collectionName).UpsertById(context.Background(), id, update)
+	_, err := c.MongoClient.Connection.Collection(collectionName).UpsertById(context.Background(), id, update)
 
 	if err != nil {
 		return err

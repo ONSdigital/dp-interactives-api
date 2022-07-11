@@ -4,7 +4,13 @@ import (
 	"time"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/kelseyhightower/envconfig"
+)
+
+const (
+	MetadataCollection = "MetadataCollection"
+	ArchiveCollection  = "ArchiveCollection"
 )
 
 // Config represents service configuration for dp-interactives-api
@@ -39,14 +45,8 @@ type Config struct {
 	AuthorisationConfig        *authorisation.Config
 }
 
-// MongoConfig contains the config required to connect to MongoDB.
 type MongoConfig struct {
-	BindAddr   string `envconfig:"MONGODB_BIND_ADDR"   json:"-"`
-	Collection string `envconfig:"MONGODB_COLLECTION"`
-	Database   string `envconfig:"MONGODB_DATABASE"`
-	Username   string `envconfig:"MONGODB_USERNAME"    json:"-"`
-	Password   string `envconfig:"MONGODB_PASSWORD"    json:"-"`
-	IsSSL      bool   `envconfig:"MONGODB_IS_SSL"`
+	mongodriver.MongoDriverConfig
 }
 
 var cfg *Config
@@ -82,12 +82,21 @@ func Get() (*Config, error) {
 		DefaultLimit:               20,
 		DefaultOffset:              0,
 		MongoConfig: MongoConfig{
-			BindAddr:   "localhost:27017",
-			Collection: "metadata",
-			Database:   "interactives",
-			Username:   "",
-			Password:   "",
-			IsSSL:      false,
+			MongoDriverConfig: mongodriver.MongoDriverConfig{
+				ClusterEndpoint:               "localhost:27017",
+				Username:                      "",
+				Password:                      "",
+				Database:                      "interactives",
+				Collections:                   map[string]string{MetadataCollection: "metadata", ArchiveCollection: "archive"},
+				ReplicaSet:                    "",
+				IsStrongReadConcernEnabled:    false,
+				IsWriteConcernMajorityEnabled: true,
+				ConnectTimeout:                5 * time.Second,
+				QueryTimeout:                  15 * time.Second,
+				TLSConnectionConfig: mongodriver.TLSConnectionConfig{
+					IsSSL: false,
+				},
+			},
 		},
 		AuthorisationConfig: auth,
 	}

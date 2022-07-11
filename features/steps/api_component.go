@@ -2,23 +2,18 @@ package steps
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
-	"strings"
-
-	"github.com/ONSdigital/dp-interactives-api/models"
-	uuid "github.com/satori/go.uuid"
-
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
 	"github.com/ONSdigital/dp-authorisation/v2/permissions"
 	componenttest "github.com/ONSdigital/dp-component-test"
+	"github.com/ONSdigital/dp-component-test/utils"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/dp-interactives-api/service"
 	serviceMock "github.com/ONSdigital/dp-interactives-api/service/mock"
@@ -26,7 +21,11 @@ import (
 	uploadMock "github.com/ONSdigital/dp-interactives-api/upload/mock"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
+	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"github.com/ONSdigital/log.go/v2/log"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	uuid "github.com/satori/go.uuid"
 )
 
 type InteractivesApiComponent struct {
@@ -100,11 +99,20 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 	log.Info(context.Background(), "configuration for component test", log.Data{"config": c.Config})
 
 	cfg, _ := config.Get()
-	cfg.MongoConfig.BindAddr = strings.Replace(mongoURI, "mongodb://", "", 1)
-	cfg.MongoConfig.Database = "interactives-api"
-	mongodb := &mongo.Mongo{Config: cfg}
 
-	if err := mongodb.Init(context.Background(), false, true); err != nil {
+	mongodb := &mongo.Mongo{
+		PreviewRootURL: "http://preview_url",
+		MongoConfig: config.MongoConfig{
+			MongoDriverConfig: mongodriver.MongoDriverConfig{
+				ClusterEndpoint: mongoURI,
+				Database:        utils.RandomDatabase(),
+				Collections:     cfg.MongoConfig.Collections,
+				ConnectTimeout:  cfg.MongoConfig.ConnectTimeout,
+				QueryTimeout:    cfg.MongoConfig.QueryTimeout,
+			},
+		}}
+
+	if err := mongodb.Init(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -122,7 +130,7 @@ func NewInteractivesApiComponent(mongoURI string) (*InteractivesApiComponent, er
 func (c *InteractivesApiComponent) Reset() error {
 	ctx := context.Background()
 
-	if err := c.MongoClient.Init(ctx, false, true); err != nil {
+	if err := c.MongoClient.Init(ctx); err != nil {
 		log.Warn(ctx, "error initialising MongoClient during Reset", log.Data{"err": err.Error()})
 	}
 	c.setInitialiserMock()
