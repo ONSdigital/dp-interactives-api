@@ -2,26 +2,23 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-net/v2/responder"
-	"net/http"
-	"time"
-
-	"github.com/ONSdigital/dp-interactives-api/models"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-
 	"github.com/ONSdigital/dp-api-clients-go/v2/files"
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
-	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	dphttp "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	dps3 "github.com/ONSdigital/dp-s3/v2"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"net/http"
+	"time"
 )
 
 type ExternalServiceList struct {
@@ -66,7 +63,7 @@ func (e *ExternalServiceList) GetKafkaProducer(ctx context.Context, cfg *config.
 }
 
 // GetS3Uploaded creates a S3 client and sets the S3Uploaded flag to true
-func (e *ExternalServiceList) GetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+func (e *ExternalServiceList) GetS3Client(ctx context.Context, cfg *config.Config) (api.S3Interface, error) {
 	s3, err := e.Init.DoGetS3Client(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -96,7 +93,7 @@ func (e *ExternalServiceList) GetAuthorisationMiddleware(ctx context.Context, au
 }
 
 // GetGenerators returns all the attribute generators necessary - i.e. uuid, resourceId and slug
-func (e *ExternalServiceList) GetGenerators() (models.Generator, models.Generator, models.Generator) {
+func (e *ExternalServiceList) GetGenerators() (data.Generator, data.Generator, data.Generator) {
 	return e.Init.DoGetGenerators()
 }
 
@@ -162,7 +159,7 @@ func (e *Init) DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafk
 }
 
 // DoGetS3Uploaded returns a S3Client
-func (e *Init) DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+func (e *Init) DoGetS3Client(ctx context.Context, cfg *config.Config) (api.S3Interface, error) {
 	if cfg.AwsEndpoint != "" {
 		//for local development only - set env var to initialise
 		s, err := session.NewSession(&aws.Config{
@@ -207,8 +204,8 @@ func (e *Init) DoGetAuthorisationMiddleware(ctx context.Context, authorisationCo
 }
 
 // DoGetGenerators creates authorisation middleware for the given config
-func (e *Init) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
-	return models.GenerateUUID(), models.GenerateResourceId(), models.GenerateHumanReadableSlug()
+func (e *Init) DoGetGenerators() (data.Generator, data.Generator, data.Generator) {
+	return data.GenerateUUID(), data.GenerateResourceId(), data.GenerateHumanReadableSlug()
 }
 
 // DoGetResponder creates the default responder

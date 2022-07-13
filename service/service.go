@@ -2,18 +2,16 @@ package service
 
 import (
 	"context"
-	"net/http"
-
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
-	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"net/http"
 )
 
 // Service contains all the configs, server and clients to run the interactives API
@@ -48,7 +46,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		return nil, err
 	}
 
-	var s3Client upload.S3Interface
+	var s3Client api.S3Interface
 	var producer kafka.IProducer
 	var filesService api.FilesService
 	if cfg.PublishingEnabled {
@@ -185,7 +183,7 @@ func registerCheckers(ctx context.Context,
 	hc HealthChecker,
 	mongoDB api.MongoServer,
 	producer kafka.IProducer,
-	s3 upload.S3Interface,
+	s3 api.S3Interface,
 	authorisationMiddleware authorisation.Middleware,
 	filesService api.FilesService) (err error) {
 

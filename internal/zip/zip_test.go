@@ -1,8 +1,8 @@
-package api_test
+package zip_test
 
 import (
 	"archive/zip"
-	"github.com/ONSdigital/dp-interactives-api/api"
+	zip2 "github.com/ONSdigital/dp-interactives-api/internal/zip"
 	"io"
 	"os"
 	"strings"
@@ -18,9 +18,10 @@ func TestArchive(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer os.Remove(archive.Name())
 		Convey("Then there should an error returned when attempt to open", func() {
-			a, err := api.Open(archive.Name())
+			a, f, err := zip2.Open(archive.Name())
 			So(err, ShouldBeError, zip.ErrFormat)
 			So(a, ShouldBeNil)
+			So(f, ShouldBeNil)
 		})
 	})
 
@@ -31,11 +32,12 @@ func TestArchive(t *testing.T) {
 		So(archiveName, ShouldNotBeEmpty)
 
 		Convey("Then open should run successfully", func() {
-			a, err := api.Open(archiveName)
+			a, f, err := zip2.Open(archiveName)
 			So(err, ShouldBeNil)
+			So(a, ShouldNotBeNil)
 
 			Convey("And files in archive should be 4", func() {
-				So(len(a.Files), ShouldEqual, 2)
+				So(len(f), ShouldEqual, 2)
 			})
 		})
 	})
@@ -47,9 +49,10 @@ func TestArchive(t *testing.T) {
 		So(archiveName, ShouldNotBeEmpty)
 
 		Convey("Then open should run successfully", func() {
-			a, err := api.Open(archiveName)
-			So(err, ShouldEqual, api.ErrNoIndexHtml)
+			a, f, err := zip2.Open(archiveName)
+			So(err, ShouldEqual, zip2.ErrNoIndexHtml)
 			So(a, ShouldBeNil)
+			So(f, ShouldBeNil)
 		})
 	})
 }

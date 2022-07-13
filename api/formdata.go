@@ -138,7 +138,7 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 		}
 
 		if interactive.Metadata == nil {
-			interactive.Metadata = &models.InteractiveMetadata{}
+			interactive.Metadata = &models.Metadata{}
 		}
 		interactive.Metadata.Label = strings.TrimSpace(interactive.Metadata.Label)
 
@@ -165,13 +165,6 @@ func (f *FormDataRequest) validate(attachmentValidator FormDataValidator) (errs 
 	}
 
 	return
-}
-
-func (f *FormDataRequest) hasMetadata() bool {
-	if f.Interactive == nil || f.Interactive.Metadata == nil {
-		return false
-	}
-	return f.Interactive.Metadata.HasData()
 }
 
 func validatorError(ns, msg string) error {

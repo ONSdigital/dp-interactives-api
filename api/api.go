@@ -3,21 +3,19 @@ package api
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
-
-	"github.com/ONSdigital/dp-net/v2/responder"
-
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/event"
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/schema"
-	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
+	"net/http"
+	"os"
 )
 
 const (
@@ -34,10 +32,10 @@ type API struct {
 	filesService  FilesService
 	auth          authorisation.Middleware
 	producer      *event.AvroProducer
-	s3            upload.S3Interface
-	newUUID       models.Generator
-	newResourceID models.Generator
-	newSlug       models.Generator
+	s3            S3Interface
+	newUUID       data.Generator
+	newResourceID data.Generator
+	newSlug       data.Generator
 	respond       *responder.Responder
 }
 
@@ -48,11 +46,11 @@ func Setup(ctx context.Context,
 	auth authorisation.Middleware,
 	mongoDB MongoServer,
 	kafkaProducer kafka.IProducer,
-	s3 upload.S3Interface,
+	s3 S3Interface,
 	filesService FilesService,
-	newUUID models.Generator,
-	newResourceID models.Generator,
-	newSlug models.Generator,
+	newUUID data.Generator,
+	newResourceID data.Generator,
+	newSlug data.Generator,
 	respond *responder.Responder) *API {
 
 	var kProducer *event.AvroProducer

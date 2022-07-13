@@ -3,13 +3,6 @@ package service_test
 import (
 	"context"
 	"fmt"
-	"github.com/ONSdigital/dp-net/v2/responder"
-	"net/http"
-	"sync"
-	"testing"
-
-	"github.com/ONSdigital/dp-interactives-api/models"
-
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
@@ -17,13 +10,16 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/api"
 	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"github.com/ONSdigital/dp-interactives-api/service"
 	serviceMock "github.com/ONSdigital/dp-interactives-api/service/mock"
-	"github.com/ONSdigital/dp-interactives-api/upload"
-	uploadMock "github.com/ONSdigital/dp-interactives-api/upload/mock"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"github.com/pkg/errors"
+	"net/http"
+	"sync"
+	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -44,7 +40,7 @@ var (
 	errS3            = errors.New("s3 error")
 
 	noopGen            = func(string) string { return "" }
-	funcDoGetGenerator = func() (models.Generator, models.Generator, models.Generator) {
+	funcDoGetGenerator = func() (data.Generator, data.Generator, data.Generator) {
 		return noopGen, noopGen, noopGen
 	}
 	funcDoGetMongoDbErr = func(ctx context.Context, cfg *config.Config) (api.MongoServer, error) {
@@ -104,7 +100,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 
-		s3Mock := &uploadMock.S3InterfaceMock{
+		s3Mock := &apiMock.S3InterfaceMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
@@ -140,11 +136,11 @@ func TestRun(t *testing.T) {
 			return nil, errKafkaProducer
 		}
 
-		funcDoGetS3Ok := func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+		funcDoGetS3Ok := func(ctx context.Context, cfg *config.Config) (api.S3Interface, error) {
 			return s3Mock, nil
 		}
 
-		funcDoGetS3Err := func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+		funcDoGetS3Err := func(ctx context.Context, cfg *config.Config) (api.S3Interface, error) {
 			return nil, errS3
 		}
 
@@ -420,7 +416,7 @@ func TestClose(t *testing.T) {
 			},
 		}
 
-		s3Mock := &uploadMock.S3InterfaceMock{
+		s3Mock := &apiMock.S3InterfaceMock{
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
@@ -450,7 +446,7 @@ func TestClose(t *testing.T) {
 					return hcMock, nil
 				},
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
-				DoGetS3ClientFunc:     func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) { return s3Mock, nil },
+				DoGetS3ClientFunc:     func(ctx context.Context, cfg *config.Config) (api.S3Interface, error) { return s3Mock, nil },
 				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},
@@ -489,7 +485,7 @@ func TestClose(t *testing.T) {
 					return hcMock, nil
 				},
 				DoGetHealthClientFunc: func(name, url string) *health.Client { return &health.Client{} },
-				DoGetS3ClientFunc:     func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) { return s3Mock, nil },
+				DoGetS3ClientFunc:     func(ctx context.Context, cfg *config.Config) (api.S3Interface, error) { return s3Mock, nil },
 				DoGetAuthorisationMiddlewareFunc: func(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error) {
 					return authorisationMiddleware, nil
 				},

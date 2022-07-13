@@ -1,14 +1,12 @@
-package api
+package zip
 
 import (
 	"archive/zip"
+	"errors"
+	"github.com/ONSdigital/dp-interactives-api/models"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/ONSdigital/dp-interactives-api/models"
-
-	"github.com/pkg/errors"
 )
 
 var (
@@ -19,19 +17,19 @@ var (
 //so zebedee collection json populated as expected for preview
 //because we process the zip async - zebedee doesnt get this info quick enough
 
-func Open(name string) (*models.Archive, error) {
+func Open(name string) (*models.Archive, []*models.HTMLFile, error) {
 	fi, err := os.Stat(name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	zipReader, err := zip.OpenReader(name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var hasHtmFile bool
-	var htmlFiles []*models.File
+	var htmlFiles []*models.HTMLFile
 	for _, f := range zipReader.File {
 		filename := filepath.Base(f.Name)
 		if filename[0] == '.' {
@@ -44,20 +42,16 @@ func Open(name string) (*models.Archive, error) {
 			hasHtmFile = true
 			//we only care about html files right now for preview
 			//the patch from importer will overwrite with full details
-			htmlFiles = append(htmlFiles, &models.File{
+			htmlFiles = append(htmlFiles, &models.HTMLFile{
 				Name: filename,
-				Size: int64(f.UncompressedSize64),
 				URI:  f.Name,
 			})
 		}
 	}
 
 	if !hasHtmFile {
-		return nil, ErrNoIndexHtml
+		return nil, nil, ErrNoIndexHtml
 	}
 
-	return &models.Archive{
-		Size:  fi.Size(),
-		Files: htmlFiles,
-	}, nil
+	return &models.Archive{Size: fi.Size()}, htmlFiles, nil
 }

@@ -2,8 +2,6 @@ package steps
 
 import (
 	"context"
-	"net/http"
-
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
 	"github.com/ONSdigital/dp-authorisation/v2/permissions"
@@ -13,12 +11,10 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/api"
 	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
-	"github.com/ONSdigital/dp-interactives-api/models"
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/dp-interactives-api/service"
 	serviceMock "github.com/ONSdigital/dp-interactives-api/service/mock"
-	"github.com/ONSdigital/dp-interactives-api/upload"
-	uploadMock "github.com/ONSdigital/dp-interactives-api/upload/mock"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
@@ -26,6 +22,7 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	uuid "github.com/satori/go.uuid"
+	"net/http"
 )
 
 type InteractivesApiComponent struct {
@@ -190,8 +187,8 @@ func (f *InteractivesApiComponent) DoGetMongoDB(_ context.Context, _ *config.Con
 	return f.MongoClient, nil
 }
 
-func (f *InteractivesApiComponent) DoS3Client(_ context.Context, _ *config.Config) (upload.S3Interface, error) {
-	return &uploadMock.S3InterfaceMock{
+func (f *InteractivesApiComponent) DoS3Client(_ context.Context, _ *config.Config) (api.S3Interface, error) {
+	return &apiMock.S3InterfaceMock{
 		CheckerFunc:        func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		ValidateBucketFunc: func() error { return nil },
 		UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
@@ -208,7 +205,7 @@ func (f *InteractivesApiComponent) DoGetAuthorisationMiddleware(ctx context.Cont
 	return middleware, nil
 }
 
-func (f *InteractivesApiComponent) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
+func (f *InteractivesApiComponent) DoGetGenerators() (data.Generator, data.Generator, data.Generator) {
 	emptyUUID := func(string) string { return uuid.Nil.String() }
 	fakeResourceID := func(string) string { return "AbcdE123" }
 	noopSlug := func(in string) string { return in }

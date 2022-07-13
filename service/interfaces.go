@@ -2,17 +2,15 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-interactives-api/models"
-	"github.com/ONSdigital/dp-net/v2/responder"
-	"net/http"
-
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
-	"github.com/ONSdigital/dp-interactives-api/upload"
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
+	"github.com/ONSdigital/dp-net/v2/responder"
+	"net/http"
 )
 
 //go:generate moq -out mock/initialiser.go -pkg mock . Initialiser
@@ -26,9 +24,9 @@ type Initialiser interface {
 	DoGetKafkaProducer(ctx context.Context, cfg *config.Config) (kafka.IProducer, error)
 	DoGetHealthClient(name, url string) *health.Client
 	DoGetHealthCheck(cfg *config.Config, buildTime, gitCommit, version string) (HealthChecker, error)
-	DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)
+	DoGetS3Client(ctx context.Context, cfg *config.Config) (api.S3Interface, error)
 	DoGetAuthorisationMiddleware(ctx context.Context, authorisationConfig *authorisation.Config) (authorisation.Middleware, error)
-	DoGetGenerators() (models.Generator, models.Generator, models.Generator)
+	DoGetGenerators() (data.Generator, data.Generator, data.Generator)
 	DoGetFilesService(ctx context.Context, cfg *config.Config) (api.FilesService, error)
 	DoGetResponder(ctx context.Context, cfg *config.Config) (*responder.Responder, error)
 }

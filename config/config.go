@@ -87,7 +87,7 @@ func Get() (*Config, error) {
 				Username:                      "",
 				Password:                      "",
 				Database:                      "interactives",
-				Collections:                   map[string]string{MetadataCollection: "metadata", ArchiveCollection: "archive"},
+				Collections:                   map[string]string{MetadataCollection: "metadata", ArchiveCollection: "archive_files"},
 				ReplicaSet:                    "",
 				IsStrongReadConcernEnabled:    false,
 				IsWriteConcernMajorityEnabled: true,

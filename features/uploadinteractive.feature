@@ -70,14 +70,7 @@ Feature: Interactives API (Get interactive)
                     "published": false,
                     "archive": {
                         "name": "single-interactive.zip",
-                        "size_in_bytes": 591714,
-                        "files": [
-                            {
-                                "name": "index.html",
-                                "size_in_bytes": 47767,
-                                "uri": "index.html"
-                            }
-                        ]
+                        "size_in_bytes": 591714
                     },
                     "html_files": [
                         {

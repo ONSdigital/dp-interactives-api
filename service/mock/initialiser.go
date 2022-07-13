@@ -9,9 +9,8 @@ import (
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
-	"github.com/ONSdigital/dp-interactives-api/models"
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"github.com/ONSdigital/dp-interactives-api/service"
-	"github.com/ONSdigital/dp-interactives-api/upload"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	"github.com/ONSdigital/dp-net/v2/responder"
 	"net/http"
@@ -34,7 +33,7 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetFilesServiceFunc: func(ctx context.Context, cfg *config.Config) (api.FilesService, error) {
 // 				panic("mock out the DoGetFilesService method")
 // 			},
-// 			DoGetGeneratorsFunc: func() (models.Generator, models.Generator, models.Generator) {
+// 			DoGetGeneratorsFunc: func() (data.Generator, data.Generator, data.Generator) {
 // 				panic("mock out the DoGetGenerators method")
 // 			},
 // 			DoGetHTTPServerFunc: func(bindAddr string, router http.Handler) service.HTTPServer {
@@ -55,7 +54,7 @@ var _ service.Initialiser = &InitialiserMock{}
 // 			DoGetResponderFunc: func(ctx context.Context, cfg *config.Config) (*responder.Responder, error) {
 // 				panic("mock out the DoGetResponder method")
 // 			},
-// 			DoGetS3ClientFunc: func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+// 			DoGetS3ClientFunc: func(ctx context.Context, cfg *config.Config) (api.S3Interface, error) {
 // 				panic("mock out the DoGetS3Client method")
 // 			},
 // 		}
@@ -72,7 +71,7 @@ type InitialiserMock struct {
 	DoGetFilesServiceFunc func(ctx context.Context, cfg *config.Config) (api.FilesService, error)
 
 	// DoGetGeneratorsFunc mocks the DoGetGenerators method.
-	DoGetGeneratorsFunc func() (models.Generator, models.Generator, models.Generator)
+	DoGetGeneratorsFunc func() (data.Generator, data.Generator, data.Generator)
 
 	// DoGetHTTPServerFunc mocks the DoGetHTTPServer method.
 	DoGetHTTPServerFunc func(bindAddr string, router http.Handler) service.HTTPServer
@@ -93,7 +92,7 @@ type InitialiserMock struct {
 	DoGetResponderFunc func(ctx context.Context, cfg *config.Config) (*responder.Responder, error)
 
 	// DoGetS3ClientFunc mocks the DoGetS3Client method.
-	DoGetS3ClientFunc func(ctx context.Context, cfg *config.Config) (upload.S3Interface, error)
+	DoGetS3ClientFunc func(ctx context.Context, cfg *config.Config) (api.S3Interface, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -251,7 +250,7 @@ func (mock *InitialiserMock) DoGetFilesServiceCalls() []struct {
 }
 
 // DoGetGenerators calls DoGetGeneratorsFunc.
-func (mock *InitialiserMock) DoGetGenerators() (models.Generator, models.Generator, models.Generator) {
+func (mock *InitialiserMock) DoGetGenerators() (data.Generator, data.Generator, data.Generator) {
 	if mock.DoGetGeneratorsFunc == nil {
 		panic("InitialiserMock.DoGetGeneratorsFunc: method is nil but Initialiser.DoGetGenerators was just called")
 	}
@@ -495,7 +494,7 @@ func (mock *InitialiserMock) DoGetResponderCalls() []struct {
 }
 
 // DoGetS3Client calls DoGetS3ClientFunc.
-func (mock *InitialiserMock) DoGetS3Client(ctx context.Context, cfg *config.Config) (upload.S3Interface, error) {
+func (mock *InitialiserMock) DoGetS3Client(ctx context.Context, cfg *config.Config) (api.S3Interface, error) {
 	if mock.DoGetS3ClientFunc == nil {
 		panic("InitialiserMock.DoGetS3ClientFunc: method is nil but Initialiser.DoGetS3Client was just called")
 	}

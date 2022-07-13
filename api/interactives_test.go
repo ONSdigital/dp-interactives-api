@@ -4,28 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ONSdigital/dp-net/v2/responder"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strconv"
-	"testing"
-
 	authorisation "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
 	"github.com/ONSdigital/dp-interactives-api/models"
-	"github.com/ONSdigital/dp-interactives-api/upload"
-	s3Mock "github.com/ONSdigital/dp-interactives-api/upload/mock"
 	kafka "github.com/ONSdigital/dp-kafka/v3"
 	kMock "github.com/ONSdigital/dp-kafka/v3/kafkatest"
+	"github.com/ONSdigital/dp-net/v2/responder"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"testing"
 )
 
 var (
@@ -45,7 +42,7 @@ var (
 				State:     models.ImportSuccess.String(),
 				Active:    b,
 				Published: &off,
-				Metadata: &models.InteractiveMetadata{
+				Metadata: &models.Metadata{
 					Title: "title",
 					Label: "label",
 				},
@@ -69,7 +66,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 		title         string
 		formFile      string
 		mongoServer   api.MongoServer
-		s3            upload.S3Interface
+		s3            api.S3Interface
 		fs            api.FilesService
 		kafkaProducer kafka.IProducer
 	}{
@@ -96,11 +93,9 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			title:    "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
 			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
-				GetInteractiveFunc:                 getInteractiveFunc,
+				GetInteractiveFunc: getInteractiveFunc,
 			},
-			s3: &s3Mock.S3InterfaceMock{
+			s3: &apiMock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return errors.New("s3 error") },
 			},
 		},
@@ -112,11 +107,9 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			title:    "WhenUploadError_ThenInternalServerError",
 			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
-				GetInteractiveFunc:                 getInteractiveFunc,
+				GetInteractiveFunc: getInteractiveFunc,
 			},
-			s3: &s3Mock.S3InterfaceMock{
+			s3: &apiMock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
 				UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
 					return nil, errors.New("upload error")
@@ -131,14 +124,12 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			title:    "WhenDbError_ThenInternalServerError",
 			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return errors.New("db upsert error")
 				},
 				GetInteractiveFunc: getInteractiveFunc,
 			},
-			s3: &s3Mock.S3InterfaceMock{
+			s3: &apiMock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
 				UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
 					return nil, nil
@@ -154,14 +145,12 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 			title:    "WhenAllSuccess_ThenStatus20x",
 			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
-				GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-				GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 				UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 					return nil
 				},
 				GetInteractiveFunc: getInteractiveFunc,
 			},
-			s3: &s3Mock.S3InterfaceMock{
+			s3: &apiMock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
 				UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
 					return nil, nil
@@ -183,7 +172,7 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				var req *http.Request
 				if tc.formFile != "" {
 					req = test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", tc.formFile, &models.Interactive{
-						Metadata: &models.InteractiveMetadata{
+						Metadata: &models.Metadata{
 							Label:      "label1",
 							InternalID: "idValue",
 							Title:      "title1",
@@ -209,7 +198,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 	ctx := context.Background()
 
 	formFile := "resources/single-interactive.zip"
-	s3 := &s3Mock.S3InterfaceMock{
+	s3 := &apiMock.S3InterfaceMock{
 		ValidateBucketFunc: func() error { return nil },
 		UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
 			return nil, nil
@@ -221,8 +210,6 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 	fs := &apiMock.FilesServiceMock{}
 
 	mongoServer := &apiMock.MongoServerMock{
-		GetActiveInteractiveGivenShaFunc:   func(ctx context.Context, sha string) (*models.Interactive, error) { return nil, nil },
-		GetActiveInteractiveGivenFieldFunc: func(ctx context.Context, field, title string) (*models.Interactive, error) { return nil, nil },
 		UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 			if id, _ := strconv.Atoi(vis.Metadata.ResourceID); id > 15 {
 				return nil
@@ -262,7 +249,7 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 		a := api.Setup(ctx, &config.Config{PublishingEnabled: true}, mux.NewRouter(), newAuthMiddlwareMock(), mongoServer, kafkaProducer, s3, fs, validInteractiveIdGen, resourceIdGen, noopGen, respondr)
 
 		req := test_support.NewFileUploadRequest(testReq.method, testReq.uri, "attachment", formFile, &models.Interactive{
-			Metadata: &models.InteractiveMetadata{
+			Metadata: &models.Metadata{
 				Label:      "label1",
 				InternalID: "idValue",
 				Title:      "title1",
@@ -318,7 +305,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusOK,
 			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &on, Published: &on, Metadata: &models.InteractiveMetadata{}}, nil
+					return &models.Interactive{Active: &on, Published: &on, Metadata: &models.Metadata{}}, nil
 				},
 			},
 			publishingEnabled: true,
@@ -328,7 +315,7 @@ func TestGetInteractiveMetadataHandler(t *testing.T) {
 			responseCode: http.StatusNotFound,
 			mongoServer: &apiMock.MongoServerMock{
 				GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
-					return &models.Interactive{Active: &on, Published: &off, Metadata: &models.InteractiveMetadata{}}, nil
+					return &models.Interactive{Active: &on, Published: &off, Metadata: &models.Metadata{}}, nil
 				},
 			},
 			publishingEnabled: false,

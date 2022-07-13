@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-
+	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/event"
+	"github.com/ONSdigital/dp-interactives-api/internal/zip"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
+	"io/ioutil"
+	"net/http"
+	"os"
 )
 
 const (
@@ -28,15 +29,16 @@ var (
 )
 
 func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request) {
-	// Validate request
 	ctx := r.Context()
 	log.Info(ctx, "upload interactives")
+
+	// Validate request
 	formDataRequest, errs := newFormDataRequest(r, api, WantOnlyOneAttachmentWithMetadata, true)
 	if errs != nil {
 		api.respond.Errors(ctx, w, http.StatusBadRequest, errs)
 		return
 	}
-	archive, err := Open(formDataRequest.TmpFileName)
+	archive, htmlFiles, err := zip.Open(formDataRequest.TmpFileName)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 		return
@@ -61,6 +63,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		Published: &disabled,
 		State:     models.ArchiveUploaded.String(),
 		Archive:   archive,
+		HTMLFiles: htmlFiles,
 	}
 	collisions := 0
 	for {
@@ -94,10 +97,9 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 
 	// Send kafka message to importer
 	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
-		ID:           id,
-		FilePath:     uri,
-		Title:        interactive.Metadata.Title,
-		CurrentFiles: []string{""}, //need to send an empty val :(
+		ID:       id,
+		FilePath: uri,
+		Title:    interactive.Metadata.Title,
 	})
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to notify importer %w", err))
@@ -159,29 +161,6 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		if update.Metadata != nil {
 			updatedModel.Metadata = updatedModel.Metadata.Update(update.Metadata, api.newSlug)
 		}
-
-		// link with collection-id
-		// a collectionID is present in the update message
-		if update.Metadata != nil && update.Metadata.CollectionID != "" {
-			colID := update.Metadata.CollectionID
-			// update if empty OR different
-			if existing.Metadata.CollectionID == "" || colID != existing.Metadata.CollectionID {
-				// files/archive can be in the update or existing - check update first
-				arch := update.Archive
-				if arch == nil || len(arch.Files) == 0 {
-					arch = existing.Archive
-				}
-				if arch != nil && len(arch.Files) > 0 {
-					for _, file := range arch.Files {
-						if err := api.filesService.SetCollectionID(ctx, file.Name, colID); err != nil {
-							api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error setting collectionID %s %s %w", id, colID, err))
-							return
-						}
-					}
-					updatedModel.Metadata.CollectionID = colID
-				}
-			}
-		}
 	}
 
 	// Finally check if file to be uploaded
@@ -194,7 +173,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		archive, err := Open(formDataRequest.TmpFileName)
+		archive, htmlFiles, err := zip.Open(formDataRequest.TmpFileName)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 			return
@@ -203,6 +182,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 		archive.Name = formDataRequest.Name
 		updatedModel.Archive = archive
+		updatedModel.HTMLFiles = htmlFiles
 		updatedModel.State = models.ArchiveUploaded.String()
 	}
 
@@ -222,20 +202,10 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 
 	// send kafka message to importer (if file uploaded)
 	if uri != "" {
-		//need to send at least one value
-		//https://github.com/go-avro/avro/pull/20
-		//https://github.com/go-avro/avro/issues/33 (we should update tbh)
-		currentFiles := []string{""}
-		if interactive.Archive != nil {
-			for _, f := range interactive.Archive.Files {
-				currentFiles = append(currentFiles, f.Name)
-			}
-		}
 		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
-			ID:           id,
-			FilePath:     uri,
-			Title:        interactive.Metadata.Title,
-			CurrentFiles: currentFiles,
+			ID:       id,
+			FilePath: uri,
+			Title:    interactive.Metadata.Title,
 		})
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to notify importer %w", err))
@@ -254,7 +224,7 @@ func (api *API) PublishCollectionHandler(w http.ResponseWriter, r *http.Request)
 	log.Info(ctx, "publish collection", log.Data{"collection_id": collectionId})
 	publish := true
 
-	ix, err := api.mongoDB.ListInteractives(ctx, &models.InteractiveFilter{Metadata: &models.InteractiveMetadata{CollectionID: collectionId}})
+	ix, err := api.mongoDB.ListInteractives(ctx, &models.Filter{Metadata: &models.Metadata{CollectionID: collectionId}})
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, err)
 		return
@@ -277,7 +247,7 @@ func (api *API) PublishCollectionHandler(w http.ResponseWriter, r *http.Request)
 	for _, inter := range ix {
 		inter.Published = &publish
 
-		if err := api.mongoDB.PatchInteractive(ctx, mongo.Publish, inter); err != nil {
+		if err := api.mongoDB.PatchInteractive(ctx, interactives.Publish, inter); err != nil {
 			errInteractives = errInteractives + inter.ID + ", "
 			log.Error(ctx, fmt.Sprintf("error setting publish state for interactive [%s]", inter.ID), err)
 		}
@@ -305,16 +275,14 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var patchReq models.PatchRequest
+	var patchReq interactives.PatchRequest
 	if err := json.Unmarshal(bytes, &patchReq); err != nil {
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("cannot unmarshal request body %w", err))
 		return
 	}
 
-	var patchAttribute mongo.PatchAttribute
 	switch patchReq.Attribute {
-	case "Archive":
-		patchAttribute = mongo.Archive
+	case interactives.PatchArchive:
 		if patchReq.Interactive.Archive == nil {
 			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("no archive to patch"))
 		}
@@ -325,31 +293,51 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 		}
 
 		i.Archive = &models.Archive{
-			Name:          patchReq.Interactive.Archive.Name,
-			Size:          patchReq.Interactive.Archive.Size,
-			ImportMessage: patchReq.Interactive.Archive.ImportMessage,
+			Name:                patchReq.Interactive.Archive.Name,
+			Size:                patchReq.Interactive.Archive.Size,
+			ImportMessage:       patchReq.Interactive.Archive.ImportMessage,
+			UploadRootDirectory: patchReq.Interactive.Archive.UploadRootDirectory,
 		}
-		for _, f := range patchReq.Interactive.Archive.Files {
-			i.Archive.Files = append(i.Archive.Files, &models.File{
-				Name:     f.Name,
-				Mimetype: f.Mimetype,
-				Size:     f.Size,
-				URI:      f.URI,
-			})
+
+		err = api.mongoDB.PatchInteractive(ctx, patchReq.Attribute, i)
+		if err != nil {
+			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error patching interactive %s %w", i.ID, err))
+			return
 		}
-	case "LinkToCollection":
-		patchAttribute = mongo.LinkToCollection
+	case interactives.LinkToCollection:
 		if patchReq.Interactive.Metadata != nil && patchReq.Interactive.Metadata.CollectionID != "" {
 			i.Metadata.CollectionID = patchReq.Interactive.Metadata.CollectionID
 		}
+
+		err = api.mongoDB.PatchInteractive(ctx, patchReq.Attribute, i)
+		if err != nil {
+			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error patching interactive %s %w", i.ID, err))
+			return
+		}
+	case interactives.PatchArchiveFile:
+		if patchReq.ArchiveFiles == nil {
+			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("no archive files to patch"))
+		}
+
+		for _, req := range patchReq.ArchiveFiles {
+			id := api.newUUID("")
+			file := &models.ArchiveFile{
+				ID:            id,
+				InteractiveID: i.ID,
+				Name:          req.Name,
+				Mimetype:      req.Mimetype,
+				Size:          req.Size,
+				URI:           req.URI,
+			}
+
+			err = api.mongoDB.UpsertArchiveFile(ctx, file)
+			if err != nil {
+				api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error patching interactive %s %w", i.ID, err))
+				return
+			}
+		}
 	default:
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unsuppported attribute %s", patchReq.Attribute))
-		return
-	}
-
-	err = api.mongoDB.PatchInteractive(ctx, patchAttribute, i)
-	if err != nil {
-		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error patching interactive %s %w", i.ID, err))
 		return
 	}
 
@@ -358,13 +346,13 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 
 func (api *API) ListInteractivesHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	var filter *models.InteractiveFilter
+	var filter *models.Filter
 
 	filterJson := req.URL.Query().Get("filter")
 	log.Info(ctx, "list interactives", log.Data{"filter": filterJson})
 	if filterJson != "" {
 		defer req.Body.Close()
-		filter = &models.InteractiveFilter{}
+		filter = &models.Filter{}
 
 		if err := json.Unmarshal([]byte(filterJson), &filter); err != nil {
 			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error unmarshalling body %w", ErrInvalidBody))

@@ -1,4 +1,4 @@
-package models
+package data
 
 import (
 	gonanoid "github.com/matoous/go-nanoid/v2"

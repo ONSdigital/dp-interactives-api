@@ -1,16 +1,15 @@
-package models_test
+package data_test
 
 import (
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"testing"
-
-	"github.com/ONSdigital/dp-interactives-api/models"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	resourceIdGenerator = models.GenerateResourceId()
-	slugGenerator       = models.GenerateHumanReadableSlug()
+	resourceIdGenerator = data.GenerateResourceId()
+	slugGenerator       = data.GenerateHumanReadableSlug()
 )
 
 func TestGetResourceId(t *testing.T) {

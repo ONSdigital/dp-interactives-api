@@ -10,8 +10,7 @@ var interactiveUploadedEvent = `{
   "fields": [
     {"name": "id", "type": "string"},
     {"name": "path", "type": "string"},
-    {"name": "title", "type": "string"},
-	{"name": "current_files", "type":["null",{"type":"array","items":"string"}]}
+    {"name": "title", "type": "string"}
   ]
 }`
 

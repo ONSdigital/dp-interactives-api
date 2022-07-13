@@ -5,23 +5,23 @@ package mock
 
 import (
 	"context"
-	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	"github.com/ONSdigital/dp-interactives-api/upload"
+	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"sync"
 )
 
-// Ensure, that S3InterfaceMock does implement upload.S3Interface.
+// Ensure, that S3InterfaceMock does implement api.S3Interface.
 // If this is not the case, regenerate this file with moq.
-var _ upload.S3Interface = &S3InterfaceMock{}
+var _ api.S3Interface = &S3InterfaceMock{}
 
-// S3InterfaceMock is a mock implementation of upload.S3Interface.
+// S3InterfaceMock is a mock implementation of api.S3Interface.
 //
 // 	func TestSomethingThatUsesS3Interface(t *testing.T) {
 //
-// 		// make and configure a mocked upload.S3Interface
+// 		// make and configure a mocked api.S3Interface
 // 		mockedS3Interface := &S3InterfaceMock{
-// 			CheckerFunc: func(ctx context.Context, state *health.CheckState) error {
+// 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
 // 			UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
@@ -32,13 +32,13 @@ var _ upload.S3Interface = &S3InterfaceMock{}
 // 			},
 // 		}
 //
-// 		// use mockedS3Interface in code that requires upload.S3Interface
+// 		// use mockedS3Interface in code that requires api.S3Interface
 // 		// and then make assertions.
 //
 // 	}
 type S3InterfaceMock struct {
 	// CheckerFunc mocks the Checker method.
-	CheckerFunc func(ctx context.Context, state *health.CheckState) error
+	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
 
 	// UploadFunc mocks the Upload method.
 	UploadFunc func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error)
@@ -53,7 +53,7 @@ type S3InterfaceMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// State is the state argument value.
-			State *health.CheckState
+			State *healthcheck.CheckState
 		}
 		// Upload holds details about calls to the Upload method.
 		Upload []struct {
@@ -72,13 +72,13 @@ type S3InterfaceMock struct {
 }
 
 // Checker calls CheckerFunc.
-func (mock *S3InterfaceMock) Checker(ctx context.Context, state *health.CheckState) error {
+func (mock *S3InterfaceMock) Checker(ctx context.Context, state *healthcheck.CheckState) error {
 	if mock.CheckerFunc == nil {
 		panic("S3InterfaceMock.CheckerFunc: method is nil but S3Interface.Checker was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
-		State *health.CheckState
+		State *healthcheck.CheckState
 	}{
 		Ctx:   ctx,
 		State: state,
@@ -94,11 +94,11 @@ func (mock *S3InterfaceMock) Checker(ctx context.Context, state *health.CheckSta
 //     len(mockedS3Interface.CheckerCalls())
 func (mock *S3InterfaceMock) CheckerCalls() []struct {
 	Ctx   context.Context
-	State *health.CheckState
+	State *healthcheck.CheckState
 } {
 	var calls []struct {
 		Ctx   context.Context
-		State *health.CheckState
+		State *healthcheck.CheckState
 	}
 	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
