@@ -4,10 +4,8 @@ go 1.17
 
 replace github.com/ONSdigital/dp-net => github.com/ONSdigital/dp-net v1.4.0
 
-replace github.com/ONSdigital/dp-api-clients-go/v2 => /Users/markryan/workspace/methods/ons/dp-api-clients-go
-
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.138.1
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.157.0
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.18.0-rc.1
 	github.com/ONSdigital/dp-component-test v0.7.0
@@ -18,7 +16,7 @@ require (
 	github.com/ONSdigital/dp-net/v2 v2.4.0
 	github.com/ONSdigital/dp-s3/v2 v2.0.0-beta.2
 	github.com/ONSdigital/log.go/v2 v2.2.0
-	github.com/aws/aws-sdk-go v1.44.24
+	github.com/aws/aws-sdk-go v1.44.43
 	github.com/cucumber/godog v0.12.4
 	github.com/go-playground/mold/v4 v4.2.0
 	github.com/go-playground/validator/v10 v10.11.0
@@ -94,9 +92,9 @@ require (
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/net v0.0.0-20220526153639-5463443f8c37 // indirect
+	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
