@@ -31,17 +31,11 @@ var _ api.MongoServer = &MongoServerMock{}
 // 			GetInteractiveFunc: func(ctx context.Context, id string) (*models.Interactive, error) {
 // 				panic("mock out the GetInteractive method")
 // 			},
-// 			ListArchiveFilesFunc: func(ctx context.Context, interactiveId string) ([]*models.ArchiveFile, error) {
-// 				panic("mock out the ListArchiveFiles method")
-// 			},
 // 			ListInteractivesFunc: func(ctx context.Context, filter *models.Filter) ([]*models.Interactive, error) {
 // 				panic("mock out the ListInteractives method")
 // 			},
 // 			PatchInteractiveFunc: func(contextMoqParam context.Context, patchAttribute interactives.PatchAttribute, interactive *models.Interactive) error {
 // 				panic("mock out the PatchInteractive method")
-// 			},
-// 			UpsertArchiveFileFunc: func(ctx context.Context, file *models.ArchiveFile) error {
-// 				panic("mock out the UpsertArchiveFile method")
 // 			},
 // 			UpsertInteractiveFunc: func(ctx context.Context, id string, vis *models.Interactive) error {
 // 				panic("mock out the UpsertInteractive method")
@@ -62,17 +56,11 @@ type MongoServerMock struct {
 	// GetInteractiveFunc mocks the GetInteractive method.
 	GetInteractiveFunc func(ctx context.Context, id string) (*models.Interactive, error)
 
-	// ListArchiveFilesFunc mocks the ListArchiveFiles method.
-	ListArchiveFilesFunc func(ctx context.Context, interactiveId string) ([]*models.ArchiveFile, error)
-
 	// ListInteractivesFunc mocks the ListInteractives method.
 	ListInteractivesFunc func(ctx context.Context, filter *models.Filter) ([]*models.Interactive, error)
 
 	// PatchInteractiveFunc mocks the PatchInteractive method.
 	PatchInteractiveFunc func(contextMoqParam context.Context, patchAttribute interactives.PatchAttribute, interactive *models.Interactive) error
-
-	// UpsertArchiveFileFunc mocks the UpsertArchiveFile method.
-	UpsertArchiveFileFunc func(ctx context.Context, file *models.ArchiveFile) error
 
 	// UpsertInteractiveFunc mocks the UpsertInteractive method.
 	UpsertInteractiveFunc func(ctx context.Context, id string, vis *models.Interactive) error
@@ -98,13 +86,6 @@ type MongoServerMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// ListArchiveFiles holds details about calls to the ListArchiveFiles method.
-		ListArchiveFiles []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// InteractiveId is the interactiveId argument value.
-			InteractiveId string
-		}
 		// ListInteractives holds details about calls to the ListInteractives method.
 		ListInteractives []struct {
 			// Ctx is the ctx argument value.
@@ -121,13 +102,6 @@ type MongoServerMock struct {
 			// Interactive is the interactive argument value.
 			Interactive *models.Interactive
 		}
-		// UpsertArchiveFile holds details about calls to the UpsertArchiveFile method.
-		UpsertArchiveFile []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// File is the file argument value.
-			File *models.ArchiveFile
-		}
 		// UpsertInteractive holds details about calls to the UpsertInteractive method.
 		UpsertInteractive []struct {
 			// Ctx is the ctx argument value.
@@ -141,10 +115,8 @@ type MongoServerMock struct {
 	lockChecker           sync.RWMutex
 	lockClose             sync.RWMutex
 	lockGetInteractive    sync.RWMutex
-	lockListArchiveFiles  sync.RWMutex
 	lockListInteractives  sync.RWMutex
 	lockPatchInteractive  sync.RWMutex
-	lockUpsertArchiveFile sync.RWMutex
 	lockUpsertInteractive sync.RWMutex
 }
 
@@ -249,41 +221,6 @@ func (mock *MongoServerMock) GetInteractiveCalls() []struct {
 	return calls
 }
 
-// ListArchiveFiles calls ListArchiveFilesFunc.
-func (mock *MongoServerMock) ListArchiveFiles(ctx context.Context, interactiveId string) ([]*models.ArchiveFile, error) {
-	if mock.ListArchiveFilesFunc == nil {
-		panic("MongoServerMock.ListArchiveFilesFunc: method is nil but MongoServer.ListArchiveFiles was just called")
-	}
-	callInfo := struct {
-		Ctx           context.Context
-		InteractiveId string
-	}{
-		Ctx:           ctx,
-		InteractiveId: interactiveId,
-	}
-	mock.lockListArchiveFiles.Lock()
-	mock.calls.ListArchiveFiles = append(mock.calls.ListArchiveFiles, callInfo)
-	mock.lockListArchiveFiles.Unlock()
-	return mock.ListArchiveFilesFunc(ctx, interactiveId)
-}
-
-// ListArchiveFilesCalls gets all the calls that were made to ListArchiveFiles.
-// Check the length with:
-//     len(mockedMongoServer.ListArchiveFilesCalls())
-func (mock *MongoServerMock) ListArchiveFilesCalls() []struct {
-	Ctx           context.Context
-	InteractiveId string
-} {
-	var calls []struct {
-		Ctx           context.Context
-		InteractiveId string
-	}
-	mock.lockListArchiveFiles.RLock()
-	calls = mock.calls.ListArchiveFiles
-	mock.lockListArchiveFiles.RUnlock()
-	return calls
-}
-
 // ListInteractives calls ListInteractivesFunc.
 func (mock *MongoServerMock) ListInteractives(ctx context.Context, filter *models.Filter) ([]*models.Interactive, error) {
 	if mock.ListInteractivesFunc == nil {
@@ -355,41 +292,6 @@ func (mock *MongoServerMock) PatchInteractiveCalls() []struct {
 	mock.lockPatchInteractive.RLock()
 	calls = mock.calls.PatchInteractive
 	mock.lockPatchInteractive.RUnlock()
-	return calls
-}
-
-// UpsertArchiveFile calls UpsertArchiveFileFunc.
-func (mock *MongoServerMock) UpsertArchiveFile(ctx context.Context, file *models.ArchiveFile) error {
-	if mock.UpsertArchiveFileFunc == nil {
-		panic("MongoServerMock.UpsertArchiveFileFunc: method is nil but MongoServer.UpsertArchiveFile was just called")
-	}
-	callInfo := struct {
-		Ctx  context.Context
-		File *models.ArchiveFile
-	}{
-		Ctx:  ctx,
-		File: file,
-	}
-	mock.lockUpsertArchiveFile.Lock()
-	mock.calls.UpsertArchiveFile = append(mock.calls.UpsertArchiveFile, callInfo)
-	mock.lockUpsertArchiveFile.Unlock()
-	return mock.UpsertArchiveFileFunc(ctx, file)
-}
-
-// UpsertArchiveFileCalls gets all the calls that were made to UpsertArchiveFile.
-// Check the length with:
-//     len(mockedMongoServer.UpsertArchiveFileCalls())
-func (mock *MongoServerMock) UpsertArchiveFileCalls() []struct {
-	Ctx  context.Context
-	File *models.ArchiveFile
-} {
-	var calls []struct {
-		Ctx  context.Context
-		File *models.ArchiveFile
-	}
-	mock.lockUpsertArchiveFile.RLock()
-	calls = mock.calls.UpsertArchiveFile
-	mock.lockUpsertArchiveFile.RUnlock()
 	return calls
 }
 

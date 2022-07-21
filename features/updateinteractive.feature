@@ -109,7 +109,7 @@ Feature: Interactives API (Update interactive)
                     "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
                     "published": true,
                     "archive": {
-                        "name": "single-interactive.zip",
+                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
@@ -170,7 +170,7 @@ Feature: Interactives API (Update interactive)
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                     "published": false,
                     "archive": {
-                        "name": "single-interactive.zip",
+                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
@@ -324,7 +324,7 @@ Feature: Interactives API (Update interactive)
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                     "published": true,
                     "archive": {
-                        "name": "single-interactive.zip",
+                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [

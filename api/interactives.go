@@ -45,15 +45,15 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer os.Remove(formDataRequest.TmpFileName)
 
-	archive.Name = formDataRequest.Name
 	update := formDataRequest.Interactive
 
 	// Upload to S3
-	uri, err := api.uploadFile(formDataRequest.TmpFileName)
+	uri, err := api.uploadFile(formDataRequest)
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 		return
 	}
+	archive.Name = uri
 
 	// Write to DB
 	id := api.newUUID("")
@@ -167,7 +167,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	uri := ""
 	if formDataRequest.TmpFileName != "" {
 		// Process form data (S3)
-		uri, err = api.uploadFile(formDataRequest.TmpFileName)
+		uri, err = api.uploadFile(formDataRequest)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
 			return
@@ -180,7 +180,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		}
 		defer os.Remove(formDataRequest.TmpFileName)
 
-		archive.Name = formDataRequest.Name
+		archive.Name = uri
 		updatedModel.Archive = archive
 		updatedModel.HTMLFiles = htmlFiles
 		updatedModel.State = models.ArchiveUploaded.String()
@@ -313,28 +313,6 @@ func (api *API) PatchInteractiveHandler(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error patching interactive %s %w", i.ID, err))
 			return
-		}
-	case interactives.PatchArchiveFile:
-		if patchReq.ArchiveFiles == nil {
-			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("no archive files to patch"))
-		}
-
-		for _, req := range patchReq.ArchiveFiles {
-			id := api.newUUID("")
-			file := &models.ArchiveFile{
-				ID:            id,
-				InteractiveID: i.ID,
-				Name:          req.Name,
-				Mimetype:      req.Mimetype,
-				Size:          req.Size,
-				URI:           req.URI,
-			}
-
-			err = api.mongoDB.UpsertArchiveFile(ctx, file)
-			if err != nil {
-				api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("error patching interactive %s %w", i.ID, err))
-				return
-			}
 		}
 	default:
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unsuppported attribute %s", patchReq.Attribute))

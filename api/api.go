@@ -100,23 +100,24 @@ func (*API) Close(ctx context.Context) error {
 	return nil
 }
 
-func (api *API) uploadFile(filename string) (string, error) {
+func (api *API) uploadFile(req *FormDataRequest) (string, error) {
 	err := api.s3.ValidateBucket()
 	if err != nil {
 		return "", fmt.Errorf("invalid s3 bucket %w", err)
 	}
 
-	file, err := os.Open(filename)
+	localFile, err := os.Open(req.TmpFileName)
 	if err != nil {
 		return "", fmt.Errorf("cannot open zipfile %w", err)
 	}
 
-	_, err = api.s3.Upload(&s3manager.UploadInput{Body: file, Key: &filename})
+	uniqueS3Key := fmt.Sprintf("%s/%s", api.newUUID(""), req.Name)
+	_, err = api.s3.Upload(&s3manager.UploadInput{Body: localFile, Key: &uniqueS3Key})
 	if err != nil {
 		return "", fmt.Errorf("s3 upload error %w", err)
 	}
 
-	return filename, nil
+	return uniqueS3Key, nil
 }
 
 func (api *API) blockAccess(i *models.Interactive) bool {

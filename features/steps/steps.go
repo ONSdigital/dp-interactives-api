@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
-	"github.com/ONSdigital/dp-interactives-api/config"
 	test_support "github.com/ONSdigital/dp-interactives-api/internal/test-support"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/cucumber/godog"
-	"github.com/rdumont/assistdog"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"io/ioutil"
@@ -46,7 +44,6 @@ func (c *InteractivesApiComponent) RegisterSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^As an interactives user I PUT file "([^"]*)" with form-data "([^"]*)"$`, c.iPUTFileWithFormdataAsAdmin)
 	ctx.Step(`^As an interactives user I PUT no file with form-data "([^"]*)"$`, c.iPUTNoFileWithFormdataAsAdmin)
 	ctx.Step(`^As an interactives user with filter I GET '(.*)'$`, c.IGetWithFilterString)
-	ctx.Step(`^I should have these archive files:$`, c.iShouldHaveTheseArchiveFiles)
 }
 
 func (c *InteractivesApiComponent) adminJWTToken() error {
@@ -138,36 +135,6 @@ func (c *InteractivesApiComponent) iPUTNoFileWithFormdataAsAdmin(path string, bo
 
 func (c *InteractivesApiComponent) iPUTFileWithFormdataAsAdmin(formFile, path string, body *godog.DocString) error {
 	return c.makeRequest(http.MethodPut, path, formFile, []byte(body.Content), true)
-}
-
-func (c *InteractivesApiComponent) iShouldHaveTheseArchiveFiles(table *godog.Table) error {
-	assist := assistdog.NewDefault()
-	slice, err := assist.CreateSlice(&assistArchiveFiles{}, table)
-	if err != nil {
-		return err
-	}
-
-	files := slice.([]*assistArchiveFiles)
-	interactiveId := files[0].InteractiveID
-	collection := c.MongoClient.ActualCollectionName(config.ArchiveCollection)
-
-	var db []*models.ArchiveFile
-	_, err = c.MongoClient.Connection.Collection(collection).Find(context.TODO(), bson.M{"interactive_id": interactiveId}, &db)
-	if err != nil {
-		return err
-	}
-
-	assert.Nil(c, err)
-	assert.Equal(c, len(files), len(db))
-	for i := 0; i < len(files); i++ {
-		assert.Equal(c, files[i].Name, db[i].Name)
-		assert.Equal(c, files[i].InteractiveID, db[i].InteractiveID)
-		assert.Equal(c, files[i].Mimetype, db[i].Mimetype)
-		assert.Equal(c, files[i].URI, db[i].URI)
-		assert.EqualValues(c, files[i].Size, db[i].Size)
-	}
-
-	return c.StepError()
 }
 
 func (c *InteractivesApiComponent) makeRequest(method, path, formFile string, data []byte, admin bool) error {

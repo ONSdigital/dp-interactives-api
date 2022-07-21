@@ -22,8 +22,6 @@ type MongoServer interface {
 	GetInteractive(ctx context.Context, id string) (*models.Interactive, error)
 	ListInteractives(ctx context.Context, filter *models.Filter) ([]*models.Interactive, error)
 	PatchInteractive(context.Context, interactives.PatchAttribute, *models.Interactive) error
-	ListArchiveFiles(ctx context.Context, interactiveId string) ([]*models.ArchiveFile, error)
-	UpsertArchiveFile(ctx context.Context, file *models.ArchiveFile) error
 }
 
 // AuthHandler interface for adding auth to endpoints

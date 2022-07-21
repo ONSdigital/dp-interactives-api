@@ -5,7 +5,7 @@ go 1.17
 replace github.com/ONSdigital/dp-net => github.com/ONSdigital/dp-net v1.4.0
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.157.0
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.157.1
 	github.com/ONSdigital/dp-authorisation v0.2.0
 	github.com/ONSdigital/dp-authorisation/v2 v2.18.0-rc.1
 	github.com/ONSdigital/dp-component-test v0.7.0
@@ -24,7 +24,6 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/pkg/errors v0.9.1
-	github.com/rdumont/assistdog v0.0.0-20201106100018-168b06230d14
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/stretchr/testify v1.7.0

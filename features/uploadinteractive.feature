@@ -69,7 +69,7 @@ Feature: Interactives API (Get interactive)
                     "id": "00000000-0000-0000-0000-000000000000",
                     "published": false,
                     "archive": {
-                        "name": "single-interactive.zip",
+                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
