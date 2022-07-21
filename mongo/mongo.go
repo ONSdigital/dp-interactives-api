@@ -35,7 +35,6 @@ func (m *Mongo) Init(ctx context.Context) (err error) {
 	databaseCollectionBuilder := map[mongohealth.Database][]mongohealth.Collection{
 		(mongohealth.Database)(m.Database): {
 			mongohealth.Collection(m.ActualCollectionName(config.MetadataCollection)),
-			mongohealth.Collection(m.ActualCollectionName(config.ArchiveCollection)),
 		},
 	}
 	m.healthClient = mongohealth.NewClientWithCollections(m.Connection, databaseCollectionBuilder)

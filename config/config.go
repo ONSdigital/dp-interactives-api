@@ -10,7 +10,6 @@ import (
 
 const (
 	MetadataCollection = "MetadataCollection"
-	ArchiveCollection  = "ArchiveCollection"
 )
 
 // Config represents service configuration for dp-interactives-api
@@ -87,7 +86,7 @@ func Get() (*Config, error) {
 				Username:                      "",
 				Password:                      "",
 				Database:                      "interactives",
-				Collections:                   map[string]string{MetadataCollection: "metadata", ArchiveCollection: "archive_files"},
+				Collections:                   map[string]string{MetadataCollection: "metadata"},
 				ReplicaSet:                    "",
 				IsStrongReadConcernEnabled:    false,
 				IsWriteConcernMajorityEnabled: true,
