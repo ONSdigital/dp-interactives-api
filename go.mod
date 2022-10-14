@@ -5,9 +5,9 @@ go 1.17
 replace github.com/ONSdigital/dp-net => github.com/ONSdigital/dp-net v1.4.0
 
 require (
-	github.com/ONSdigital/dp-api-clients-go/v2 v2.157.1
+	github.com/ONSdigital/dp-api-clients-go/v2 v2.159.1
 	github.com/ONSdigital/dp-authorisation v0.2.0
-	github.com/ONSdigital/dp-authorisation/v2 v2.18.0-rc.1
+	github.com/ONSdigital/dp-authorisation/v2 v2.25.1
 	github.com/ONSdigital/dp-component-test v0.7.0
 	github.com/ONSdigital/dp-healthcheck v1.3.0
 	github.com/ONSdigital/dp-kafka/v3 v3.2.0
@@ -16,7 +16,7 @@ require (
 	github.com/ONSdigital/dp-net/v2 v2.4.0
 	github.com/ONSdigital/dp-s3/v2 v2.0.0-beta.2
 	github.com/ONSdigital/log.go/v2 v2.2.0
-	github.com/aws/aws-sdk-go v1.44.43
+	github.com/aws/aws-sdk-go v1.44.75
 	github.com/cucumber/godog v0.12.4
 	github.com/go-playground/mold/v4 v4.2.0
 	github.com/go-playground/validator/v10 v10.11.0
@@ -54,7 +54,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.1.0 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
@@ -91,9 +91,9 @@ require (
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
+	golang.org/x/net v0.0.0-20220811182439-13a9a731de15 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
