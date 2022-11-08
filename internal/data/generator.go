@@ -1,11 +1,12 @@
 package data
 
 import (
-	gonanoid "github.com/matoous/go-nanoid/v2"
-	uuid "github.com/satori/go.uuid"
 	"regexp"
 	"strings"
 	"unicode"
+
+	gonanoid "github.com/matoous/go-nanoid/v2"
+	uuid "github.com/satori/go.uuid"
 )
 
 type Generator func(string) string
@@ -43,6 +44,9 @@ func GenerateHumanReadableSlug() func(string) string {
 
 func GenerateUUID() func(string) string {
 	return func(string) string {
-		return uuid.NewV4().String()
+		if uid, err := uuid.NewV4(); err != nil {
+			return uid.String()
+		}
+		return ""
 	}
 }

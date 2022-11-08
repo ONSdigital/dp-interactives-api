@@ -4,7 +4,6 @@
 package mock
 
 import (
-	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"net/http"
 	"sync"
@@ -20,7 +19,7 @@ var _ api.AuthHandler = &AuthHandlerMock{}
 //
 // 		// make and configure a mocked api.AuthHandler
 // 		mockedAuthHandler := &AuthHandlerMock{
-// 			RequireFunc: func(required dpauth.Permissions, handler http.HandlerFunc) http.HandlerFunc {
+// 			RequireFunc: func(permission string, handler http.HandlerFunc) http.HandlerFunc {
 // 				panic("mock out the Require method")
 // 			},
 // 		}
@@ -31,14 +30,14 @@ var _ api.AuthHandler = &AuthHandlerMock{}
 // 	}
 type AuthHandlerMock struct {
 	// RequireFunc mocks the Require method.
-	RequireFunc func(required dpauth.Permissions, handler http.HandlerFunc) http.HandlerFunc
+	RequireFunc func(permission string, handler http.HandlerFunc) http.HandlerFunc
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Require holds details about calls to the Require method.
 		Require []struct {
-			// Required is the required argument value.
-			Required dpauth.Permissions
+			// Permission is the permission argument value.
+			Permission string
 			// Handler is the handler argument value.
 			Handler http.HandlerFunc
 		}
@@ -47,33 +46,33 @@ type AuthHandlerMock struct {
 }
 
 // Require calls RequireFunc.
-func (mock *AuthHandlerMock) Require(required dpauth.Permissions, handler http.HandlerFunc) http.HandlerFunc {
+func (mock *AuthHandlerMock) Require(permission string, handler http.HandlerFunc) http.HandlerFunc {
 	if mock.RequireFunc == nil {
 		panic("AuthHandlerMock.RequireFunc: method is nil but AuthHandler.Require was just called")
 	}
 	callInfo := struct {
-		Required dpauth.Permissions
-		Handler  http.HandlerFunc
+		Permission string
+		Handler    http.HandlerFunc
 	}{
-		Required: required,
-		Handler:  handler,
+		Permission: permission,
+		Handler:    handler,
 	}
 	mock.lockRequire.Lock()
 	mock.calls.Require = append(mock.calls.Require, callInfo)
 	mock.lockRequire.Unlock()
-	return mock.RequireFunc(required, handler)
+	return mock.RequireFunc(permission, handler)
 }
 
 // RequireCalls gets all the calls that were made to Require.
 // Check the length with:
 //     len(mockedAuthHandler.RequireCalls())
 func (mock *AuthHandlerMock) RequireCalls() []struct {
-	Required dpauth.Permissions
-	Handler  http.HandlerFunc
+	Permission string
+	Handler    http.HandlerFunc
 } {
 	var calls []struct {
-		Required dpauth.Permissions
-		Handler  http.HandlerFunc
+		Permission string
+		Handler    http.HandlerFunc
 	}
 	mock.lockRequire.RLock()
 	calls = mock.calls.Require

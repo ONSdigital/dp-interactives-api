@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
-	dpauth "github.com/ONSdigital/dp-authorisation/auth"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"net/http"
 )
 
 //go:generate moq -out mock/mongo.go -pkg mock . MongoServer
@@ -26,7 +26,7 @@ type MongoServer interface {
 
 // AuthHandler interface for adding auth to endpoints
 type AuthHandler interface {
-	Require(required dpauth.Permissions, handler http.HandlerFunc) http.HandlerFunc
+	Require(permission string, handler http.HandlerFunc) http.HandlerFunc
 }
 
 type FilesService interface {

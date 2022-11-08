@@ -66,7 +66,7 @@ func Get() (*Config, error) {
 		PreviewRootURL:             "http://localhost:27300",
 		AwsRegion:                  "eu-west-1",
 		UploadBucketName:           "dp-interactives-file-uploads",
-		Brokers:                    []string{"localhost:9093"},
+		Brokers:                    []string{"localhost:9092"},
 		MinBrokers:                 1,
 		KafkaVersion:               "1.0.2",
 		KafkaMaxBytes:              2000000,

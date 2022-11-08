@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-api-clients-go/v2/health"
-	dpauth "github.com/ONSdigital/dp-authorisation/auth"
+	"net/http"
+
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	"github.com/ONSdigital/dp-interactives-api/config"
@@ -11,7 +11,6 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 // Service contains all the configs, server and clients to run the interactives API
@@ -34,12 +33,6 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	r := mux.NewRouter()
 	s := serviceList.GetHTTPServer(cfg.BindAddr, r)
 
-	authorisationMiddleware, err := serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig)
-	if err != nil {
-		log.Fatal(ctx, "could not instantiate authorisation middleware", err)
-		return nil, err
-	}
-
 	mongoDB, err := serviceList.GetMongoDB(ctx, cfg)
 	if err != nil {
 		log.Fatal(ctx, "failed to initialise mongo DB", err)
@@ -49,6 +42,7 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 	var s3Client api.S3Interface
 	var producer kafka.IProducer
 	var filesService api.FilesService
+	var authorisationMiddleware authorisation.Middleware
 	if cfg.PublishingEnabled {
 		// Get S3Uploaded client
 		s3Client, err = serviceList.GetS3Client(ctx, cfg)
@@ -67,6 +61,13 @@ func Run(ctx context.Context, cfg *config.Config, serviceList *ExternalServiceLi
 		filesService, err = serviceList.GetFilesService(ctx, cfg)
 		if err != nil {
 			log.Fatal(ctx, "failed to initialise files service", err)
+			return nil, err
+		}
+
+		// Auth - only needed in publish
+		authorisationMiddleware, err = serviceList.GetAuthorisationMiddleware(ctx, cfg.AuthorisationConfig)
+		if err != nil {
+			log.Fatal(ctx, "could not instantiate authorisation middleware", err)
 			return nil, err
 		}
 	}
@@ -155,9 +156,11 @@ func (svc *Service) Close(ctx context.Context) error {
 			}
 		}
 
-		if err := svc.authorisationMiddleware.Close(ctx); err != nil {
-			log.Error(ctx, "failed to close authorisation middleware", err)
-			hasShutdownError = true
+		if svc.config.PublishingEnabled {
+			if err := svc.authorisationMiddleware.Close(ctx); err != nil {
+				log.Error(ctx, "failed to close authorisation middleware", err)
+				hasShutdownError = true
+			}
 		}
 
 		if !hasShutdownError {
@@ -209,32 +212,15 @@ func registerCheckers(ctx context.Context,
 			hasErrors = true
 			log.Error(ctx, "error adding check for filesService", err)
 		}
-	}
 
-	if err := hc.AddCheck("permissions cache health check", authorisationMiddleware.HealthCheck); err != nil {
-		hasErrors = true
-		log.Error(ctx, "error adding check for permissions cache", err)
+		if err := hc.AddCheck("permissions cache health check", authorisationMiddleware.HealthCheck); err != nil {
+			hasErrors = true
+			log.Error(ctx, "error adding check for permissions cache", err)
+		}
 	}
 
 	if hasErrors {
 		return errors.New("Error(s) registering checkers for healthcheck")
 	}
 	return nil
-}
-
-// generate permissions from dp-auth-api, using the provided health client, reusing its http Client
-func getAuthorisationHandlers(zc *health.Client) api.AuthHandler {
-	log.Info(context.Background(), "getting Authorisation Handlers", log.Data{"zc_url": zc.URL})
-
-	authClient := dpauth.NewPermissionsClient(zc.Client)
-	authVerifier := dpauth.DefaultPermissionsVerifier()
-
-	// for checking caller permissions when we only have a user/service token
-	permissions := dpauth.NewHandler(
-		dpauth.NewPermissionsRequestBuilder(zc.URL),
-		authClient,
-		authVerifier,
-	)
-
-	return permissions
 }
