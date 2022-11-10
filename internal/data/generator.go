@@ -44,7 +44,7 @@ func GenerateHumanReadableSlug() func(string) string {
 
 func GenerateUUID() func(string) string {
 	return func(string) string {
-		if uid, err := uuid.NewV4(); err != nil {
+		if uid, err := uuid.NewV4(); err == nil {
 			return uid.String()
 		}
 		return ""
