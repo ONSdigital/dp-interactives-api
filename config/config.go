@@ -65,6 +65,7 @@ func Get() (*Config, error) {
 		PublishingEnabled:          true,
 		PreviewRootURL:             "http://localhost:27300",
 		AwsRegion:                  "eu-west-1",
+		AwsEndpoint:                "http://localhost:4566",
 		UploadBucketName:           "dp-interactives-file-uploads",
 		Brokers:                    []string{"localhost:9092"},
 		MinBrokers:                 1,

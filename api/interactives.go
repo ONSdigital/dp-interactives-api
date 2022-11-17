@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+
 	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/event"
 	"github.com/ONSdigital/dp-interactives-api/internal/zip"
@@ -13,9 +17,6 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
-	"io/ioutil"
-	"net/http"
-	"os"
 )
 
 const (
@@ -96,10 +97,12 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Send kafka message to importer
+	// CollectionID will always be there (interactive can only be uploaded inside a collection)
 	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
-		ID:       id,
-		FilePath: uri,
-		Title:    interactive.Metadata.Title,
+		ID:           id,
+		FilePath:     uri,
+		Title:        interactive.Metadata.Title,
+		CollectionID: interactive.Metadata.CollectionID,
 	})
 	if err != nil {
 		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to notify importer %w", err))

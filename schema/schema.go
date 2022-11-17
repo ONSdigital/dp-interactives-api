@@ -10,7 +10,8 @@ var interactiveUploadedEvent = `{
   "fields": [
     {"name": "id", "type": "string"},
     {"name": "path", "type": "string"},
-    {"name": "title", "type": "string"}
+    {"name": "title", "type": "string"},
+    {"name": "collection_id", "type": "string"}
   ]
 }`
 
