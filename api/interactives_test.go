@@ -201,6 +201,9 @@ func TestUploadInteractivesHandlers(t *testing.T) {
 			}
 		},
 		GetInteractiveFunc: getInteractiveFunc,
+		PatchInteractiveFunc: func(contextMoqParam context.Context, patchAttribute interactives.PatchAttribute, interactive *models.Interactive) error {
+			return nil
+		},
 	}
 
 	type test struct {
