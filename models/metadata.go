@@ -2,9 +2,10 @@ package models
 
 import (
 	"fmt"
-	"github.com/ONSdigital/dp-interactives-api/internal/data"
 	"strings"
 	"time"
+
+	"github.com/ONSdigital/dp-interactives-api/internal/data"
 )
 
 type State int
@@ -15,6 +16,8 @@ const (
 	ArchiveDispatchedToImporter
 	ImportFailure
 	ImportSuccess
+	ArchiveUploading
+	ArchiveUploadFailed
 )
 
 var (
@@ -24,6 +27,8 @@ var (
 		"archivedispatchedtoimporter": ArchiveDispatchedToImporter,
 		"importfailure":               ImportFailure,
 		"importsuccess":               ImportSuccess,
+		"archiveuploading":            ArchiveUploading,
+		"archiveuploadfailed":         ArchiveUploadFailed,
 	}
 )
 
@@ -39,6 +44,10 @@ func (s State) String() string {
 		return "ImportFailure"
 	case ImportSuccess:
 		return "ImportSuccess"
+	case ArchiveUploading:
+		return "ArchiveUploading"
+	case ArchiveUploadFailed:
+		return "ArchiveUploadFailed"
 	default:
 		return "Unknown"
 	}

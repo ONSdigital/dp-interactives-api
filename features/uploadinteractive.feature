@@ -69,7 +69,6 @@ Feature: Interactives API (Get interactive)
                     "id": "00000000-0000-0000-0000-000000000000",
                     "published": false,
                     "archive": {
-                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
@@ -85,7 +84,7 @@ Feature: Interactives API (Get interactive)
                         "resource_id": "AbcdE123",
                         "internal_id": "123"
                     },
-                    "state": "ArchiveUploaded",
+                    "state": "ArchiveUploading",
                     "url": "http://preview_url/interactives/Title123-AbcdE123/embed",
                     "uri": "/interactives/Title123-AbcdE123"
                 }

@@ -109,7 +109,6 @@ Feature: Interactives API (Update interactive)
                     "id": "ca99d09c-953a-4fe5-9b0a-51b3d40c01f7",
                     "published": true,
                     "archive": {
-                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
@@ -125,7 +124,7 @@ Feature: Interactives API (Update interactive)
                         "resource_id": "resid321",
                         "internal_id": "456"
                     },
-                    "state": "ArchiveUploaded",
+                    "state": "ArchiveUploading",
                     "url": "http://preview_url/interactives/Title456-resid321/embed",
                     "uri": "/interactives/Title456-resid321"
                 }
@@ -170,7 +169,6 @@ Feature: Interactives API (Update interactive)
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                     "published": false,
                     "archive": {
-                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
@@ -186,7 +184,7 @@ Feature: Interactives API (Update interactive)
                         "resource_id": "resid321",
                         "internal_id": "456"
                     },
-                    "state": "ArchiveUploaded",
+                    "state": "ArchiveUploading",
                     "url": "http://preview_url/interactives/Title456-resid321/embed",
                     "uri": "/interactives/Title456-resid321"
                 }
@@ -324,7 +322,6 @@ Feature: Interactives API (Update interactive)
                     "id": "0d77a889-abb2-4432-ad22-9c23cf7ee796",
                     "published": true,
                     "archive": {
-                        "name": "00000000-0000-0000-0000-000000000000/single-interactive.zip",
                         "size_in_bytes": 591714
                     },
                     "html_files": [
@@ -340,7 +337,7 @@ Feature: Interactives API (Update interactive)
                         "resource_id": "resid321",
                         "internal_id": "123"
                     },
-                    "state": "ArchiveUploaded",
+                    "state": "ArchiveUploading",
                     "url": "http://preview_url/interactives/human readable slug-resid321/embed",
                     "uri": "/interactives/human readable slug-resid321"
                 }

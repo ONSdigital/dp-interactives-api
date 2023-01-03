@@ -14,6 +14,7 @@ import (
 	"github.com/ONSdigital/dp-interactives-api/internal/zip"
 	"github.com/ONSdigital/dp-interactives-api/models"
 	"github.com/ONSdigital/dp-interactives-api/mongo"
+	"github.com/ONSdigital/dp-net/request"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/gorilla/mux"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
@@ -44,17 +45,8 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 		return
 	}
-	defer os.Remove(formDataRequest.TmpFileName)
 
 	update := formDataRequest.Interactive
-
-	// Upload to S3
-	uri, err := api.uploadFile(formDataRequest)
-	if err != nil {
-		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
-		return
-	}
-	archive.Name = uri
 
 	// Write to DB
 	id := api.newUUID("")
@@ -62,7 +54,7 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		ID:        id,
 		Active:    &enabled,
 		Published: &disabled,
-		State:     models.ArchiveUploaded.String(),
+		State:     models.ArchiveUploading.String(),
 		Archive:   archive,
 		HTMLFiles: htmlFiles,
 	}
@@ -96,18 +88,10 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Send kafka message to importer
-	// CollectionID will always be there (interactive can only be uploaded inside a collection)
-	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
-		ID:           id,
-		FilePath:     uri,
-		Title:        interactive.Metadata.Title,
-		CollectionID: interactive.Metadata.CollectionID,
-	})
-	if err != nil {
-		api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to notify importer %w", err))
-		return
-	}
+	// dont hang on to the old context
+	requestID := request.GetRequestId(ctx)
+	newCtx := request.WithRequestId(context.Background(), requestID)
+	go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)
 
 	api.respond.JSON(ctx, w, http.StatusAccepted, interactive)
 }
@@ -167,26 +151,16 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Finally check if file to be uploaded
-	uri := ""
 	if formDataRequest.TmpFileName != "" {
-		// Process form data (S3)
-		uri, err = api.uploadFile(formDataRequest)
-		if err != nil {
-			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to upload %w", err))
-			return
-		}
-
 		archive, htmlFiles, err := zip.Open(formDataRequest.TmpFileName)
 		if err != nil {
 			api.respond.Error(ctx, w, http.StatusBadRequest, fmt.Errorf("unable to open file %w", err))
 			return
 		}
-		defer os.Remove(formDataRequest.TmpFileName)
 
-		archive.Name = uri
 		updatedModel.Archive = archive
 		updatedModel.HTMLFiles = htmlFiles
-		updatedModel.State = models.ArchiveUploaded.String()
+		updatedModel.State = models.ArchiveUploading.String()
 	}
 
 	// write to DB
@@ -203,17 +177,11 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// send kafka message to importer (if file uploaded)
-	if uri != "" {
-		err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
-			ID:       id,
-			FilePath: uri,
-			Title:    interactive.Metadata.Title,
-		})
-		if err != nil {
-			api.respond.Error(ctx, w, http.StatusInternalServerError, fmt.Errorf("unable to notify importer %w", err))
-			return
-		}
+	// upload (async) if file is present
+	if formDataRequest.TmpFileName != "" {
+		requestID := request.GetRequestId(ctx)
+		newCtx := request.WithRequestId(context.Background(), requestID)
+		go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)
 	}
 
 	api.respond.JSON(ctx, w, http.StatusOK, interactive)
@@ -407,4 +375,50 @@ func (api *API) GetInteractive(ctx context.Context, req *http.Request) (*models.
 	}
 
 	return i, http.StatusOK, nil
+}
+
+func (api *API) uploadAsync(ctx context.Context, ix *models.Interactive, tmpFileName, name string) {
+	defer os.Remove(tmpFileName)
+	// Upload to S3
+	uri, err := api.uploadFile(tmpFileName, name)
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf("error uploading [%s] to s3 bucket", tmpFileName), err)
+		ix.State = models.ArchiveUploadFailed.String()
+		err = api.mongoDB.PatchInteractive(ctx, interactives.PatchAttribute(mongo.State), ix)
+		if err != nil {
+			log.Error(ctx, fmt.Sprintf("error updating mongo for interactive [%s], State [%s]", ix.ID, ix.State), err)
+		}
+		return
+	}
+
+	// Patch archive + state
+	ix.Archive.Name = uri
+	ix.State = models.ArchiveUploaded.String()
+	err = api.mongoDB.PatchInteractive(ctx, interactives.PatchArchive, ix)
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf("error updating mongo for interactive [%s], State [%s]", ix.ID, ix.State), err)
+	}
+
+	// Send kafka message to importer
+	// CollectionID will always be there (interactive can only be uploaded inside a collection)
+	err = api.producer.InteractiveUploaded(&event.InteractiveUploaded{
+		ID:           ix.ID,
+		FilePath:     uri,
+		Title:        ix.Metadata.Title,
+		CollectionID: ix.Metadata.CollectionID,
+	})
+	if err != nil {
+		// update state in DB
+		ix.State = models.ArchiveDispatchFailed.String()
+		err = api.mongoDB.PatchInteractive(ctx, interactives.PatchAttribute(mongo.State), ix)
+		if err != nil {
+			log.Error(ctx, fmt.Sprintf("error updating mongo for interactive [%s], State [%s]", ix.ID, ix.State), err)
+		}
+		return
+	}
+	ix.State = models.ArchiveDispatchedToImporter.String()
+	err = api.mongoDB.PatchInteractive(ctx, interactives.PatchAttribute(mongo.State), ix)
+	if err != nil {
+		log.Error(ctx, fmt.Sprintf("error updating mongo for interactive [%s], State [%s]", ix.ID, ix.State), err)
+	}
 }

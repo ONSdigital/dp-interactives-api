@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	"github.com/ONSdigital/dp-interactives-api/config"
-	"time"
 
 	"github.com/ONSdigital/dp-interactives-api/models"
 	dpMongoDriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
+)
+
+const (
+	State           string = "State"
 )
 
 // GetInteractive retrieves an interactive by its id
@@ -76,6 +81,8 @@ func (m *Mongo) PatchInteractive(ctx context.Context, attribute interactives.Pat
 		patch = bson.M{"published": i.Published, "metadata.collection_id": ""}
 	case interactives.LinkToCollection:
 		patch = bson.M{"metadata.collection_id": i.Metadata.CollectionID}
+	case interactives.PatchAttribute(State):
+		patch = bson.M{"state": i.State}
 	default:
 		return fmt.Errorf("unsupported attribute %s", attribute)
 	}

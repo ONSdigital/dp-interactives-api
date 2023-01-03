@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-interactives-api/config"
 	"github.com/ONSdigital/dp-interactives-api/event"
@@ -14,8 +17,6 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
-	"net/http"
-	"os"
 )
 
 const (
@@ -100,18 +101,18 @@ func (*API) Close(ctx context.Context) error {
 	return nil
 }
 
-func (api *API) uploadFile(req *FormDataRequest) (string, error) {
+func (api *API) uploadFile(tmpFileName, name string) (string, error) {
 	err := api.s3.ValidateBucket()
 	if err != nil {
 		return "", fmt.Errorf("invalid s3 bucket %w", err)
 	}
 
-	localFile, err := os.Open(req.TmpFileName)
+	localFile, err := os.Open(tmpFileName)
 	if err != nil {
 		return "", fmt.Errorf("cannot open zipfile %w", err)
 	}
 
-	uniqueS3Key := fmt.Sprintf("%s/%s", api.newUUID(""), req.Name)
+	uniqueS3Key := fmt.Sprintf("%s/%s", api.newUUID(""), name)
 	_, err = api.s3.Upload(&s3manager.UploadInput{Body: localFile, Key: &uniqueS3Key})
 	if err != nil {
 		return "", fmt.Errorf("s3 upload error %w", err)

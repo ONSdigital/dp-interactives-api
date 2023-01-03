@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"testing"
+
+	"github.com/ONSdigital/dp-api-clients-go/v2/interactives"
 	authorisation "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
 	"github.com/ONSdigital/dp-interactives-api/api"
 	apiMock "github.com/ONSdigital/dp-interactives-api/api/mock"
@@ -18,11 +25,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strconv"
-	"testing"
 )
 
 var (
@@ -42,6 +44,7 @@ var (
 				State:     models.ImportSuccess.String(),
 				Active:    b,
 				Published: &off,
+				Archive:   &models.Archive{},
 				Metadata: &models.Metadata{
 					Title: "title",
 					Label: "label",
@@ -90,37 +93,6 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
 				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
 			},
-			title:    "WhenValidationPassButS3BucketNotExisting_ThenInternalServerError",
-			formFile: "resources/single-interactive.zip",
-			mongoServer: &apiMock.MongoServerMock{
-				GetInteractiveFunc: getInteractiveFunc,
-			},
-			s3: &apiMock.S3InterfaceMock{
-				ValidateBucketFunc: func() error { return errors.New("s3 error") },
-			},
-		},
-		{
-			requests: []request{
-				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
-				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
-			},
-			title:    "WhenUploadError_ThenInternalServerError",
-			formFile: "resources/single-interactive.zip",
-			mongoServer: &apiMock.MongoServerMock{
-				GetInteractiveFunc: getInteractiveFunc,
-			},
-			s3: &apiMock.S3InterfaceMock{
-				ValidateBucketFunc: func() error { return nil },
-				UploadFunc: func(input *s3manager.UploadInput, options ...func(*s3manager.Uploader)) (*s3manager.UploadOutput, error) {
-					return nil, errors.New("upload error")
-				},
-			},
-		},
-		{
-			requests: []request{
-				{"/v1/interactives", http.MethodPost, http.StatusInternalServerError},
-				{"/v1/interactives/an-id", http.MethodPut, http.StatusInternalServerError},
-			},
 			title:    "WhenDbError_ThenInternalServerError",
 			formFile: "resources/single-interactive.zip",
 			mongoServer: &apiMock.MongoServerMock{
@@ -149,6 +121,9 @@ func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
 					return nil
 				},
 				GetInteractiveFunc: getInteractiveFunc,
+				PatchInteractiveFunc: func(contextMoqParam context.Context, patchAttribute interactives.PatchAttribute, interactive *models.Interactive) error {
+					return nil
+				},
 			},
 			s3: &apiMock.S3InterfaceMock{
 				ValidateBucketFunc: func() error { return nil },
