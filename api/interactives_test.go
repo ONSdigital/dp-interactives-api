@@ -56,6 +56,7 @@ var (
 )
 
 func TestUploadAndUpdateInteractivesHandlers(t *testing.T) {
+	t.Parallel()
 	log.SetDestination(io.Discard, io.Discard)
 
 	type request struct {

@@ -88,12 +88,12 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	api.respond.JSON(ctx, w, http.StatusAccepted, interactive)
+	
 	// dont hang on to the old context
 	requestID := request.GetRequestId(ctx)
 	newCtx := request.WithRequestId(context.Background(), requestID)
-	go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)
-
-	api.respond.JSON(ctx, w, http.StatusAccepted, interactive)
+	go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)	
 }
 
 func (api *API) GetInteractiveHandler(w http.ResponseWriter, r *http.Request) {
@@ -177,14 +177,14 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	api.respond.JSON(ctx, w, http.StatusOK, interactive)
+
 	// upload (async) if file is present
 	if formDataRequest.TmpFileName != "" {
 		requestID := request.GetRequestId(ctx)
 		newCtx := request.WithRequestId(context.Background(), requestID)
 		go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)
-	}
-
-	api.respond.JSON(ctx, w, http.StatusOK, interactive)
+	}	
 }
 
 // dedicated publish collection as multiple interactives can be a part of a single collection
