@@ -89,11 +89,11 @@ func (api *API) UploadInteractivesHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	api.respond.JSON(ctx, w, http.StatusAccepted, interactive)
-	
+
 	// dont hang on to the old context
 	requestID := request.GetRequestId(ctx)
 	newCtx := request.WithRequestId(context.Background(), requestID)
-	go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)	
+	go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)
 }
 
 func (api *API) GetInteractiveHandler(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +184,7 @@ func (api *API) UpdateInteractiveHandler(w http.ResponseWriter, r *http.Request)
 		requestID := request.GetRequestId(ctx)
 		newCtx := request.WithRequestId(context.Background(), requestID)
 		go api.uploadAsync(newCtx, interactive, formDataRequest.TmpFileName, formDataRequest.Name)
-	}	
+	}
 }
 
 // dedicated publish collection as multiple interactives can be a part of a single collection
@@ -343,6 +343,13 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request
 
 	// must not delete published interactives
 	if *vis.Published {
+		// request to remove a published interactive
+		// if linked to a collection then unlink (as zebedee will do the same)
+		if vis.Metadata.CollectionID != "" {
+			vis.Metadata.CollectionID = ""
+			api.mongoDB.PatchInteractive(ctx, interactives.LinkToCollection, vis)
+		}
+
 		api.respond.Error(ctx, w, http.StatusForbidden, ErrCantDeletePublishedIn)
 		return
 	}
