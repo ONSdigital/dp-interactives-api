@@ -329,6 +329,7 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	vars := mux.Vars(r)
 	id := vars["id"]
+	log.Info(ctx, fmt.Sprintf("delete interactive [%s]", id))
 
 	// error if it doesnt exist
 	vis, err := api.mongoDB.GetInteractive(ctx, id)
@@ -346,6 +347,7 @@ func (api *API) DeleteInteractivesHandler(w http.ResponseWriter, r *http.Request
 		// request to remove a published interactive
 		// if linked to a collection then unlink (as zebedee will do the same)
 		if vis.Metadata.CollectionID != "" {
+			log.Info(ctx, fmt.Sprintf("unlinking interactive [%s] from collection [%s]", id, vis.Metadata.CollectionID))
 			vis.Metadata.CollectionID = ""
 			api.mongoDB.PatchInteractive(ctx, interactives.LinkToCollection, vis)
 		}
