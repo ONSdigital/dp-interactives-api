@@ -1,6 +1,7 @@
 package config
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -43,6 +44,38 @@ func TestConfig(t *testing.T) {
 				So(newErr, ShouldBeNil)
 				So(newCfg, ShouldResemble, cfg)
 			})
+
+			Convey("Sensitive fields are hidden", func() {
+				tagName := "json"
+				tagValue := "-"
+				newCfg, newErr := Get()
+
+				So(newErr, ShouldBeNil)
+
+				sensitiveFields := getStructFieldName(newCfg, &newCfg.ServiceAuthToken, &newCfg.KafkaSecClientKey)
+				for _, fld := range sensitiveFields {
+					field, ok := reflect.TypeOf(cfg).Elem().FieldByName(fld)
+					So(ok, ShouldBeTrue)
+					So(field.Tag.Get(tagName), ShouldEqual, tagValue)
+				}
+			})
 		})
 	})
+}
+
+func getStructFieldName(Struct interface{}, StructField ...interface{}) (fields []string) {
+	fields = []string{}
+
+	for r := range StructField {
+		s := reflect.ValueOf(Struct).Elem()
+		f := reflect.ValueOf(StructField[r]).Elem()
+
+		for i := 0; i < s.NumField(); i++ {
+			valueField := s.Field(i)
+			if valueField.Addr().Interface() == f.Addr().Interface() {
+				fields = append(fields, s.Type().Field(i).Name)
+			}
+		}
+	}
+	return fields
 }

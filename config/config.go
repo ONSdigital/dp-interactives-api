@@ -27,7 +27,7 @@ type Config struct {
 	KafkaSecProtocol           string        `envconfig:"KAFKA_SEC_PROTO"`
 	KafkaSecCACerts            string        `envconfig:"KAFKA_SEC_CA_CERTS"`
 	KafkaSecClientCert         string        `envconfig:"KAFKA_SEC_CLIENT_CERT"`
-	KafkaSecClientKey          string        `envconfig:"KAFKA_SEC_CLIENT_KEY"             json:"-"`
+	KafkaSecClientKey          string        `envconfig:"KAFKA_SEC_CLIENT_KEY"    json:"-"`
 	KafkaSecSkipVerify         bool          `envconfig:"KAFKA_SEC_SKIP_VERIFY"`
 	InteractivesWriteTopic     string        `envconfig:"INTERACTIVES_WRITE_TOPIC"`
 	KafkaConsumerWorkers       int           `envconfig:"KAFKA_CONSUMER_WORKERS"`
@@ -39,7 +39,7 @@ type Config struct {
 	DefaultMaxLimit            int           `envconfig:"DEFAULT_MAXIMUM_LIMIT"`
 	DefaultLimit               int           `envconfig:"DEFAULT_LIMIT"`
 	DefaultOffset              int           `envconfig:"DEFAULT_OFFSET"`
-	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN" 			   json:"-"`
+	ServiceAuthToken           string        `envconfig:"SERVICE_AUTH_TOKEN"    json:"-"`
 	MongoConfig                MongoConfig
 	AuthorisationConfig        *authorisation.Config
 }
