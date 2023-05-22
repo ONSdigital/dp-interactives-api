@@ -79,8 +79,14 @@ func TestRun(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
+		channels := &kafka.ProducerChannels{
+			Output: make(chan []byte),
+		}
 		kafkaProducerMock := &kafkatest.IProducerMock{
 			LogErrorsFunc: func(ctx context.Context) {},
+			ChannelsFunc: func() *kafka.ProducerChannels {
+				return channels
+			},
 		}
 
 		hcMock := &serviceMock.HealthCheckerMock{

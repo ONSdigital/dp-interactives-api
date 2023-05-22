@@ -6,8 +6,6 @@ import (
 
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
-	"github.com/ONSdigital/dp-authorisation/v2/permissions"
-	"github.com/ONSdigital/dp-permissions-api/sdk"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-component-test/utils"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -22,6 +20,7 @@ import (
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	mongodriver "github.com/ONSdigital/dp-mongodb/v3/mongodb"
 	"github.com/ONSdigital/dp-net/v2/responder"
+	"github.com/ONSdigital/dp-permissions-api/sdk"
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	uuid "github.com/satori/go.uuid"
@@ -42,6 +41,7 @@ type InteractivesApiComponent struct {
 
 func setupFakePermissionsAPI() *authorisationtest.FakePermissionsAPI {
 	fakePermissionsAPI := authorisationtest.NewFakePermissionsAPI()
+	//c.Config.AuthorisationConfig.PermissionsAPIURL = fakePermissionsAPI.URL()
 	bundle := getPermissionsBundle()
 	fakePermissionsAPI.Reset()
 	fakePermissionsAPI.UpdatePermissionsBundleResponse(bundle)
