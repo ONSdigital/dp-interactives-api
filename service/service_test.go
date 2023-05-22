@@ -3,6 +3,10 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"sync"
+	"testing"
+
 	"github.com/ONSdigital/dp-api-clients-go/v2/health"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	authorisationMock "github.com/ONSdigital/dp-authorisation/v2/authorisation/mock"
@@ -17,9 +21,6 @@ import (
 	"github.com/ONSdigital/dp-kafka/v3/kafkatest"
 	"github.com/ONSdigital/dp-net/v2/responder"
 	"github.com/pkg/errors"
-	"net/http"
-	"sync"
-	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -78,7 +79,9 @@ func TestRun(t *testing.T) {
 			CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error { return nil },
 		}
 
-		kafkaProducerMock := kafkatest.NewMessageProducer(true)
+		kafkaProducerMock := &kafkatest.IProducerMock{
+			LogErrorsFunc: func(ctx context.Context) {},
+		}
 
 		hcMock := &serviceMock.HealthCheckerMock{
 			AddCheckFunc: func(name string, checker healthcheck.Checker) error { return nil },

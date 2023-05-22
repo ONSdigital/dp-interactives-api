@@ -2,9 +2,12 @@ package steps
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/ONSdigital/dp-authorisation/v2/authorisation"
 	"github.com/ONSdigital/dp-authorisation/v2/authorisationtest"
 	"github.com/ONSdigital/dp-authorisation/v2/permissions"
+	"github.com/ONSdigital/dp-permissions-api/sdk"
 	componenttest "github.com/ONSdigital/dp-component-test"
 	"github.com/ONSdigital/dp-component-test/utils"
 	"github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -22,7 +25,6 @@ import (
 	"github.com/ONSdigital/log.go/v2/log"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	uuid "github.com/satori/go.uuid"
-	"net/http"
 )
 
 type InteractivesApiComponent struct {
@@ -46,8 +48,8 @@ func setupFakePermissionsAPI() *authorisationtest.FakePermissionsAPI {
 	return fakePermissionsAPI
 }
 
-func getPermissionsBundle() *permissions.Bundle {
-	return &permissions.Bundle{
+func getPermissionsBundle() *sdk.Bundle {
+	return &sdk.Bundle{
 		"interactives:create": { // role
 			"groups/role-admin": { // group
 				{
