@@ -41,7 +41,6 @@ type InteractivesApiComponent struct {
 
 func setupFakePermissionsAPI() *authorisationtest.FakePermissionsAPI {
 	fakePermissionsAPI := authorisationtest.NewFakePermissionsAPI()
-	//c.Config.AuthorisationConfig.PermissionsAPIURL = fakePermissionsAPI.URL()
 	bundle := getPermissionsBundle()
 	fakePermissionsAPI.Reset()
 	fakePermissionsAPI.UpdatePermissionsBundleResponse(bundle)
