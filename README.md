@@ -1,5 +1,9 @@
 # dp-interactives-api
 
+***
+:warning: This repository will be archived in November 2023 as it is no longer in development. :warning:
+***
+
 Manages all interactives state and metadata (in persistent store). Talks to dp-interactives-importer via kafka.
 
 ## Getting started
